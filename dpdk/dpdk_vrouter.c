@@ -677,7 +677,7 @@ dpdk_argv_update(void)
 			            dpdk_ctrl_thread_mask_str);
     }
     if (dpdk_ctrl_thread_mask_ptr) {
-        if (dpdk_argv_append("-t", dpdk_ctrl_thread_mask_ptr) != 0)
+        if (dpdk_argv_append("-C", dpdk_ctrl_thread_mask_ptr) != 0)
 	        return -1;
     }
 
