@@ -302,13 +302,12 @@ dpdk_find_port_id_by_pci_addr(const struct rte_pci_addr *addr)
     struct rte_pci_addr *eth_pci_addr;
 
     VR_DPDK_RTE_ETH_FOREACH_DEV(i) {
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 2, 0, 0))
         if (rte_eth_devices[i].data == NULL)
-#else
-        if (rte_eth_devices[i].pci_dev == NULL)
-#endif
             continue;
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 2, 0, 0))
+
+        if (strcmp(rte_eth_devices[i].device->driver->name, "net_bonding") == 0)
+            return i;
+
         if (rte_eth_devices[i].device != NULL) {
             eth_pci_addr = &(RTE_DEV_TO_PCI(rte_eth_devices[i].device)->addr);
             RTE_LOG_DP(DEBUG, VROUTER, "count %d eth_pci_addr %x %x %x %x \n",
@@ -323,24 +322,7 @@ dpdk_find_port_id_by_pci_addr(const struct rte_pci_addr *addr)
                 addr->function == eth_pci_addr->function) {
                 return i;
             }
-        } else {
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
-            if (strcmp(rte_eth_devices[i].device->driver->name, "net_bonding") == 0)
-                return i;
-#else
-            if (strcmp(rte_eth_devices[i].data->drv_name, "net_bonding") == 0)
-                return i;
-#endif
         }
-#else
-        eth_pci_addr = &(rte_eth_devices[i].pci_dev->addr);
-        if (addr->bus == eth_pci_addr->bus &&
-            addr->devid == eth_pci_addr->devid &&
-            addr->domain == eth_pci_addr->domain &&
-            addr->function == eth_pci_addr->function) {
-            return i;
-        }
-#endif
     }
 
     return VR_DPDK_INVALID_PORT_ID;
@@ -523,10 +505,7 @@ dpdk_vif_attach_ethdev(struct vr_interface *vif,
 
     if (dev_info.tx_offload_capa & DEV_TX_OFFLOAD_VLAN_INSERT
         && dev_info.rx_offload_capa & DEV_RX_OFFLOAD_VLAN_STRIP) {
-        /*
-         * Enabling vlan offload causes performance degradation, possibly
-         * dut to a DPDK library issue, so don't set VIF_FLAG_VLAN_OFFLOAD
-         */
+        vif->vif_flags |= VIF_FLAG_VLAN_OFFLOAD;
     } else {
         vif->vif_flags &= ~VIF_FLAG_VLAN_OFFLOAD;
     }
@@ -957,7 +936,7 @@ dpdk_fabric_af_packet_if_del(struct vr_interface *vif)
         rte_eth_dev_close(port_id);
 
 #if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
-        rte_eth_dev_detach(port_id, name);
+        // rte_eth_dev_detach(port_id, name);
 #else
         rte_free(ethdev_ptr->data->dev_private);
         rte_free(ethdev_ptr->data);
