@@ -60,6 +60,7 @@ gen_sandesh = env.Command("gen_sandesh", [],
                           -I src/contrail-common/ \
                           --out "+ vtest_py_venv_root + "/vr_py_sandesh/ " +
                           vtest_py_venv_root+"/vr_py.sandesh")
+env.Depends(gen_sandesh, src_root + "/build/bin/sandesh")
 
 # copy pysandesh library to venv
 copy_pysandesh = env.Command("copy_pysandesh", [],
