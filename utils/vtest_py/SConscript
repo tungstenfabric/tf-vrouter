@@ -54,19 +54,21 @@ create_vr_py_dir = env.Command("create_vr_py_dir", [],
                                Mkdir(vtest_py_venv_root + "/vr_py_sandesh"))
 
 # generate vrouter sandesh py files
+S = src_root + "/build/bin/sandesh"
 gen_sandesh = env.Command("gen_sandesh", [],
-                          src_root+"/build/bin/sandesh --gen py:new_style \
-                          -I controller/src/ \
-                          -I src/contrail-common/ \
-                          --out "+ vtest_py_venv_root + "/vr_py_sandesh/ " +
-                          vtest_py_venv_root+"/vr_py.sandesh")
+                           S + " --gen py:new_style \
+                           -I controller/src/ \
+                           -I src/contrail-common/ \
+                           --out "+ vtest_py_venv_root + "/vr_py_sandesh/ " +
+                           vtest_py_venv_root+"/vr_py.sandesh")
+env.Depends(gen_sandesh, S)
 
 # copy pysandesh library to venv
+S = build_root + "/tools/sandesh/library/python/pysandesh"
 copy_pysandesh = env.Command("copy_pysandesh", [],
-                              vtest_py_src_root + "/copy_dir.py "+
-                              build_root +
-                              "/tools/sandesh/library/python/pysandesh " +
+                              vtest_py_src_root + "/copy_dir.py " + S + " " +
                               vtest_py_venv_root + "/pysandesh")
+env.Depends(copy_pysandesh, S)
 
 # copy test files to venv
 copy_test_files = env.Command("copy_test_files", [],
