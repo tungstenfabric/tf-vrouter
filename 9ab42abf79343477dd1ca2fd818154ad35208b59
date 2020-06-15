@@ -1,0 +1,238 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "bcadbfd2_1a0164dd",
+        "filename": "gdb/vr_dpdk.gdb",
+        "patchSetId": 1
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-15T11:38:38Z",
+      "side": 1,
+      "message": "There are not counters per se, so we can\u0027t give this title. Lets us have separate field names like - Num of Forwarding Lcores: xyz etc.",
+      "range": {
+        "startLine": 7,
+        "startChar": 12,
+        "endLine": 7,
+        "endChar": 20
+      },
+      "revId": "9ab42abf79343477dd1ca2fd818154ad35208b59",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9225fb8f_7041d56c",
+        "filename": "gdb/vr_dpdk.gdb",
+        "patchSetId": 1
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-15T11:38:38Z",
+      "side": 1,
+      "message": "You can probably group the head, tail and single attributes under \u0027Producer\u0027 title. \nAlso can you change \u0027single\u0027 to \u0027is_single_producer\u0027? Similary do the changes for \u0027Consumer\u0027",
+      "range": {
+        "startLine": 87,
+        "startChar": 4,
+        "endLine": 88,
+        "endChar": 43
+      },
+      "revId": "9ab42abf79343477dd1ca2fd818154ad35208b59",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9ff2733b_d1ef6941",
+        "filename": "gdb/vr_dpdk.gdb",
+        "patchSetId": 1
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-15T11:38:38Z",
+      "side": 1,
+      "message": "How did you get this value?",
+      "range": {
+        "startLine": 118,
+        "startChar": 28,
+        "endLine": 118,
+        "endChar": 30
+      },
+      "revId": "9ab42abf79343477dd1ca2fd818154ad35208b59",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8e64e180_0e9dc6eb",
+        "filename": "gdb/vr_dpdk.gdb",
+        "patchSetId": 1
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-15T11:38:38Z",
+      "side": 1,
+      "message": "How did you get this value?",
+      "range": {
+        "startLine": 138,
+        "startChar": 22,
+        "endLine": 138,
+        "endChar": 24
+      },
+      "revId": "9ab42abf79343477dd1ca2fd818154ad35208b59",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e67fd78d_b3173525",
+        "filename": "gdb/vr_dpdk.gdb",
+        "patchSetId": 1
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-15T11:38:38Z",
+      "side": 1,
+      "message": "Just \"Vif Id:\" is enough",
+      "revId": "9ab42abf79343477dd1ca2fd818154ad35208b59",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9bd727dc_c2ae3d22",
+        "filename": "gdb/vr_dpdk.gdb",
+        "patchSetId": 1
+      },
+      "lineNbr": 315,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-15T11:38:38Z",
+      "side": 1,
+      "message": "Can you cleanup this?",
+      "range": {
+        "startLine": 314,
+        "startChar": 0,
+        "endLine": 315,
+        "endChar": 58
+      },
+      "revId": "9ab42abf79343477dd1ca2fd818154ad35208b59",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dc86c638_fb2b9a44",
+        "filename": "gdb/vr_dpdk.gdb",
+        "patchSetId": 1
+      },
+      "lineNbr": 439,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-15T11:38:38Z",
+      "side": 1,
+      "message": "Just \"Vif Id:\" is enough",
+      "revId": "9ab42abf79343477dd1ca2fd818154ad35208b59",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2669def3_ecce94b9",
+        "filename": "gdb/vr_dpdk.gdb",
+        "patchSetId": 1
+      },
+      "lineNbr": 468,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-15T11:38:38Z",
+      "side": 1,
+      "message": "Based on lcore index, lets print Lcore type:",
+      "revId": "9ab42abf79343477dd1ca2fd818154ad35208b59",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "10e208be_17af6f88",
+        "filename": "gdb/vr_dpdk.gdb",
+        "patchSetId": 1
+      },
+      "lineNbr": 474,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-15T11:38:38Z",
+      "side": 1,
+      "message": "print lcore cmd arg as hex value.",
+      "revId": "9ab42abf79343477dd1ca2fd818154ad35208b59",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6d9965b8_039e11c7",
+        "filename": "gdb/vr_dpdk.gdb",
+        "patchSetId": 1
+      },
+      "lineNbr": 497,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-15T11:38:38Z",
+      "side": 1,
+      "message": "As discussed, lets call this as \"Rx rings serviced:\"",
+      "revId": "9ab42abf79343477dd1ca2fd818154ad35208b59",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ad3c183d_166a8a55",
+        "filename": "gdb/vr_dpdk.gdb",
+        "patchSetId": 1
+      },
+      "lineNbr": 499,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-15T11:38:38Z",
+      "side": 1,
+      "message": "\"Tx rings serviced:\"",
+      "revId": "9ab42abf79343477dd1ca2fd818154ad35208b59",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5a6fcbb8_9829651c",
+        "filename": "gdb/vr_dpdk.gdb",
+        "patchSetId": 1
+      },
+      "lineNbr": 502,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-15T11:38:38Z",
+      "side": 1,
+      "message": "As discussed, we can just print - \"vif(0/0)\" etc..",
+      "revId": "9ab42abf79343477dd1ca2fd818154ad35208b59",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
