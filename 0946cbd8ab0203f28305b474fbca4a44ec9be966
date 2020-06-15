@@ -16,6 +16,24 @@
       "revId": "0946cbd8ab0203f28305b474fbca4a44ec9be966",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f8fd2202_c09320c4",
+        "filename": "include/vr_info.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 928
+      },
+      "writtenOn": "2020-06-15T10:20:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "57209933_07f2ec5e",
+      "revId": "0946cbd8ab0203f28305b474fbca4a44ec9be966",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
     }
   ]
 }
