@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "57209933_07f2ec5e",
+        "filename": "include/vr_info.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-06-15T09:55:42Z",
+      "side": 1,
+      "message": "Don\u0027t remove info_get_version for KERNEL..",
+      "revId": "0946cbd8ab0203f28305b474fbca4a44ec9be966",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
