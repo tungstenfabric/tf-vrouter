@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c45f5927_b394111d",
+        "filename": "linux/vr_host_interface.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 598,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-16T15:45:25Z",
+      "side": 1,
+      "message": "Instead of allocating and freeing noht_cpumask for every pkt, can you have a static global array of struct cpumask and index it using curr_cpu? The total size of this array can be vr_num_cpus.",
+      "revId": "319fe27c140e2e99855f33d5dcbb2733823fce9f",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
