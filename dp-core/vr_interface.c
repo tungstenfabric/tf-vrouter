@@ -2551,7 +2551,7 @@ vr_interface_copy_bond_info(vr_interface_req *req,
             len = strlen(bond_info->vif_slave_drv_name[i]);
             sl_drv_name_iter += snprintf((buffer_drv + sl_drv_name_iter),
                     (VR_INTERFACE_STR_BUF_LEN - sl_drv_name_iter - 1),
-                    bond_info->vif_slave_drv_name[i]);
+                    "%s\n", bond_info->vif_slave_drv_name[i]);
             if(!sl_drv_name_iter)
                 goto error_exit;
             sl_drv_name_iter += 1;

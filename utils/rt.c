@@ -498,7 +498,7 @@ bridge_table_data_process(void *s_req)
     return;
 }
 
-static int
+int
 vr_bridge_table_setup(struct nl_client *cl)
 {
     int ret;

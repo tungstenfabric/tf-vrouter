@@ -41,6 +41,7 @@
 
 #include <termios.h>
 #include <sys/select.h>
+#include <sys/time.h>
 
 #include "vr_types.h"
 #include "vr_message.h"

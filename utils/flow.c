@@ -1967,7 +1967,7 @@ flow_make_flow_req_perf(vr_flow_req *req)
 {
     int ret, attr_len, error;
     struct nl_response *resp;
-    static count = 0;
+    static int count = 0;
     static struct iovec iov[MAX_FLOW_NL_MSG_BUNCH];
     uint8_t *base;
 
