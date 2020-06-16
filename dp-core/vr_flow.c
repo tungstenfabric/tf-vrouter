@@ -72,8 +72,6 @@ unsigned int vr_trap_flow(struct vrouter *, struct vr_flow_entry *,
         struct vr_packet *, unsigned int, struct vr_flow_stats *,
         struct vr_packet_node *);
 
-void get_random_bytes(void *buf, int nbytes);
-
 bool
 vr_valid_link_local_port(struct vrouter *router, int family,
                          int proto, int port)

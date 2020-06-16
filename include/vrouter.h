@@ -31,7 +31,7 @@ extern "C" {
 
 #define VR_NATIVE_VRF       0
 #define VR_UNIX_PATH_MAX    108
-#define VR_MAX_CPUS         64
+#define VR_MAX_CPUS         256
 
 #define VR_CPU_MASK     0xffff
 extern unsigned int vr_num_cpus;
@@ -420,6 +420,8 @@ extern volatile bool vr_not_ready;
 
 extern struct vrouter *vrouter_get(unsigned int);
 extern unsigned int vrouter_generation_num_get(struct vrouter *router);
+
+extern void get_random_bytes(void *, int);
 
 extern int vrouter_init(void);
 extern void vrouter_exit(bool);

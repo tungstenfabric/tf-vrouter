@@ -275,6 +275,12 @@ extern int vr_send_vxlan_get(struct nl_client *, unsigned int, unsigned int);
 extern int vr_send_vxlan_dump(struct nl_client *, unsigned int, int);
 extern int vr_send_vxlan_delete(struct nl_client *, unsigned int, unsigned int);
 
+extern int vr_send_vrf_add(struct nl_client *, unsigned int, unsigned int, int,
+        int, unsigned int);
+extern int vr_send_vrf_delete(struct nl_client *, unsigned int, unsigned int);
+extern int vr_send_vrf_dump(struct nl_client *, unsigned int, int);
+extern int vr_send_vrf_get(struct nl_client *, unsigned int, unsigned int);
+
 extern int vr_send_qos_map_get(struct nl_client *, unsigned int, unsigned int);
 extern int vr_send_qos_map_dump(struct nl_client *, unsigned int, int);
 extern int vr_send_qos_map_add(struct nl_client *, unsigned int, unsigned int,
@@ -306,6 +312,23 @@ extern void vr_print_drop_stats(vr_drop_stats_req *, int);
 extern int vr_send_info_dump(struct nl_client *cl, unsigned int router_id,
         int marker, int inst_id, vr_info_msg_en msginfo, int buffsz,
         uint8_t *vr_info_inbuf);
+
+extern void vr_print_drop_dbg_stats(vr_drop_stats_req *, int);
+extern void vr_print_pkt_drop_log(vr_pkt_drop_log_req *);
+extern int vr_pkt_drop_log_request(struct nl_client *, unsigned int, unsigned int, int);
+
+extern int vr_send_qos_map_delete(struct nl_client *, unsigned int, unsigned int);
+
+extern int vr_send_get_bridge_table_data(struct nl_client *);
+
+extern int vr_bridge_table_setup(struct nl_client *);
+
+extern int vr_send_vrouter_set_runtime_opts(struct nl_client *, unsigned int,
+        int, int, int, int,
+        int, int, int, int, int,
+        int, int, int, int,
+        int, int, int, int,
+        unsigned int, int);
 
 #ifdef __cplusplus
 }

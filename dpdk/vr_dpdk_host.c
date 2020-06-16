@@ -42,7 +42,7 @@ struct dpdk_work_cb_data {
 };
 
 /* Max number of CPUs. We adjust it later in vr_dpdk_host_init() */
-unsigned int vr_num_cpus = VR_MAX_CPUS;
+unsigned int vr_num_cpus = VR_MAX_CPUS_DPDK;
 
 /* Global init flag */
 static bool vr_host_inited = false;

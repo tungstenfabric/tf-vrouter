@@ -464,7 +464,7 @@ struct dpdk_virtio_tx_queue_set_params {
     unsigned int queue_id;
 };
 
-static unsigned int vif_lcore_tx_queue[VR_MAX_INTERFACES][VR_MAX_CPUS];
+static unsigned int vif_lcore_tx_queue[VR_MAX_INTERFACES][VR_MAX_CPUS_DPDK];
 static unsigned int vif_tx_queues_enabled[VR_MAX_INTERFACES];
 
 /*
