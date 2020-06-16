@@ -619,9 +619,9 @@ dpdk_argv_update(void)
         return -1;
     }
 
-    if (vr_dpdk.nb_fwd_lcores > VR_MAX_CPUS - VR_DPDK_FWD_LCORE_ID) {
+    if (vr_dpdk.nb_fwd_lcores > VR_MAX_CPUS_DPDK - VR_DPDK_FWD_LCORE_ID) {
         RTE_LOG(ERR, VROUTER, "Error configuring lcores: number of forwarding cores exceeds maximum of %u\n",
-                VR_MAX_CPUS - VR_DPDK_FWD_LCORE_ID);
+                VR_MAX_CPUS_DPDK - VR_DPDK_FWD_LCORE_ID);
         return -1;
     }
 
