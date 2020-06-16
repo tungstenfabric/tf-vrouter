@@ -34,6 +34,24 @@
       "revId": "319fe27c140e2e99855f33d5dcbb2733823fce9f",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d3599088_332e8401",
+        "filename": "linux/vr_host_interface.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 598,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-16T18:33:59Z",
+      "side": 1,
+      "message": "No. I meant static global outside the function.",
+      "parentUuid": "8b0ea025_676fd028",
+      "revId": "319fe27c140e2e99855f33d5dcbb2733823fce9f",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
