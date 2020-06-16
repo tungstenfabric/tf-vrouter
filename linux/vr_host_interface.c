@@ -591,10 +591,11 @@ linux_get_rxq(struct sk_buff *skb, u16 *rxq, unsigned int curr_cpu,
     unsigned int next_cpu;
     int numa_node = cpu_to_node(curr_cpu);
     const struct cpumask *node_cpumask = cpumask_of_node(numa_node);
-    struct cpumask noht_cpumask;
+    struct cpumask *noht_cpumask = NULL;
     unsigned int num_cpus, cpu, count = 0;
     __u32 rxhash;
 
+    noht_cpumask = kmalloc(sizeof(struct cpumask *), GFP_KERNEL);
     /*
      * We are running in softirq context, so CPUs can't be offlined
      * underneath us. So, it is safe to use the NUMA node CPU bitmaps.
@@ -602,9 +603,9 @@ linux_get_rxq(struct sk_buff *skb, u16 *rxq, unsigned int curr_cpu,
      * in the node CPU mask.
      */
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(4,2,0))
-    cpumask_andnot(&noht_cpumask, node_cpumask, cpu_sibling_mask(curr_cpu));
+    cpumask_andnot(noht_cpumask, node_cpumask, cpu_sibling_mask(curr_cpu));
 #else
-    cpumask_andnot(&noht_cpumask, node_cpumask,
+    cpumask_andnot(noht_cpumask, node_cpumask,
                    topology_sibling_cpumask(curr_cpu));
 #endif
 
@@ -613,7 +614,7 @@ linux_get_rxq(struct sk_buff *skb, u16 *rxq, unsigned int curr_cpu,
      * that core and its hyperthreads in the CPU mask.
      */
     if (prev_cpu && (prev_cpu <= nr_cpu_ids)) {
-        cpumask_andnot(&noht_cpumask, &noht_cpumask,
+        cpumask_andnot(noht_cpumask, noht_cpumask,
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(4,2,0))
                        cpu_sibling_mask(prev_cpu-1));
 #else
@@ -621,7 +622,7 @@ linux_get_rxq(struct sk_buff *skb, u16 *rxq, unsigned int curr_cpu,
 #endif
     }
 
-    num_cpus = cpumask_weight(&noht_cpumask);
+    num_cpus = cpumask_weight(noht_cpumask);
 
     if (num_cpus) {
         rxhash = skb_get_hash(skb);
@@ -635,7 +636,7 @@ linux_get_rxq(struct sk_buff *skb, u16 *rxq, unsigned int curr_cpu,
          * next_cpu is between 0 and (num_cpus - 1). Find the CPU corresponding
          * to next_cpu in the CPU bitmask.
          */
-        for_each_cpu(cpu, &noht_cpumask) {
+        for_each_cpu(cpu, noht_cpumask) {
             if (count == next_cpu) {
                 break;
             }
@@ -658,6 +659,9 @@ linux_get_rxq(struct sk_buff *skb, u16 *rxq, unsigned int curr_cpu,
          */
         *rxq = curr_cpu;
     }
+
+    if (noht_cpumask)
+        kfree(noht_cpumask);
 
     return;
 }   
