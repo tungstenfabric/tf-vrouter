@@ -83,6 +83,7 @@ extern unsigned vr_packet_sz;
                                         || vif->vif_type == VIF_TYPE_VIRTUAL)
  */
 
+#define VR_MAX_CPUS_DPDK            64
 /* Default lcore mask. Used only when sched_getaffinity() is failed */
 #define VR_DPDK_DEF_LCORE_MASK      0xf
 /* Default memory size to allocate at startup (in MBs) */
@@ -125,7 +126,7 @@ extern unsigned vr_packet_sz;
 #define VR_DPDK_MPLS_OFFSET         ((VR_ETHER_HLEN             \
                                     + sizeof(struct vr_ip)      \
                                     + sizeof(struct vr_udp))/2)
-/* Maximum number of rings per lcore (maximum is VR_MAX_INTERFACES*VR_MAX_CPUS) */
+/* Maximum number of rings per lcore (maximum is VR_MAX_INTERFACES*VR_MAX_CPUS_DPDK) */
 #define VR_DPDK_MAX_RINGS           (VR_MAX_INTERFACES*2)
 /* Maximum number of bond interfaces per lcore */
 #define VR_DPDK_MAX_BONDS           2
@@ -517,7 +518,7 @@ struct vr_dpdk_lcore {
     /* Number of lcores to distribute packets to */
     uint16_t lcore_nb_dst_lcores;
     /* List of forwarding lcore indexes based on VR_DPDK_FWD_LCORE_ID */
-    uint16_t lcore_dst_lcore_idxs[VR_MAX_CPUS];
+    uint16_t lcore_dst_lcore_idxs[VR_MAX_CPUS_DPDK];
     /* Table of RX queues */
     struct vr_dpdk_queue lcore_rx_queues[VR_MAX_INTERFACES];
     /* Table of TX queues */
@@ -649,7 +650,7 @@ struct vr_dpdk_global {
 
     /* Table of pointers to forwarding lcore
      * Must be at the end of the cache line 1 */
-    struct vr_dpdk_lcore *lcores[VR_MAX_CPUS];
+    struct vr_dpdk_lcore *lcores[VR_MAX_CPUS_DPDK];
 
     /**********************************************************************/
     /* Big and less frequently used fields */
@@ -944,7 +945,7 @@ void vr_dpdk_lcore_if_unschedule(struct vr_interface *vif);
 /* Schedule an MPLS label queue */
 int vr_dpdk_lcore_mpls_schedule(struct vr_interface *vif, unsigned dst_ip,
     unsigned mpls_label);
-/* Returns the least used lcore or VR_MAX_CPUS */
+/* Returns the least used lcore or VR_MAX_CPUS_DPDK */
 unsigned vr_dpdk_lcore_least_used_get(void);
 /* Flush TX queues */
 static inline void

@@ -34,13 +34,13 @@
 
 extern unsigned int datapath_offloads;
 
-/* Returns the least used lcore or VR_MAX_CPUS */
+/* Returns the least used lcore or VR_MAX_CPUS_DPDK */
 unsigned
 vr_dpdk_lcore_least_used_get(void)
 {
     unsigned lcore_id;
     struct vr_dpdk_lcore *lcore;
-    unsigned least_used_id = VR_MAX_CPUS;
+    unsigned least_used_id = VR_MAX_CPUS_DPDK;
     uint16_t least_used_nb_queues = 2 * VR_MAX_INTERFACES;
     unsigned int num_queues;
 
@@ -61,13 +61,13 @@ vr_dpdk_lcore_least_used_get(void)
     return least_used_id;
 }
 
-/* Returns the least used IO lcore or VR_MAX_CPUS */
+/* Returns the least used IO lcore or VR_MAX_CPUS_DPDK */
 unsigned
 dpdk_lcore_least_used_io_get(void)
 {
     unsigned lcore_id;
     struct vr_dpdk_lcore *lcore;
-    unsigned least_used_id = VR_MAX_CPUS;
+    unsigned least_used_id = VR_MAX_CPUS_DPDK;
     uint16_t least_used_nb_queues = 2 * VR_MAX_INTERFACES;
     unsigned int num_queues;
 
@@ -182,7 +182,7 @@ vr_dpdk_lcore_mpls_schedule(struct vr_interface *vif, unsigned dst_ip,
     struct vr_dpdk_queue *rx_queue;
     unsigned least_used_id = vr_dpdk_lcore_least_used_get();
 
-    if (least_used_id == VR_MAX_CPUS) {
+    if (least_used_id == VR_MAX_CPUS_DPDK) {
         RTE_LOG(ERR, VROUTER, "    error getting the least used lcore ID\n");
         return -EFAULT;
     }
@@ -380,7 +380,7 @@ vr_dpdk_lcore_if_schedule(struct vr_interface *vif, unsigned least_used_id,
     struct vr_dpdk_queue *rx_queue;
     struct vr_dpdk_lcore *lcore;
 
-    if (least_used_id == VR_MAX_CPUS) {
+    if (least_used_id == VR_MAX_CPUS_DPDK) {
         RTE_LOG(ERR, VROUTER, "    error getting the least used lcore ID\n");
         return -EFAULT;
     }
@@ -402,7 +402,7 @@ vr_dpdk_lcore_if_schedule(struct vr_interface *vif, unsigned least_used_id,
         && vif_is_virtual(vif)) {
         /* assign RX queue to an IO lcore */
         lcore_id = dpdk_lcore_least_used_io_get();
-        if (lcore_id == VR_MAX_CPUS) {
+        if (lcore_id == VR_MAX_CPUS_DPDK) {
             RTE_LOG(ERR, VROUTER, "    error getting the least used IO lcore ID\n");
             return -EFAULT;
         }
