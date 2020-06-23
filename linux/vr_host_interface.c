@@ -1224,7 +1224,11 @@ linux_rx_handler(struct sk_buff **pskb)
 
     if (dev->type == ARPHRD_ETHER) {
         skb_push(skb, skb->mac_len);
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0))
         if (skb->vlan_tci & VLAN_TAG_PRESENT) {
+#else
+        if (skb->vlan_present) {
+#endif
             if (!(skb = linux_skb_vlan_insert(vif, skb,
                             skb->vlan_tci & 0xEFFF)))
                 return RX_HANDLER_CONSUMED;

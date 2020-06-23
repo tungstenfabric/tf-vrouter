@@ -33,6 +33,14 @@
 #include "vr_buildinfo.h"
 #include "vr_mem.h"
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4,8,0))
+#define FRAG_T skb_frag_t
+#define FRAG_T_PAGE_OFFSET page_offset
+#else
+#define FRAG_T struct bio_vec
+#define FRAG_T_PAGE_OFFSET bv_offset
+#endif
+
 unsigned int vr_num_cpus = 1;
 
 extern unsigned int vr_bridge_entries;
@@ -406,11 +414,19 @@ lh_phead_len(struct vr_packet *pkt)
 static void
 lh_get_time(uint64_t *sec, uint64_t *usec)
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
     struct timeval t;
 
     do_gettimeofday(&t);
     *sec = t.tv_sec;
     *usec = t.tv_usec;
+#else
+    struct timespec64 t;
+
+    ktime_get_real_ts64(&t);
+    *sec = t.tv_sec;
+    *usec = t.tv_nsec / 1000;
+#endif
 
     return;
 }
@@ -1082,7 +1098,7 @@ lh_pull_inner_headers_fast_udp(struct vr_packet *pkt, int
     struct vr_ip6 *ip6h = NULL;
     struct vr_udp *udph;
     struct vr_ip *outer_iph = NULL;
-    skb_frag_t *frag;
+    FRAG_T *frag;
 
     pkt_headlen = pkt_head_len(pkt);
     hdr_len = sizeof(struct udphdr);
@@ -1108,7 +1124,7 @@ lh_pull_inner_headers_fast_udp(struct vr_packet *pkt, int
     frag = &skb_shinfo(skb)->frags[0];
     frag_size = skb_frag_size(frag);
     va = vr_kmap_atomic(skb_frag_page(frag));
-    va += frag->page_offset;
+    va += frag->FRAG_T_PAGE_OFFSET;
 
     pull_len = 0;
     if (pkt_headlen == 0) {
@@ -1145,7 +1161,7 @@ lh_pull_inner_headers_fast_udp(struct vr_packet *pkt, int
 
     memcpy(skb_tail_pointer(skb), va, pull_len);
     skb_frag_size_sub(frag, pull_len);
-    frag->page_offset += pull_len;
+    frag->FRAG_T_PAGE_OFFSET += pull_len;
     skb->data_len -= pull_len;
     skb->tail += pull_len;
 
@@ -1292,7 +1308,7 @@ lh_pull_inner_headers_fast_gre(struct vr_packet *pkt, int
     struct sk_buff *skb = vp_os_packet(pkt);
     struct vr_ip *iph  = NULL;
     struct vr_ip6 *ip6h  = NULL;
-    skb_frag_t *frag;
+    FRAG_T *frag;
 
     pkt_headlen = pkt_head_len(pkt);
     if (pkt_headlen) {
@@ -1353,7 +1369,7 @@ lh_pull_inner_headers_fast_gre(struct vr_packet *pkt, int
     frag = &skb_shinfo(skb)->frags[0];
     frag_size = skb_frag_size(frag);
     va = vr_kmap_atomic(skb_frag_page(frag));
-    va += frag->page_offset;
+    va += frag->FRAG_T_PAGE_OFFSET;
 
     pull_len = 0;
     if (pkt_headlen == 0) {
@@ -1415,7 +1431,7 @@ lh_pull_inner_headers_fast_gre(struct vr_packet *pkt, int
 
     memcpy(skb_tail_pointer(skb), va, pull_len);
     skb_frag_size_sub(frag, pull_len);
-    frag->page_offset += pull_len;
+    frag->FRAG_T_PAGE_OFFSET += pull_len;
     skb->data_len -= pull_len;
     skb->tail += pull_len;
 
