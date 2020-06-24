@@ -6,6 +6,7 @@ import ipaddress
 import netaddr
 import os
 import socket
+import struct
 from base import Base
 
 # Add all utility functions here like vt_ipv4, vt_encap etc.
@@ -62,3 +63,12 @@ class Common(object):
         ip6_u = int(bin(netaddr.IPAddress(str) >> 64), 2)
         ip6_l = int(bin(netaddr.IPAddress(str) & (1 << 64) - 1), 2)
         return self.htonll(ip6_u), self.htonll(ip6_l)
+
+    @classmethod
+    def vt_ipv6_bytes(self, str):
+        """Returns unsigned int value for corresponding ipv6 string"""
+        ipv6_sp = ipaddress.ip_address(unicode(str)).packed
+        ipv6_dec = []
+        for i in ipv6_sp:
+            ipv6_dec.append(struct.unpack('<B', i)[0])
+        return ipv6_dec
