@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0d47602b_43ff5347",
+        "filename": "utils/flow.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1905,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-06-24T08:18:28Z",
+      "side": 1,
+      "message": "Why is UT case not added for this scenario?",
+      "revId": "3d4e6a00806a5d812e69e1c0cf668ee92ea73001",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
