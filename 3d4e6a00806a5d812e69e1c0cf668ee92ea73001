@@ -16,6 +16,24 @@
       "revId": "3d4e6a00806a5d812e69e1c0cf668ee92ea73001",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ee628dcf_dc41e358",
+        "filename": "utils/flow.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1905,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-24T08:52:39Z",
+      "side": 1,
+      "message": "Hi Siva, the code change is in flow CLI utility and there is no UT infra for that.\nDo you mean to say to execute the CLI itself via script?",
+      "parentUuid": "0d47602b_43ff5347",
+      "revId": "3d4e6a00806a5d812e69e1c0cf668ee92ea73001",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
