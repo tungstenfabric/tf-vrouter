@@ -21,7 +21,10 @@ class Route(ObjectBase, vr_route_req):
         if mac is not None:
             self.rtr_mac = self.vt_mac(mac)
         if prefix is not None:
-            self.rtr_prefix = self.vt_ipv4_bytes(prefix)
+            if family is constants.AF_INET:
+                self.rtr_prefix = self.vt_ipv4_bytes(prefix)
+            elif family is constants.AF_INET6:
+                self.rtr_prefix = self.vt_ipv6_bytes(prefix)
         self.rtr_prefix_len = prefix_len
         self.rtr_nh_id = nh_idx
         self.rtr_label_flags = rtr_label_flags
