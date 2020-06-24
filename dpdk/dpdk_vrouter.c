@@ -115,6 +115,8 @@ enum vr_opt_index {
     VR_DPDK_CTRL_THREAD_MASK_OPT_INDEX,
 #define CLOSE_FLOW_ON_TCP_RST_OPT   "vr_close_flow_on_tcp_rst"
     CLOSE_FLOW_ON_TCP_RST_OPT_INDEX,
+#define VR_NO_LOAD_BALANCE_OPT       "vr_no_load_balance"
+    VR_NO_LOAD_BALANCE_OPT_INDEX,
 #define LCORES_OPT              "lcores"
     LCORES_OPT_INDEX,
     MAX_OPT_INDEX
@@ -135,6 +137,7 @@ unsigned int vr_dpdk_tx_ring_sz = VR_DPDK_TX_RING_SZ;
 unsigned int vr_service_core_mask = 0;
 unsigned int vr_dpdk_ctrl_thread_mask = 0;
 unsigned int vr_dpdk_yield_option = VR_DPDK_YIELD_NO_PACKETS;
+bool vr_no_load_balance = false;
 char service_core_mask_str[VR_DPDK_STR_BUF_SZ];
 char dpdk_ctrl_thread_mask_str[VR_DPDK_STR_BUF_SZ];
 char *service_core_mask_ptr = NULL;
@@ -1088,6 +1091,8 @@ static struct option long_options[] = {
                                                     NULL,                   0},
     [VR_DPDK_CTRL_THREAD_MASK_OPT_INDEX] = {VR_DPDK_CTRL_THREAD_MASK_OPT, required_argument,
                                                     NULL,                   0},
+    [VR_NO_LOAD_BALANCE_OPT_INDEX] = {VR_NO_LOAD_BALANCE_OPT, no_argument,
+                                                    NULL,                   0},
     [CLOSE_FLOW_ON_TCP_RST_OPT_INDEX] = {CLOSE_FLOW_ON_TCP_RST_OPT, required_argument,
 	                                            NULL,                   0},
     [MAX_OPT_INDEX]                 =   {NULL,                  0,
@@ -1132,6 +1137,7 @@ Usage(void)
         "    --"VR_DPDK_RX_RING_SZ_OPT" NUM Configure vr_dpdk_rx_ring_sz value\n"
         "    --"VR_DPDK_TX_RING_SZ_OPT" NUM Configure vr_dpd_tx_ring_sz value\n"
         "    --"VR_DPDK_YIELD_OPT" NUM      Configurable parameter to disable yield\n"
+        "    --"VR_NO_LOAD_BALANCE_OPT" NUM Parameter to disable s/w load-balancing\n"
         "    --"VR_SERVICE_CORE_MASK_OPT" NUM LIST OR HEXADECIMAL BITMASK "
 	                                 "Configurable parameter for service "
 					 "core mask\n"
@@ -1338,6 +1344,10 @@ parse_long_opts(int opt_flow_index, char *optarg)
 	if (errno != 0) {
             vr_close_flow_on_tcp_rst = 0;
 	}
+
+    case VR_NO_LOAD_BALANCE_OPT_INDEX:
+        vr_no_load_balance = true;
+        break;
 
     case SOCKET_DIR_OPT_INDEX:
         vr_socket_dir = optarg;

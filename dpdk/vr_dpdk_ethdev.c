@@ -35,6 +35,7 @@
 extern int vr_rxd_sz, vr_txd_sz;
 extern unsigned int datapath_offloads;
 unsigned int vr_dpdk_master_port_id;
+extern bool vr_no_load_balance;
 
 struct rte_eth_conf ethdev_conf = {
 #if (RTE_VERSION >= RTE_VERSION_NUM(17, 2, 0, 0))
@@ -1356,6 +1357,10 @@ vr_dpdk_ethdev_rx_emulate(struct vr_interface *vif,
     offload_en = vif_is_fabric(vif) && datapath_offloads;
     /* parse packet headers and emulate RSS hash */
     for (i = 0; i < *nb_pkts; i++) {
+        /* If software load-balancing is not required, break */
+        if (vr_no_load_balance)
+            break;
+
         /* datapath offloads calculated the RSS for flow tagged packets */
         if (!(offload_en && (pkts[i]->ol_flags & PKT_RX_FDIR_ID))) {
             ret = dpdk_mbuf_parse_and_hash_packets(pkts[i]);
