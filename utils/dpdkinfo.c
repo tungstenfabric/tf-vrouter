@@ -74,7 +74,7 @@ static struct option long_options[] = {
     [APP_OPT_INDEX]    =   {"app",    no_argument,        &app_set,      1},
     [BUFFSZ_OPT_INDEX]  =   {"buffsz",  required_argument,  &buffsz,        1},
     [SOCK_DIR_OPT_INDEX]  = {"sock-dir", required_argument, &sock_dir_set,  1},
-    [MAX_OPT_INDEX]     =   {"NULL",    0,                  0,              0},
+    [MAX_OPT_INDEX]     =   {NULL,    0,                  0,              0},
 };
 
 static void
@@ -98,7 +98,7 @@ Usage()
     printf("                 --app|-a\
                                                           Show App information\n");
     printf("       Optional: --buffsz      <value>\
-                                             Send output buffer size\n");
+                                             Send output buffer size (less than 1Gb)\n");
     exit(-EINVAL);
 }
 
@@ -157,41 +157,67 @@ parse_long_opts(int opt_index, char *opt_arg)
     switch (opt_index) {
     case VER_OPT_INDEX:
         msginfo = INFO_VER_DPDK;
-        vr_info_inbuf = opt_arg;
         break;
+
     case BOND_OPT_INDEX:
         msginfo = INFO_BOND;
         break;
+
     case LACP_OPT_INDEX:
         msginfo = INFO_LACP;
-        vr_info_inbuf = opt_arg;
+        if (!strcmp(opt_arg, "all") || !strcmp(opt_arg, "conf")){
+            vr_info_inbuf = opt_arg;
+        } else {
+            Usage();
+        }
         break;
+
     case MEMPOOL_OPT_INDEX:
         msginfo = INFO_MEMPOOL;
         vr_info_inbuf = opt_arg;
         break;
+
     case STATS_OPT_INDEX:
         msginfo = INFO_STATS;
-        vr_info_inbuf = opt_arg;
+        if (strcmp(opt_arg,"eth") == 0){
+            vr_info_inbuf = opt_arg;
+        } else {
+            Usage();
+        }
         break;
+
     case XSTATS_OPT_INDEX:
         msginfo = INFO_XSTATS;
-        vr_info_inbuf = opt_arg;
+        if (!opt_arg){
+            opt_arg = "NULL";
+        }
+        if (!strcmp(opt_arg, "all") || !strcmp(opt_arg, "NULL") ||
+        !strcmp(opt_arg, "0") || ((atoi(opt_arg) > 0) && (atoi(opt_arg) < 7))){
+            vr_info_inbuf = opt_arg;
+        } else {
+            Usage();
+        }
         break;
+
     case LCORE_OPT_INDEX:
         msginfo = INFO_LCORE;
-        vr_info_inbuf = opt_arg;
         break;
+
     case APP_OPT_INDEX:
         msginfo = INFO_APP;
-        vr_info_inbuf = opt_arg;
         break;
+
     case SOCK_DIR_OPT_INDEX:
         vr_socket_dir = opt_arg;
         break;
+
     case BUFFSZ_OPT_INDEX:
+        if ((unsigned)strtol(opt_arg, NULL, 0) >= 1000000000){
+            Usage();
+        }
         buffsz = (unsigned)strtol(opt_arg, NULL, 0);
         break;
+
     case HELP_OPT_INDEX:
     default:
         Usage();
@@ -236,19 +262,17 @@ main(int argc, char *argv[])
 
     parse_ini_file();
 
-    while (((opt = getopt_long(argc, argv, "h:v:b:l:m:s:n:x:c:a:",
+    while (((opt = getopt_long(argc, argv, "-:hvbl:m:sn:cax::",
                         long_options, &option_index)) >= 0)) {
         switch (opt) {
         case 'v':
             ver_set = 1;
             msginfo = INFO_VER_DPDK;
-            parse_long_opts(VER_OPT_INDEX, optarg);
             break;
 
         case 'b':
             bond_set = 1;
             msginfo = INFO_BOND;
-            parse_long_opts(BOND_OPT_INDEX, optarg);
             break;
 
         case 'l':
@@ -263,7 +287,7 @@ main(int argc, char *argv[])
             parse_long_opts(MEMPOOL_OPT_INDEX, optarg);
             break;
 
-	    case 'n':
+        case 'n':
             stats_set = 1;
             msginfo = INFO_STATS;
             parse_long_opts(STATS_OPT_INDEX, optarg);
@@ -283,13 +307,11 @@ main(int argc, char *argv[])
         case 'c':
             lcore_set = 1;
             msginfo = INFO_LCORE;
-            parse_long_opts(LCORE_OPT_INDEX, optarg);
             break;
 
         case 'a':
             app_set = 1;
             msginfo = INFO_APP;
-            parse_long_opts(APP_OPT_INDEX, optarg);
             break;
 
         case 0:
