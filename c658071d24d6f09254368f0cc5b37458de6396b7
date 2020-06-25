@@ -1,0 +1,129 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a8f9c1d0_7537df31",
+        "filename": "tests/test_rt_ipv4.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-25T04:39:57Z",
+      "side": 1,
+      "message": "Can you add a brief description of the test case before the test?",
+      "revId": "c658071d24d6f09254368f0cc5b37458de6396b7",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d9f96d74_d5491b99",
+        "filename": "tests/test_rt_ipv4.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-25T04:39:57Z",
+      "side": 1,
+      "message": "Can you also add the label to the route and see if you get the correct label back as part of verification? This would be applicable to almost all the test cases.",
+      "revId": "c658071d24d6f09254368f0cc5b37458de6396b7",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "765fedc3_66cf5485",
+        "filename": "tests/test_rt_ipv4.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-25T04:39:57Z",
+      "side": 1,
+      "message": "you could also query 10.2.10.1/32 - it should return nh2.",
+      "revId": "c658071d24d6f09254368f0cc5b37458de6396b7",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "22bac2b9_386df799",
+        "filename": "tests/test_rt_ipv4.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-25T04:39:57Z",
+      "side": 1,
+      "message": "you can also query 10.1.1.10/32 - it should return nh2",
+      "revId": "c658071d24d6f09254368f0cc5b37458de6396b7",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6b1a74d4_e0ff16f2",
+        "filename": "tests/test_rt_ipv4.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 204,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-25T04:39:57Z",
+      "side": 1,
+      "message": "can you also query one of the deleted subnets and see if it returns the correct nh - 0 in this case?",
+      "revId": "c658071d24d6f09254368f0cc5b37458de6396b7",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d295a343_df6c7823",
+        "filename": "tests/test_rt_ipv4.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 237,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-25T04:39:57Z",
+      "side": 1,
+      "message": "you instead query 10.2.10.1/32 and see if it returns nh1",
+      "range": {
+        "startLine": 236,
+        "startChar": 11,
+        "endLine": 237,
+        "endChar": 25
+      },
+      "revId": "c658071d24d6f09254368f0cc5b37458de6396b7",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a3a428ba_1d4b988c",
+        "filename": "tests/test_rt_ipv4.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 292,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-25T04:39:57Z",
+      "side": 1,
+      "message": "I don\u0027t see the query for the super route. Can you check that?",
+      "revId": "c658071d24d6f09254368f0cc5b37458de6396b7",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
