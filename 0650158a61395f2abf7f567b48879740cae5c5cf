@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "65421671_3342d08a",
+        "filename": "utils/sandump/sandump",
+        "patchSetId": 2
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-06-25T17:14:11Z",
+      "side": 1,
+      "message": "in which directory will all this happen?",
+      "range": {
+        "startLine": 3,
+        "startChar": 0,
+        "endLine": 18,
+        "endChar": 2
+      },
+      "revId": "0650158a61395f2abf7f567b48879740cae5c5cf",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b3867de7_1d1399b3",
+        "filename": "utils/sandump/sandump",
+        "patchSetId": 2
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-06-25T17:14:11Z",
+      "side": 1,
+      "message": "is this a free port? Check with haji",
+      "range": {
+        "startLine": 30,
+        "startChar": 0,
+        "endLine": 30,
+        "endChar": 9
+      },
+      "revId": "0650158a61395f2abf7f567b48879740cae5c5cf",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "781eec31_36dc9d83",
+        "filename": "utils/sandump/sandump",
+        "patchSetId": 2
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-06-25T17:14:11Z",
+      "side": 1,
+      "message": "why is this check?",
+      "revId": "0650158a61395f2abf7f567b48879740cae5c5cf",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
