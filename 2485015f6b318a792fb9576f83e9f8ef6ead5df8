@@ -1,0 +1,210 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f82c7348_16bf4dac",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-06-27T20:04:33Z",
+      "side": 1,
+      "message": "you can declare cur as integer variable and you can use it..\nsnprintf return integer value, but cur is declared as char*\n\"cur +\u003d snprintf\"",
+      "range": {
+        "startLine": 58,
+        "startChar": 32,
+        "endLine": 58,
+        "endChar": 50
+      },
+      "revId": "2485015f6b318a792fb9576f83e9f8ef6ead5df8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1e1218c8_574851e9",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-06-27T20:04:33Z",
+      "side": 1,
+      "message": "why you need a variable for end, port_states[LINE-1] point to end.",
+      "range": {
+        "startLine": 59,
+        "startChar": 8,
+        "endLine": 59,
+        "endChar": 55
+      },
+      "revId": "2485015f6b318a792fb9576f83e9f8ef6ead5df8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "43e39ff2_b0f6c035",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-06-27T20:04:33Z",
+      "side": 1,
+      "message": "use macro",
+      "range": {
+        "startLine": 62,
+        "startChar": 14,
+        "endLine": 62,
+        "endChar": 15
+      },
+      "revId": "2485015f6b318a792fb9576f83e9f8ef6ead5df8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "81b67a30_7defe7ad",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-06-27T20:04:33Z",
+      "side": 1,
+      "message": "if (cur \u003e \u0027LINE\u0027), then snprintf will fail, please take care",
+      "revId": "2485015f6b318a792fb9576f83e9f8ef6ead5df8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "24204c6e_40d747f9",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 815,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-06-27T20:04:33Z",
+      "side": 1,
+      "message": "If I pass some random string to stats, the above condition will Geet true.\nDoes it tested by passing negative cases ?",
+      "revId": "2485015f6b318a792fb9576f83e9f8ef6ead5df8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "313c2fc4_bd16e645",
+        "filename": "utils/dpdkinfo.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-06-27T20:04:33Z",
+      "side": 1,
+      "message": "Have you tested this ?\n\u0027!\u0027 to be removed right ?",
+      "revId": "2485015f6b318a792fb9576f83e9f8ef6ead5df8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "13868042_4c4a6bbc",
+        "filename": "utils/dpdkinfo.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 194,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-06-27T20:04:33Z",
+      "side": 1,
+      "message": "from above condition, opt_arg is set to NULL and why opt_arg is assigned to vr_info_inbuf",
+      "range": {
+        "startLine": 194,
+        "startChar": 40,
+        "endLine": 194,
+        "endChar": 62
+      },
+      "revId": "2485015f6b318a792fb9576f83e9f8ef6ead5df8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9f71e354_97b279dc",
+        "filename": "utils/dpdkinfo.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-06-27T20:04:33Z",
+      "side": 1,
+      "message": "Instead of integer, you can use macros for better readability",
+      "range": {
+        "startLine": 195,
+        "startChar": 74,
+        "endLine": 195,
+        "endChar": 75
+      },
+      "revId": "2485015f6b318a792fb9576f83e9f8ef6ead5df8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a09ffc76_32b8b1ff",
+        "filename": "utils/dpdkinfo.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 215,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-06-27T20:04:33Z",
+      "side": 1,
+      "message": "Have you tested with this value ?",
+      "revId": "2485015f6b318a792fb9576f83e9f8ef6ead5df8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0fccbfdd_ae88911a",
+        "filename": "utils/dpdkinfo.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 281,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-06-27T20:04:33Z",
+      "side": 1,
+      "message": "Why parse_long_opts is passed for short names ?\nplease take care in other places too",
+      "range": {
+        "startLine": 281,
+        "startChar": 12,
+        "endLine": 281,
+        "endChar": 52
+      },
+      "revId": "2485015f6b318a792fb9576f83e9f8ef6ead5df8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
