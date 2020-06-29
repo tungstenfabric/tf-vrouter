@@ -19,6 +19,7 @@
 #include "vrouter.h"
 #define SEPERATOR 70
 #define LINE 200
+#define MAXBITS 8
 
 enum segments {
     RX_PACKETS,
@@ -47,9 +48,31 @@ dpdk_info_get_dpdk_version(VR_INFO_ARGS)
     return 0;
 }
 
+int
+get_port_states(VR_INFO_ARGS, uint8_t state)
+{
+   VR_INFO_DEC();
+   int i = 0, cur = 0;
+   char *states[] = {"ACT", "TIMEOUT", "AGG", "SYNC", "COL", "DIST",
+                     "DEF", "EXP"};
+   uint8_t orig_state = state;
+   char port_states[LINE] = "";
+
+   /* Iterating through each bit */
+   while (i <= MAXBITS){
+       if ((1 & state) && (cur < LINE)){
+           cur += snprintf(port_states+cur, LINE-cur, " %s", states[i]);
+       }
+       state  = state >> 1;
+       i++;
+   }
+   VI_PRINTF("\tport state: %d (%s) \n\n", orig_state, port_states);
+   return 0;
+}
+
 /* dpdk_info_get_bond provide the bond master & slave information */
 static int
-dpdk_bond_mode_8023ad(VR_INFO_ARGS, int port_id)
+dpdk_bond_mode_8023ad(VR_INFO_ARGS, uint16_t port_id)
 {
     VR_INFO_DEC();
     int ret;
@@ -79,7 +102,8 @@ dpdk_bond_mode_8023ad(VR_INFO_ARGS, int port_id)
 }
 
 static int
-dpdk_bond_info_mii_status(VR_INFO_ARGS, int port_id, struct rte_eth_link *link)
+dpdk_bond_info_mii_status(VR_INFO_ARGS, uint16_t port_id,
+                                   struct rte_eth_link *link)
 {
     VR_INFO_DEC();
     char *status[] = {"DOWN", "UP"};
@@ -92,11 +116,12 @@ dpdk_bond_info_mii_status(VR_INFO_ARGS, int port_id, struct rte_eth_link *link)
 }
 
 static int
-dpdk_bond_info_show_slave(VR_INFO_ARGS, int port_id,
+dpdk_bond_info_show_slave(VR_INFO_ARGS, uint16_t port_id,
                                struct vr_dpdk_ethdev *ethdev)
 {
     VR_INFO_DEC();
-    int i, ret, slave_id;
+    int i, ret;
+    uint16_t slave_id;
     char *lacp_rate[] = {"slow", "fast"};
     char *duplex[] = {"half", "full"};
     struct ether_addr mac_addr;
@@ -120,10 +145,10 @@ dpdk_bond_info_show_slave(VR_INFO_ARGS, int port_id,
 
         VI_PRINTF("Slave Interface(%d): %s \n", i, name);
         VI_PRINTF("Slave Interface Driver: %s\n",
-            rte_eth_devices[port_id].device->driver->name);
+            rte_eth_devices[slave_id].device->driver->name);
 
-        rte_eth_link_get_nowait(port_id, &link);
-        ret = dpdk_bond_info_mii_status(VR_INFO_PASS_ARGS, port_id, &link);
+        rte_eth_link_get_nowait(slave_id, &link);
+        ret = dpdk_bond_info_mii_status(VR_INFO_PASS_ARGS, slave_id, &link);
         if (ret < 0) {
             return VR_INFO_FAILED;
         }
@@ -136,39 +161,45 @@ dpdk_bond_info_show_slave(VR_INFO_ARGS, int port_id,
         VI_PRINTF("802.3ad info\n");
 
         VI_PRINTF("LACP Rate: %s\n",
-            lacp_rate[rte_eth_bond_lacp_rate_get(port_id)]);
+            lacp_rate[rte_eth_bond_lacp_rate_get(slave_id)]);
 
-        rte_eth_macaddr_get(port_id, &mac_addr);
+        rte_eth_macaddr_get(slave_id, &mac_addr);
         VI_PRINTF("Bond MAC addr:"MAC_FORMAT "\n",
             MAC_VALUE(mac_addr.addr_bytes));
 
         VI_PRINTF("Details actor lacp pdu: \n");
-        VI_PRINTF("\tsystem priority: %d \n", info.actor.system_priority);
+        VI_PRINTF("\tsystem priority: %"PRIu16"\n",
+                       htons(info.actor.system_priority));
         VI_PRINTF("\tsystem mac address:"MAC_FORMAT "\n",
             MAC_VALUE(info.actor.system.addr_bytes));
-        VI_PRINTF("\tport key: %d \n", info.actor.key);
-        VI_PRINTF("\tport priority: %d \n", info.actor.port_priority);
-        VI_PRINTF("\tport number: %d \n", info.actor.port_number);
-        VI_PRINTF("\tport state: %d \n", info.actor_state);
+        VI_PRINTF("\tport key: %"PRIu16"\n", htons(info.actor.key));
+        VI_PRINTF("\tport priority: %"PRIu16 "\n",
+                      htons(info.actor.port_priority));
+        VI_PRINTF("\tport number: %"PRIu16"\n", htons(info.actor.port_number));
+        get_port_states(msg_req, info.actor_state);
 
         VI_PRINTF("Details partner lacp pdu: \n");
-        VI_PRINTF("\tsystem priority: %d \n", info.partner.system_priority);
+        VI_PRINTF("\tsystem priority: %"PRIu16"\n",
+                         htons(info.partner.system_priority));
         VI_PRINTF("\tsystem mac address:"MAC_FORMAT "\n",
             MAC_VALUE(info.partner.system.addr_bytes));
-        VI_PRINTF("\tport key: %d \n", info.partner.key);
-        VI_PRINTF("\tport priority: %d \n", info.partner.port_priority);
-        VI_PRINTF("\tport number: %d \n", info.partner.port_number);
-        VI_PRINTF("\tport state: %d \n\n", info.partner_state);
+        VI_PRINTF("\tport key: %"PRIu16"\n", htons(info.partner.key));
+        VI_PRINTF("\tport priority: %"PRIu16"\n",
+                         htons(info.partner.port_priority));
+        VI_PRINTF("\tport number: %"PRIu16"\n",
+                         htons(info.partner.port_number));
+        get_port_states(msg_req, info.partner_state);
     }
     return 0;
 }
 
 static int
-dpdk_bond_info_show_master(VR_INFO_ARGS, int port_id,
+dpdk_bond_info_show_master(VR_INFO_ARGS, uint16_t port_id,
     struct vr_dpdk_ethdev *ethdev)
 {
     VR_INFO_DEC();
-    int ret, bond_mode, slave_id;
+    int ret, bond_mode;
+    uint16_t slave_id;
     struct rte_eth_link link;
     struct rte_eth_bond_8023ad_slave_info info;
 
@@ -243,14 +274,14 @@ dpdk_bond_info_show_master(VR_INFO_ARGS, int port_id,
         RTE_LOG(ERR, VROUTER, "Error getting bond interface name\n");
     }
 
-    VI_PRINTF("System priority: %d\n", info.actor.system_priority);
+    VI_PRINTF("System priority: %"PRIu16"\n", htons(info.actor.system_priority));
     VI_PRINTF("System MAC address:"MAC_FORMAT "\n",
         MAC_VALUE(info.actor.system.addr_bytes));
     VI_PRINTF("Active Aggregator Info: \n");
-    VI_PRINTF("\tAggregator ID: %d\n", info.agg_port_id);
+    VI_PRINTF("\tAggregator ID: %"PRIu16"\n", htons(info.agg_port_id));
     VI_PRINTF("\tNumber of ports: %d \n", ethdev->ethdev_nb_slaves);
-    VI_PRINTF("\tActor Key: %d \n", info.actor.key);
-    VI_PRINTF("\tPartner Key: %d \n", info.partner.key);
+    VI_PRINTF("\tActor Key: %"PRIu16"\n", htons(info.actor.key));
+    VI_PRINTF("\tPartner Key: %"PRIu16"\n", htons(info.partner.key));
     VI_PRINTF("\tPartner Mac Address: "MAC_FORMAT "\n\n",
         MAC_VALUE(info.partner.system.addr_bytes));
     return 0;
@@ -369,10 +400,10 @@ dpdk_info_get_lacp(VR_INFO_ARGS)
 
             VI_PRINTF("Slave Interface(%d): %s \n", i, name);
             VI_PRINTF("Details actor lacp pdu: \n");
-            VI_PRINTF("\tport state: %d \n", info.actor_state);
+            get_port_states(msg_req, info.actor_state);
 
             VI_PRINTF("Details partner lacp pdu: \n");
-            VI_PRINTF("\tport state: %d \n\n", info.partner_state);
+            get_port_states(msg_req, info.partner_state);
         }
     } else if (strcmp(msg_req->inbuf, "conf") == 0) {
         display_lacp_conf(msg_req, port_id);
@@ -788,8 +819,9 @@ dpdk_info_get_xstats(VR_INFO_ARGS)
                 atoi(msg_req->inbuf) <= ethdev->ethdev_nb_slaves)) {
             reqd_interface = 1;
         } else {
-            RTE_LOG(ERR, VROUTER, "Invalid argument.\n");
-            return -1;
+            VI_PRINTF("There are only %d slaves available.\n\n",
+                           ethdev->ethdev_nb_slaves);
+            return 0;
         }
 
         xstats_count = rte_eth_xstats_get_names_by_id(port_id, NULL, 0, NULL);
@@ -927,7 +959,7 @@ dpdk_info_get_app(VR_INFO_ARGS)
 
     VR_INFO_BUF_INIT();
 
-    VI_PRINTF("No. of cores: %d \n", vr_num_cpus);
+    VI_PRINTF("No. of lcores: %d \n", vr_num_cpus);
     VI_PRINTF("No. of forwarding lcores: %d \n", vr_dpdk.nb_fwd_lcores);
 
     /* Get the port_id for master, Incase of non-bond devices,
@@ -973,8 +1005,11 @@ dpdk_info_get_app(VR_INFO_ARGS)
     }
     VI_PRINTF("Vlan name: %s \n", vr_dpdk.vlan_name);
     VI_PRINTF("Vlan tag: %d \n", vr_dpdk.vlan_tag);
-    VI_PRINTF("Vlan vif: %s \n", vr_dpdk.vlan_vif->vif_name);
-
+    if (vr_dpdk.vlan_vif){
+        VI_PRINTF("Vlan vif: %s \n", vr_dpdk.vlan_vif->vif_name);
+    } else {
+        VI_PRINTF("Vlan vif: NULL\n");
+    }
     /* Display Ethdev information */
     if (ethdev->ethdev_ptr) {
         rte_eth_dev_info_get(port_id, &dev_info);
