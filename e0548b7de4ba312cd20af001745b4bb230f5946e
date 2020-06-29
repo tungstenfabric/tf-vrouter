@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5b2c0341_18407569",
+        "filename": "tests/test_rt_ipv4.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-29T14:28:41Z",
+      "side": 1,
+      "message": "Instead of hardcoding the value 5, can you use/define a macro for it?",
+      "revId": "e0548b7de4ba312cd20af001745b4bb230f5946e",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9db93a4f_9671a262",
+        "filename": "tests/test_rt_ipv4.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-29T14:28:41Z",
+      "side": 1,
+      "message": "Can we query and verify the label as well?",
+      "revId": "e0548b7de4ba312cd20af001745b4bb230f5946e",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e772d3b3_0b16deaf",
+        "filename": "tests/test_rt_ipv6.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-29T14:28:41Z",
+      "side": 1,
+      "message": "We should assign IPv6 address to the tap.",
+      "revId": "e0548b7de4ba312cd20af001745b4bb230f5946e",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "99c81109_d8600652",
+        "filename": "tests/test_rt_ipv6.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-06-29T14:28:41Z",
+      "side": 1,
+      "message": "Can you also query for \"ffaa::1120/128\"? It should return nh1 along with label 13.",
+      "revId": "e0548b7de4ba312cd20af001745b4bb230f5946e",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
