@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "dad951df_49966871",
+        "filename": "dpdk/dpdk_vrouter.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 619,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-06-29T19:21:23Z",
+      "side": 1,
+      "message": "can we remove the other check where it was bailing out?",
+      "range": {
+        "startLine": 617,
+        "startChar": 5,
+        "endLine": 619,
+        "endChar": 9
+      },
+      "revId": "05eb2e6ec0b954fa07ee73b6b78cbf93d69aa9d3",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
