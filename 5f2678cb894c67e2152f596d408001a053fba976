@@ -48,6 +48,54 @@
     },
     {
       "key": {
+        "uuid": "379862da_8b474840",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 5
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 928
+      },
+      "writtenOn": "2020-06-30T05:48:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1003ad12_f81d929b",
+      "range": {
+        "startLine": 64,
+        "startChar": 27,
+        "endLine": 64,
+        "endChar": 42
+      },
+      "revId": "5f2678cb894c67e2152f596d408001a053fba976",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "bdfad1b8_521e306b",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 5
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 928
+      },
+      "writtenOn": "2020-06-30T05:48:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6e188783_100c5ff7",
+      "range": {
+        "startLine": 64,
+        "startChar": 54,
+        "endLine": 64,
+        "endChar": 59
+      },
+      "revId": "5f2678cb894c67e2152f596d408001a053fba976",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "039ce98c_86cba6da",
         "filename": "utils/dpdkinfo.c",
         "patchSetId": 5
@@ -62,6 +110,24 @@
       "revId": "5f2678cb894c67e2152f596d408001a053fba976",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9a49364f_20938416",
+        "filename": "utils/dpdkinfo.c",
+        "patchSetId": 5
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 928
+      },
+      "writtenOn": "2020-06-30T05:48:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "039ce98c_86cba6da",
+      "revId": "5f2678cb894c67e2152f596d408001a053fba976",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
     }
   ]
 }
