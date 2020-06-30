@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1003ad12_f81d929b",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 5
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-06-30T05:08:53Z",
+      "side": 1,
+      "message": "Keep spaces in between, Common coding practices followed.",
+      "range": {
+        "startLine": 64,
+        "startChar": 27,
+        "endLine": 64,
+        "endChar": 42
+      },
+      "revId": "5f2678cb894c67e2152f596d408001a053fba976",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6e188783_100c5ff7",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 5
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-06-30T05:08:53Z",
+      "side": 1,
+      "message": "It should be \"%s \"",
+      "range": {
+        "startLine": 64,
+        "startChar": 54,
+        "endLine": 64,
+        "endChar": 59
+      },
+      "revId": "5f2678cb894c67e2152f596d408001a053fba976",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "039ce98c_86cba6da",
+        "filename": "utils/dpdkinfo.c",
+        "patchSetId": 5
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-06-30T05:08:53Z",
+      "side": 1,
+      "message": "its not a library function.. Add it like below #include \"vr_interface.h\"",
+      "revId": "5f2678cb894c67e2152f596d408001a053fba976",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
