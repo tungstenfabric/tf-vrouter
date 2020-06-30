@@ -126,6 +126,13 @@ class Vif(ObjectBase, vr_interface_req):
         """
         return int(self.get('vifr_nh_id'))
 
+    def clear(self):
+        """
+        Clear stats for the specified interface
+        """
+        self.h_op = constants.SANDESH_OPER_RESET
+        self.sync()
+
 
 class VirtualVif(Vif):
     """
@@ -324,3 +331,50 @@ class FabricVif(Vif):
         self.vifr_vrf = vrf
         self.vifr_mcast_vrf = mcast_vrf
         self.vifr_mtu = mtu
+
+
+class ClearVifStats(Vif):
+    """
+    Clear vif statisticss for all interfaces
+
+    Mandatory Parameters:
+    --------------------
+    name : str
+        Interface name
+    mac_str: str
+        MAC address
+    idx(if auto_alloc is not set) : int
+        Interface index
+
+    Optional Parameters:
+    -------------------
+    ipv4_str : str
+        IPv4 address
+    ipv6_str : str
+        IPv6 address
+    vrf : int
+        Vrf id
+    mcast_vrf : int
+        Multicast vrf id
+    mtu : int
+        MTU size
+    flags : int
+        Vif flags
+    """
+
+    def __init__(
+            self,
+            name="clear_stats",
+            mac_str=0,
+            ipv4_str=None,
+            ipv6_str=None,
+            idx=-1,
+            vrf=0,
+            mcast_vrf=65535,
+            mtu=1514,
+            h_op=constants.SANDESH_OPER_RESET,
+            **kwargs):
+        super(ClearVifStats, self).__init__(idx, name, ipv4_str, mac_str,
+                                            ipv6_str, **kwargs)
+        self.h_op = h_op
+        self.vifr_idx = idx
