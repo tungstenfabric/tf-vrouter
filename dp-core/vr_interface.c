@@ -2540,7 +2540,7 @@ vr_interface_copy_bond_info(vr_interface_req *req,
             len = strlen(bond_info->vif_slave_name[i]);
             sl_name_iter += snprintf((buffer + sl_name_iter),
                     (VR_INTERFACE_STR_BUF_LEN - sl_name_iter - 1),
-                    "%s\n", bond_info->vif_slave_name[i]);
+                    "%s", bond_info->vif_slave_name[i]);
             if(!sl_name_iter)
                 goto error_exit;
             /* Concatenate with NULL terminated string because at
@@ -2551,7 +2551,7 @@ vr_interface_copy_bond_info(vr_interface_req *req,
             len = strlen(bond_info->vif_slave_drv_name[i]);
             sl_drv_name_iter += snprintf((buffer_drv + sl_drv_name_iter),
                     (VR_INTERFACE_STR_BUF_LEN - sl_drv_name_iter - 1),
-                    "%s\n", bond_info->vif_slave_drv_name[i]);
+                    "%s", bond_info->vif_slave_drv_name[i]);
             if(!sl_drv_name_iter)
                 goto error_exit;
             sl_drv_name_iter += 1;
@@ -2768,7 +2768,7 @@ __vr_interface_make_req(vr_interface_req *req, struct vr_interface *intf,
                 if(!req->vifr_vlan_name)
                     return -ENOMEM;
                 snprintf(req->vifr_vlan_name, req->vifr_vlan_name_size,
-                        "%s\n", vlan_info.vlan_name);
+                        "%s", vlan_info.vlan_name);
             }
         }
     }
