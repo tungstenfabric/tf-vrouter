@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fdd20581_37075820",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 411,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-07-02T16:09:10Z",
+      "side": 1,
+      "message": "Do you think we can assign the source interface of all agent received packets as pkt0 unconditionally?",
+      "range": {
+        "startLine": 408,
+        "startChar": 0,
+        "endLine": 411,
+        "endChar": 31
+      },
+      "revId": "377d09cc3a39becd5172d528de41ca03469aa9c0",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
