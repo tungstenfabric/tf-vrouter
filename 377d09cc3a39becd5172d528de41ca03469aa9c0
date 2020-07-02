@@ -70,6 +70,30 @@
       "revId": "377d09cc3a39becd5172d528de41ca03469aa9c0",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d79dd04b_e57dfa23",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 411,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-07-02T16:36:34Z",
+      "side": 1,
+      "message": "I am not sure which code path it may affect and what would be the side effect.\nLooks risky to me. I would prefer to stick to the current change.",
+      "parentUuid": "b5ac48e6_5144cb42",
+      "range": {
+        "startLine": 408,
+        "startChar": 0,
+        "endLine": 411,
+        "endChar": 31
+      },
+      "revId": "377d09cc3a39becd5172d528de41ca03469aa9c0",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
