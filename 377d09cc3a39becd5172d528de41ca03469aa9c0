@@ -22,6 +22,30 @@
       "revId": "377d09cc3a39becd5172d528de41ca03469aa9c0",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "efcab82d_82c2328c",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 411,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-07-02T16:11:44Z",
+      "side": 1,
+      "message": "Yes, I thought about it. But then restricted this only to fabric to avoid any side effects.\nThe current changes are bit more safe.",
+      "parentUuid": "fdd20581_37075820",
+      "range": {
+        "startLine": 408,
+        "startChar": 0,
+        "endLine": 411,
+        "endChar": 31
+      },
+      "revId": "377d09cc3a39becd5172d528de41ca03469aa9c0",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
