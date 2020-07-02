@@ -398,7 +398,14 @@ agent_rx(struct vr_interface *vif, struct vr_packet *pkt,
          */
         agent_vif = __vrouter_get_interface(vrouter_get(0),
                                             ntohs(hdr->hdr_ifindex));
-        if (!agent_vif) {
+        /*
+         * Don't set the pkt input vif to fabric as it leads to
+         * wrong checks being made later in the code where
+         * it thinks that the pkt really came in on a
+         * fabric interface. In such cases, set the pkt input
+         * vif to pkt0 vif
+         */
+        if ((!agent_vif) || (vif_is_fabric(agent_vif))) {
             agent_vif = vif;
         }
         pkt->vp_if = agent_vif;
