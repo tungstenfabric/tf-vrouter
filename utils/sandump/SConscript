@@ -1,0 +1,10 @@
+#
+# Copyright (c) 2020 Juniper Networks, Inc. All rights reserved.
+#
+
+Import('VRutilsEnv')
+env = VRutilsEnv.Clone()
+
+if 'install' in COMMAND_LINE_TARGETS:
+    env.Alias('install', env.Install(env['INSTALL_BIN'], 'sandump'))
+    env.Alias('install', env.Install(Dir('.'), 'wireshark_plugin'))
