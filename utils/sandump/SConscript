@@ -1,0 +1,16 @@
+#
+# Copyright (c) 2020 Juniper Networks, Inc. All rights reserved.
+#
+
+from SCons.Script import GetOption
+
+Import('VRutilsEnv')
+env = VRutilsEnv.Clone()
+
+if 'install' in COMMAND_LINE_TARGETS:
+    env.Alias('install', env.Install(env['INSTALL_BIN'], 'sandump'))
+    install_root = GetOption('install_root')
+    env.Alias('install', env.Install(install_root + '/usr/local/share/wireshark/', 'wireshark_plugin/init.lua'))
+    env.Alias('install', env.Install(install_root + '/usr/share/lua/5.1/', 'wireshark_plugin/common.lua'))
+    env.Alias('install', env.Install(install_root + '/usr/share/lua/5.1/', 'wireshark_plugin/helpers.lua'))
+    env.Alias('install', env.Install(install_root + '/usr/local/lib64/wireshark/plugins/', 'wireshark_plugin/main.lua'))

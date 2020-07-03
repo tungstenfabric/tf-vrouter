@@ -1,8 +1,6 @@
-package.prepend_path("/Applications/Wireshark.app/Contents/PlugIns/wireshark/wireshark_plugin")
+--package.prepend_path("/Applications/Wireshark.app/Contents/PlugIns/wireshark/wireshark_plugin")
 require("helpers");
 require("common");
-
-sandesh_dt = DissectorTable.new("sandesh_table")
 
 sandesh_proto = Proto("sandesh", "Sandesh Protocol")
 sandesh_proto.fields = {}
@@ -56,7 +54,7 @@ do
 end
 
 function sandesh_proto.init()
-  DissectorTable.get("sandesh_table"):add(147, sandesh_proto)
+  DissectorTable.get("udp.port"):add(9989, sandesh_proto)
 end
 
 -- dissects the buffer
@@ -189,12 +187,13 @@ end
 
 -- updates src, dst
 local function update_src_dst_cols(pinfo)
-  if pinfo.p2p_dir  == 1 then
-    pinfo.cols.src = "Vrouter"
-    pinfo.cols.dst = "Agent"
-  else
-    pinfo.cols.src = "Agent"
-    pinfo.cols.dst = "Vrouter"
+  if pinfo.dst_port == 9989 then
+    pinfo.src = Address.ip("0.0.0.0")
+    pinfo.dst = Address.ip("1.1.1.1")
+  end
+  if pinfo.src_port == 9989 then
+    pinfo.src = Address.ip("1.1.1.1")
+    pinfo.dst = Address.ip("0.0.0.0")
   end
 end
 
