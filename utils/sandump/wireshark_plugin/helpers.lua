@@ -1,4 +1,4 @@
-package.prepend_path("/Applications/Wireshark.app/Contents/PlugIns/wireshark/wireshark_plugin")
+--package.prepend_path("/Applications/Wireshark.app/Contents/PlugIns/wireshark/wireshark_plugin")
 require("common");
 
 -- returns whether to hide a branch or not
@@ -377,6 +377,12 @@ function update_proto_info_col(pinfo, structure, structure_in_info_col,
       str = str .. v.prepend .. v.value .. " "
     end
   end
+
+  if string.match(tostring(pinfo.cols.protocol), "UDP") then
+    pinfo.cols.protocol = ""
+    pinfo.cols.info = ""
+  end
+
   structure_in_info_col[structure] = true
   if string.match(tostring(pkt_info), "Multiple Sandesh Objects") then
   elseif  string.match(tostring(pkt_info), "Operation") or
