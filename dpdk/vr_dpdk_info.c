@@ -109,9 +109,11 @@ dpdk_bond_info_mii_status(VR_INFO_ARGS, uint16_t port_id,
     char *status[] = {"DOWN", "UP"};
 
     VI_PRINTF("MII status: %s\n", status[link->link_status]);
-    VI_PRINTF("MII Link Speed: %d\n", link->link_speed);
-    VI_PRINTF("MII Polling Interval (ms): %d\n",
-            rte_eth_bond_link_monitoring_get(port_id));
+    VI_PRINTF("MII Link Speed: %d Mbps\n", link->link_speed);
+    if(rte_eth_bond_mode_get(port_id) == BONDING_MODE_8023AD) {
+        VI_PRINTF("MII Polling Interval (ms): %d\n",
+                rte_eth_bond_link_monitoring_get(port_id));
+    }
     return 0;
 }
 
@@ -122,7 +124,6 @@ dpdk_bond_info_show_slave(VR_INFO_ARGS, uint16_t port_id,
     VR_INFO_DEC();
     int i, ret;
     uint16_t slave_id;
-    char *lacp_rate[] = {"slow", "fast"};
     char *duplex[] = {"half", "full"};
     struct ether_addr mac_addr;
     struct rte_eth_link link;
@@ -157,11 +158,6 @@ dpdk_bond_info_show_slave(VR_INFO_ARGS, uint16_t port_id,
         VI_PRINTF("Aggregator ID: %d\n", info.agg_port_id);
 
         VI_PRINTF("Duplex: %s\n", duplex[link.link_duplex]);
-
-        VI_PRINTF("802.3ad info\n");
-
-        VI_PRINTF("LACP Rate: %s\n",
-            lacp_rate[rte_eth_bond_lacp_rate_get(slave_id)]);
 
         rte_eth_macaddr_get(slave_id, &mac_addr);
         VI_PRINTF("Bond MAC addr:"MAC_FORMAT "\n",
@@ -257,8 +253,13 @@ dpdk_bond_info_show_master(VR_INFO_ARGS, uint16_t port_id,
 
     VI_PRINTF("Up Delay (ms): %d\n",
         rte_eth_bond_link_up_prop_delay_get(port_id));
-    VI_PRINTF("Down Delay (ms): %d\n\n",
+    VI_PRINTF("Down Delay (ms): %d\n",
         rte_eth_bond_link_down_prop_delay_get(port_id));
+    if(rte_eth_devices[port_id].device &&
+            rte_eth_devices[port_id].device->driver) {
+        VI_PRINTF("Driver: %s\n\n",
+            rte_eth_devices[port_id].device->driver->name);
+    }
 
     if (bond_mode == BONDING_MODE_8023AD) {
         ret = dpdk_bond_mode_8023ad(VR_INFO_PASS_ARGS, port_id);
