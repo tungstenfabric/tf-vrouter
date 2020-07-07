@@ -365,7 +365,7 @@ vr_dpdk_virtio_rx_queue_init(unsigned int lcore_id, struct vr_interface *vif,
             PRIu16 "\n", vif->vif_name, queue_id);
         return NULL;
     }
-
+    rx_queue->vring_queue_id = queue_id;
     /* store queue params */
     rx_queue_params->qp_release_op = &dpdk_virtio_rx_queue_release;
 
