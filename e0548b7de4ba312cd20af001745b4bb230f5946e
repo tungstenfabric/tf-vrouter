@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "655d5765_ba4adeaa",
+        "filename": "tests/test_rt_ipv4.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 952
+      },
+      "writtenOn": "2020-07-08T10:28:21Z",
+      "side": 1,
+      "message": "Fixed it.",
+      "parentUuid": "5b2c0341_18407569",
+      "revId": "e0548b7de4ba312cd20af001745b4bb230f5946e",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9db93a4f_9671a262",
         "filename": "tests/test_rt_ipv4.py",
         "patchSetId": 4
@@ -33,6 +51,24 @@
       "revId": "e0548b7de4ba312cd20af001745b4bb230f5946e",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "18b6b0cd_22a96874",
+        "filename": "tests/test_rt_ipv4.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 952
+      },
+      "writtenOn": "2020-07-08T10:28:21Z",
+      "side": 1,
+      "message": "Added query to verify this.",
+      "parentUuid": "9db93a4f_9671a262",
+      "revId": "e0548b7de4ba312cd20af001745b4bb230f5946e",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
     },
     {
       "key": {
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "c61ac61f_01f154f3",
+        "filename": "tests/test_rt_ipv6.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 952
+      },
+      "writtenOn": "2020-07-08T10:28:21Z",
+      "side": 1,
+      "message": "Included \"ipv6_str\" assignment.",
+      "parentUuid": "e772d3b3_0b16deaf",
+      "revId": "e0548b7de4ba312cd20af001745b4bb230f5946e",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "99c81109_d8600652",
         "filename": "tests/test_rt_ipv6.py",
         "patchSetId": 4
@@ -67,6 +121,24 @@
       "revId": "e0548b7de4ba312cd20af001745b4bb230f5946e",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d6aad15d_013983f0",
+        "filename": "tests/test_rt_ipv6.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 952
+      },
+      "writtenOn": "2020-07-08T10:28:21Z",
+      "side": 1,
+      "message": "Fixed it.",
+      "parentUuid": "99c81109_d8600652",
+      "revId": "e0548b7de4ba312cd20af001745b4bb230f5946e",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
     }
   ]
 }
