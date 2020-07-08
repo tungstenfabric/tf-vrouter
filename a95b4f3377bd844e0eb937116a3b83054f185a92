@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "071b4306_6c4195e1",
+        "filename": "include/vr_packet.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 1570,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-07-08T08:09:26Z",
+      "side": 1,
+      "message": "As per this change, we will not be doing this for IPv6 pkts. Why is that? Any particular reason?",
+      "revId": "a95b4f3377bd844e0eb937116a3b83054f185a92",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
