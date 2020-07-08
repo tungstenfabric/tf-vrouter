@@ -34,6 +34,24 @@
       "revId": "a95b4f3377bd844e0eb937116a3b83054f185a92",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1a76fd9c_5f38c2af",
+        "filename": "include/vr_packet.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 1570,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-07-08T08:29:15Z",
+      "side": 1,
+      "message": "But this condition is under \"else if (pkt-\u003evp_type !\u003d VP_TYPE_NULL)\" and this will be true only if pkt-\u003evp_type !\u003d IPv6 (the previous if stmt). Isn\u0027t it?",
+      "parentUuid": "0a4f5e5d_43f21065",
+      "revId": "a95b4f3377bd844e0eb937116a3b83054f185a92",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
