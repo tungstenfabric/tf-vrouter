@@ -70,6 +70,24 @@
       "revId": "a95b4f3377bd844e0eb937116a3b83054f185a92",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b4c1e141_8b5b2ad9",
+        "filename": "include/vr_packet.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 1570,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-07-08T10:15:22Z",
+      "side": 1,
+      "message": "Ok I think I overlooked one braces. Yes, it is outside, so we are good.",
+      "parentUuid": "454bee2d_d072367a",
+      "revId": "a95b4f3377bd844e0eb937116a3b83054f185a92",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
