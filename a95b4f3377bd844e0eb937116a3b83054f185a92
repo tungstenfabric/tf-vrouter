@@ -52,6 +52,24 @@
       "revId": "a95b4f3377bd844e0eb937116a3b83054f185a92",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "454bee2d_d072367a",
+        "filename": "include/vr_packet.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 1570,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-07-08T08:43:22Z",
+      "side": 1,
+      "message": "This is placed outside of \"else if (pkt-\u003evp_type !\u003d VP_TYPE_NULL)\"",
+      "parentUuid": "1a76fd9c_5f38c2af",
+      "revId": "a95b4f3377bd844e0eb937116a3b83054f185a92",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
