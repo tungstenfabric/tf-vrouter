@@ -468,23 +468,6 @@ define get_fat_flow_config
     end
 end
 
-#arg0:uint64_t high or low
-#Displays only half ip6 address. Called twice
-define ipv6_hex_convert
-    set $c1 = 1
-    set $flag = 0
-    set $shift = 8
-    while ($c1 <= 8)
-        if ($flag && ($c1 & 1))
-            printf ":%02x", ($arg0 >> ($shift * $c1)) & 0xff
-        else
-            printf "%02x", $arg0 & 0xff
-            set $flag = 1
-        end
-        set $c1 = $c1 + 1
-    end
-end
-
 #arg0:Port aggr info(4 LSB)
 define check_validity_part1
     if($arg0 == 0)
