@@ -158,27 +158,6 @@ define print_vif_type
     end
 end
 
-#arg0:uint8_t *vif_ip6
-define print_ipv6
-    set $count = 0
-    set $vif_ipv6 = $arg0
-    while($count<16)
-        if($count == 0)
-            printf "%02x%02x",$vif_ipv6[$count], $vif_ipv6[$count+1]
-        else
-            printf ":%02x%02x",$vif_ipv6[$count], $vif_ipv6[$count+1]
-        end
-        set $count = $count + 2
-    end
-    printf "\n"
-end
-
-#arg0:uint8_t *mac
-define mac_address
-    printf "%02x:%02x:%02x:", $arg0[0], $arg0[1], $arg0[2]
-    printf "%02x:%02x:%02x ", $arg0[3], $arg0[4], $arg0[5]
-end
-
 #arg0:vif_transport of cur_vif
 define print_vif_transport
     printf "Transport:"
@@ -465,23 +444,6 @@ define get_fat_flow_config
         printf "PrefixMask:%u ", $cur_cfg.dst_prefix_mask
         printf "AggrLen:%u\n", $cur_cfg.dst_aggregate_plen
         set $count = $count + 1
-    end
-end
-
-#arg0:uint64_t high or low
-#Displays only half ip6 address. Called twice
-define ipv6_hex_convert
-    set $c1 = 1
-    set $flag = 0
-    set $shift = 8
-    while ($c1 <= 8)
-        if ($flag && ($c1 & 1))
-            printf ":%02x", ($arg0 >> ($shift * $c1)) & 0xff
-        else
-            printf "%02x", $arg0 & 0xff
-            set $flag = 1
-        end
-        set $c1 = $c1 + 1
     end
 end
 
