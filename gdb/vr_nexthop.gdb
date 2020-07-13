@@ -304,14 +304,14 @@ define print_nh_vxlan_tunnel_data
     end
     if (($cur_nh.nh_flags >> 25) & 1)
         printf "L3Mac:"
-        print_mac_address $arg0.tun_l3_mac
+        mac_address $arg0.tun_l3_mac
     end
 end
 
 #arg0:nh_pbb_tun of cur_nh
 define print_nh_pbb_tunnel_data
     printf "\n            PbbLabel:%d PbbMac:", $arg0.tun_pbb_label
-    get_mac_address $arg0.tun_pbb_mac
+    mac_address $arg0.tun_pbb_mac
 end
 
 #arg0:nh_udp_tun of cur_nh, arg1:flag(0 = No MPLS, 1 = MPLS)
@@ -383,10 +383,4 @@ define get_nh_comp_config_hash
     if ($arg0 & $mask_val_hash)
         printf "Dsp Port"
     end
-end
-
-#arg0:ipv4 in decimal
-define get_ipv4
-    printf "%d.%d.", ($arg0 & 0xff), ($arg0 >> 8) & 0xff
-    printf "%d.%d ", ($arg0 >> 16) & 0xff, ($arg0 >> 24)  & 0xff
 end
