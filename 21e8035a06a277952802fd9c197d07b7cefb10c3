@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9f62b129_2494926b",
+        "filename": "gdb/vr_fragment.gdb",
+        "patchSetId": 1
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-07-13T07:36:51Z",
+      "side": 1,
+      "message": "Minor comment: Can you indent this properly?",
+      "range": {
+        "startLine": 34,
+        "startChar": 8,
+        "endLine": 38,
+        "endChar": 11
+      },
+      "revId": "21e8035a06a277952802fd9c197d07b7cefb10c3",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "415518d6_178b22ea",
+        "filename": "gdb/vr_fragment.gdb",
+        "patchSetId": 1
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-07-13T07:36:51Z",
+      "side": 1,
+      "message": "Same comment - indent.",
+      "range": {
+        "startLine": 43,
+        "startChar": 8,
+        "endLine": 47,
+        "endChar": 11
+      },
+      "revId": "21e8035a06a277952802fd9c197d07b7cefb10c3",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cdd4f44c_d8269d46",
+        "filename": "gdb/vr_fragment.gdb",
+        "patchSetId": 1
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-07-13T07:36:51Z",
+      "side": 1,
+      "message": "Can you move this to a separate utility file like vr_util.gdb?",
+      "revId": "21e8035a06a277952802fd9c197d07b7cefb10c3",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
