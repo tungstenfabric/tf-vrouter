@@ -44,7 +44,9 @@ dpdk_info_get_dpdk_version(VR_INFO_ARGS)
 
     VR_INFO_BUF_INIT();
 
-    VI_PRINTF("DPDK version: %s\n\n", ContrailBuildInfo);
+    VI_PRINTF("DPDK Version: %s\n",
+        rte_version());
+    VI_PRINTF("vRouter version: %s\n\n", ContrailBuildInfo);
     return 0;
 }
 
@@ -313,8 +315,6 @@ dpdk_info_get_bond(VR_INFO_ARGS)
         RTE_LOG(ERR, VROUTER, "Ethdev not available\n");
     }
 
-    VI_PRINTF("DPDK Version: %s\n",
-        rte_version());
     VI_PRINTF("No. of bond slaves: %d\n", ethdev->ethdev_nb_slaves);
 
     ret = dpdk_bond_info_show_master(VR_INFO_PASS_ARGS, port_id, ethdev);
