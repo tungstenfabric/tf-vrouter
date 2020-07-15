@@ -20,21 +20,14 @@
 #include "vr_dpdk_virtio.h"
 
 #include <rte_errno.h>
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
 #include <rte_ethdev_pci.h>
 #include <rte_ethdev_vdev.h>
-#endif
 #include <rte_ethdev.h>
 #include <rte_ip_frag.h>
 #include <rte_ip.h>
 #include <rte_port_ethdev.h>
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
 #include <rte_pci.h>
-#endif
 
-#if (RTE_VERSION == RTE_VERSION_NUM(2, 1, 0, 0))
-#include <rte_eth_af_packet.h>
-#endif
 
 #include <linux/if_tun.h>
 #include <net/if_arp.h>
@@ -302,13 +295,12 @@ dpdk_find_port_id_by_pci_addr(const struct rte_pci_addr *addr)
     struct rte_pci_addr *eth_pci_addr;
 
     VR_DPDK_RTE_ETH_FOREACH_DEV(i) {
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 2, 0, 0))
         if (rte_eth_devices[i].data == NULL)
-#else
-        if (rte_eth_devices[i].pci_dev == NULL)
-#endif
             continue;
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 2, 0, 0))
+
+        if (strcmp(rte_eth_devices[i].device->driver->name, "net_bonding") == 0)
+            return i;
+
         if (rte_eth_devices[i].device != NULL) {
             eth_pci_addr = &(RTE_DEV_TO_PCI(rte_eth_devices[i].device)->addr);
             RTE_LOG_DP(DEBUG, VROUTER, "count %d eth_pci_addr %x %x %x %x \n",
@@ -323,81 +315,46 @@ dpdk_find_port_id_by_pci_addr(const struct rte_pci_addr *addr)
                 addr->function == eth_pci_addr->function) {
                 return i;
             }
-        } else {
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
-            if (strcmp(rte_eth_devices[i].device->driver->name, "net_bonding") == 0)
-                return i;
-#else
-            if (strcmp(rte_eth_devices[i].data->drv_name, "net_bonding") == 0)
-                return i;
-#endif
         }
-#else
-        eth_pci_addr = &(rte_eth_devices[i].pci_dev->addr);
-        if (addr->bus == eth_pci_addr->bus &&
-            addr->devid == eth_pci_addr->devid &&
-            addr->domain == eth_pci_addr->domain &&
-            addr->function == eth_pci_addr->function) {
-            return i;
-        }
-#endif
     }
 
     return VR_DPDK_INVALID_PORT_ID;
 }
 
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 2, 0, 0))
 uint8_t
 dpdk_find_port_id_by_drv_name(void)
 {
     uint8_t i;
 
     VR_DPDK_RTE_ETH_FOREACH_DEV(i) {
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
-        if (rte_eth_devices[i].device == NULL)
-            continue;
+    if (rte_eth_devices[i].device == NULL)
+        continue;
 
-        if (!rte_eth_dev_is_valid_port(i))
-            continue;
+    if (!rte_eth_dev_is_valid_port(i))
+        continue;
 
-        if (rte_eth_devices[i].device->driver == NULL ||
-            rte_eth_devices[i].device->driver->name == NULL)
-            continue;
+    if (rte_eth_devices[i].device->driver == NULL ||
+        rte_eth_devices[i].device->driver->name == NULL)
+        continue;
 
-        if (strcmp(rte_eth_devices[i].device->driver->name, "net_bonding") == 0)
-            return i;
-#else
-        if (rte_eth_devices[i].data == NULL)
-            continue;
-
-        if (strcmp(rte_eth_devices[i].data->drv_name, "net_bonding") == 0)
-            return i;
-#endif
+    if (strcmp(rte_eth_devices[i].device->driver->name, "net_bonding") == 0)
+        return i;
     }
 
     return VR_DPDK_INVALID_PORT_ID;
 }
-#endif
 
 static inline void
 dpdk_find_pci_addr_by_port(struct rte_pci_addr *addr, uint8_t port_id)
 {
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 2, 0, 0))
     rte_memcpy(addr, &(RTE_DEV_TO_PCI(rte_eth_devices[port_id].device)->addr), sizeof(struct rte_pci_addr));
-#else
-    rte_memcpy(addr, &rte_eth_devices[port_id].pci_dev->addr, sizeof(struct rte_pci_addr));
-#endif
 }
 
 static inline void
 dpdk_set_addr_vlan_filter_strip(uint32_t port_id, struct vr_interface *vif)
 {
     uint32_t i, ret;
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
     uint16_t *port_id_ptr;
-#else
-    uint8_t *port_id_ptr;
-#endif
     int port_num = 0;
     struct vr_dpdk_ethdev *ethdev = &vr_dpdk.ethdevs[port_id];
 
@@ -471,11 +428,7 @@ static int
 vr_ethdev_inner_cksum_capable(struct vr_dpdk_ethdev *ethdev)
 {
     struct rte_eth_dev_info dev_info;
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
     uint16_t *port_id_ptr;
-#else
-    uint8_t *port_id_ptr;
-#endif
     int port_num = 0;
 
     port_id_ptr = (ethdev->ethdev_nb_slaves == -1)?
@@ -677,11 +630,7 @@ dpdk_af_packet_if_add(struct vr_interface *vif)
         return ret;
     }
 
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
     ret = rte_vdev_init(name, params);
-#else
-    ret = rte_eal_vdev_init(name, params);
-#endif
     if (ret < 0) {
         RTE_LOG(ERR, VROUTER,
                 "    error initializing af_packet device %s\n", name);
@@ -799,10 +748,8 @@ dpdk_fabric_if_add(struct vr_interface *vif)
             return -ENOENT;
         }
 
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 2, 0, 0))
         port_id = dpdk_find_port_id_by_drv_name();
         if (port_id == VR_DPDK_INVALID_PORT_ID)
-#endif
             port_id = vif->vif_os_idx;
 
         /* TODO: does not work for host interfaces
@@ -905,9 +852,6 @@ dpdk_fabric_af_packet_if_del(struct vr_interface *vif)
 {
     uint8_t port_id;
     struct vr_dpdk_ethdev *ethdev;
-#if (RTE_VERSION < RTE_VERSION_NUM(17, 11, 0, 0))
-    struct rte_eth_dev *ethdev_ptr;
-#else
     char name[VR_INTERFACE_NAME_LEN];
     int ret;
 
@@ -918,7 +862,6 @@ dpdk_fabric_af_packet_if_del(struct vr_interface *vif)
         return ret;
     }
 
-#endif
 
     RTE_LOG(INFO, VROUTER, "Deleting vif %u %s device\n", vif->vif_idx,
             vif_is_fabric(vif) ? "eth" : "af_packet");
@@ -934,9 +877,6 @@ dpdk_fabric_af_packet_if_del(struct vr_interface *vif)
     }
 
     ethdev = (struct vr_dpdk_ethdev *)(vif->vif_os);
-#if (RTE_VERSION < RTE_VERSION_NUM(17, 11, 0, 0))
-    ethdev_ptr = ethdev->ethdev_ptr;
-#endif
     port_id = ethdev->ethdev_port_id;
 
     /* unschedule RX/TX queues */
@@ -957,7 +897,7 @@ dpdk_fabric_af_packet_if_del(struct vr_interface *vif)
         rte_eth_dev_close(port_id);
 
 #if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
-        rte_eth_dev_detach(port_id, name);
+        // rte_eth_dev_detach(port_id, name);
 #else
         rte_free(ethdev_ptr->data->dev_private);
         rte_free(ethdev_ptr->data);

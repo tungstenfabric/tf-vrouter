@@ -21,9 +21,7 @@
 
 #include <rte_eth_bond.h>
 #include <rte_errno.h>
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
 #include <rte_ethdev_pci.h>
-#endif
 #include <rte_ethdev.h>
 #include <rte_hash_crc.h>
 #include <rte_ip.h>
@@ -38,30 +36,12 @@ unsigned int vr_dpdk_master_port_id;
 extern bool vr_no_load_balance;
 
 struct rte_eth_conf ethdev_conf = {
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 2, 0, 0))
     .link_speeds = ETH_LINK_SPEED_AUTONEG,
-#else
-    .link_speed = 0,    /* ETH_LINK_SPEED_10[0|00|000], or 0 for autonegotation */
-    .link_duplex = 0,   /* ETH_LINK_[HALF_DUPLEX|FULL_DUPLEX], or 0 for autonegotation */
-#endif
     .rxmode = { /* Port RX configuration. */
         /* The multi-queue packet distribution mode to be used, e.g. RSS. */
         .mq_mode            = ETH_MQ_RX_RSS,
         .max_rx_pkt_len     = VR_DEF_MAX_PACKET_SZ, /* Only used if jumbo_frame enabled */
-        .header_split       = 0, /* Disable Header Split */
-#if (RTE_VERSION >= RTE_VERSION_NUM(18, 05, 0, 0))
-        .offloads           = DEV_RX_OFFLOAD_CHECKSUM | DEV_RX_OFFLOAD_JUMBO_FRAME |
-                              DEV_RX_OFFLOAD_CRC_STRIP,
-        .ignore_offload_bitfield = 1,
-#else
-        .hw_ip_checksum     = 1, /* Enable IP/UDP/TCP checksum offload */
-        .hw_vlan_filter     = 0, /* Disabel VLAN filter */
-        .hw_vlan_strip      = 0, /* Disable VLAN strip (might be enabled with --vlan argument) */
-        .hw_vlan_extend     = 0, /* Disable Extended VLAN */
-        .jumbo_frame        = 1, /* Enable Jumbo Frame Receipt */
-        .hw_strip_crc       = 1, /* Enable CRC stripping by hardware */
-        .enable_scatter     = 0, /* Disable scatter packets rx handler */
-#endif
+        .offloads           = DEV_RX_OFFLOAD_CHECKSUM | DEV_RX_OFFLOAD_JUMBO_FRAME,
     },
     .rx_adv_conf = {
         .rss_conf = { /* Port RSS configuration */
@@ -73,9 +53,7 @@ struct rte_eth_conf ethdev_conf = {
     },
     .txmode = { /* Port TX configuration. */
         .mq_mode            = ETH_MQ_TX_NONE, /* TX multi-queues mode */
-#if (RTE_VERSION >= RTE_VERSION_NUM(18, 05, 0, 0))
         .offloads = DEV_TX_OFFLOAD_UDP_CKSUM | DEV_TX_OFFLOAD_TCP_CKSUM | DEV_TX_OFFLOAD_IPV4_CKSUM,
-#endif
         /* For i40e specifically */
         .pvid               = 0,
         .hw_vlan_reject_tagged      = 0, /* If set, reject sending out tagged pkts */
@@ -118,10 +96,7 @@ static const struct rte_eth_rxconf rx_queue_conf = {
     },
     /* Do not immediately free RX descriptors */
     .rx_free_thresh = VR_DPDK_RX_BURST_SZ,
-#if (RTE_VERSION >= RTE_VERSION_NUM(18, 05, 0, 0))
-    .offloads           = DEV_RX_OFFLOAD_CHECKSUM | DEV_RX_OFFLOAD_JUMBO_FRAME |
-                          DEV_RX_OFFLOAD_CRC_STRIP,
-#endif
+    .offloads           = DEV_RX_OFFLOAD_CHECKSUM | DEV_RX_OFFLOAD_JUMBO_FRAME,
 };
 
 /*
@@ -136,12 +111,7 @@ static const struct rte_eth_txconf tx_queue_conf = {
         .hthresh = 0,   /* Ring host threshold */
         .wthresh = 0,   /* Ring writeback threshold */
     },
-#if (RTE_VERSION >= RTE_VERSION_NUM(18, 05, 0, 0))
     .offloads  = DEV_TX_OFFLOAD_UDP_CKSUM | DEV_TX_OFFLOAD_TCP_CKSUM | DEV_TX_OFFLOAD_IPV4_CKSUM,
-    .txq_flags = 0, /* Reverting to older API as newer api doesnt work ETH_TXQ_FLAGS_IGNORE, */
-#else
-    .txq_flags = 0,          /* Set flags for the Tx queue */
-#endif
     .tx_free_thresh = 32,
     .tx_rs_thresh = 32,      /* Use PMD default values */
 };
@@ -449,11 +419,7 @@ dpdk_ethdev_info_update(struct vr_dpdk_ethdev *ethdev)
     RTE_LOG_DP(DEBUG, VROUTER, "dev_info: driver_name=%s if_index=%u"
             " max_rx_queues=%" PRIu16 " max_tx_queues=%" PRIu16
             " max_vfs=%" PRIu16 " max_vmdq_pools=%" PRIu16
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
             " rx_offload_capa=%" PRIx64 " tx_offload_capa=%" PRIx64 "\n",
-#else
-            " rx_offload_capa=%" PRIx32 " tx_offload_capa=%" PRIx32 "\n",
-#endif
             dev_info.driver_name, dev_info.if_index,
             dev_info.max_rx_queues, dev_info.max_tx_queues,
             dev_info.max_vfs, dev_info.max_vmdq_pools,
@@ -717,11 +683,7 @@ dpdk_ethdev_bond_info_update(struct vr_dpdk_ethdev *ethdev)
             }
             memset(&mac_addr, 0, sizeof(mac_addr));
             rte_eth_macaddr_get(slave_port_id, &mac_addr);
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 2, 0, 0))
             pci_addr = &(RTE_DEV_TO_PCI(rte_eth_devices[slave_port_id].device)->addr);
-#else
-            pci_addr = &rte_eth_devices[slave_port_id].pci_dev->addr;
-#endif
             RTE_LOG(INFO, VROUTER, "    bond member eth device %" PRIu8
                 " PCI " PCI_PRI_FMT " MAC " MAC_FORMAT "\n",
                 slave_port_id, pci_addr->domain, pci_addr->bus,
@@ -969,6 +931,21 @@ vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf
     vif = __vrouter_get_interface(vrouter_get(0), ethdev->ethdev_vif_idx);
 
     dpdk_ethdev_info_update(ethdev);
+   
+    //hack to prevent hack in rte_eth_dev_configure
+    //rough - in progress and untested
+    if(dev_conf)
+    {
+    struct rte_eth_dev_info dev_info;
+    rte_eth_dev_info_get(port_id, &dev_info);
+   //also add ondition here
+    dev_conf->rx_adv_conf.rss_conf.rss_hf &= dev_info.flow_type_rss_offloads;
+    if (dev_conf->rxmode.mq_mode & ETH_MQ_RX_RSS_FLAG == 0 )
+	    dev_conf->rxmode.offloads &=  ~DEV_RX_OFFLOAD_RSS_HASH;
+    dev_conf->rxmode.offloads &= dev_info.rx_offload_capa;
+    dev_conf->txmode.offloads &= dev_info.tx_offload_capa;
+
+    } 
 
     ret = rte_eth_dev_configure(port_id, ethdev->ethdev_nb_rx_queues,
         ethdev->ethdev_nb_tx_queues, dev_conf);
@@ -979,12 +956,7 @@ vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf
         return ret;
     }
 
-#if (RTE_VERSION < RTE_VERSION_NUM(17, 2, 0, 0))
-    /* update device bond information after the device has been configured */
-    if (ethdev->ethdev_ptr->driver) { /* af_packet has no driver and no bond info */
-#else
     if (dpdk_find_port_id_by_drv_name() != VR_DPDK_INVALID_PORT_ID) {
-#endif
         dpdk_ethdev_bond_info_update(ethdev);
 
     }
