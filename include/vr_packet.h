@@ -215,7 +215,8 @@ struct vr_packet {
     unsigned char vp_ttl;
     unsigned char vp_queue;
     unsigned char vp_priority:4,
-                  vp_notused:4;
+                  vp_send_thru_vrouter:1,
+                  vp_notused:3;
 };
 
 
@@ -1082,6 +1083,7 @@ struct vr_forwarding_md {
     int8_t fmd_dmac[VR_ETHER_ALEN];
     int8_t fmd_smac[VR_ETHER_ALEN];
     int8_t fmd_local_ttl;
+    bool packet_not_freed;
 };
 
 static inline void
@@ -1103,6 +1105,7 @@ vr_init_forwarding_md(struct vr_forwarding_md *fmd)
     fmd->fmd_dscp = -1;
     fmd->fmd_dotonep = -1;
     fmd->fmd_local_ttl = FMD_PKT_LOOP_TTL;
+    fmd->packet_not_freed = false;
     VR_MAC_RESET(fmd->fmd_dmac);
     VR_MAC_RESET(fmd->fmd_smac);
 
