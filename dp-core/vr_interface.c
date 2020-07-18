@@ -60,6 +60,8 @@ static int dummy_plen = 255;
 
 #define MINIMUM(a, b) (((a) < (b)) ? (a) : (b))
 
+#define RX_HANDLER_PASS 3
+
 static inline uint64_t
 vr_htonll (uint64_t n)
 {
@@ -821,6 +823,9 @@ vhost_tx(struct vr_interface *vif, struct vr_packet *pkt,
     if (ret < 0) {
         ret = 0;
         stats->vis_oerrors++;
+    } else if (ret == RX_HANDLER_PASS) {
+        fmd->packet_not_freed = true;
+        ret = 0;
     }
 
     return ret;
@@ -1144,6 +1149,7 @@ static int
 vm_srx(struct vr_interface *vif, struct vr_packet *pkt,
         unsigned short vlan_id)
 {
+    int rc;
     unsigned short vrf;
     struct vr_interface_stats *stats = vif_get_stats(vif, pkt->vp_cpu);
     struct vr_forwarding_md fmd;
@@ -1160,7 +1166,13 @@ vm_srx(struct vr_interface *vif, struct vr_packet *pkt,
 
     vif_mirror(vif, pkt, &fmd, vif->vif_flags & VIF_FLAG_MIRROR_RX);
 
-    return vr_virtual_input(vrf, vif, pkt, &fmd, vlan_id);
+    rc = vr_virtual_input(vrf, vif, pkt, &fmd, vlan_id);
+
+    if (fmd.packet_not_freed) {
+        return RX_HANDLER_PASS;
+    } else {
+        return rc;
+    }
 }
 
 static mac_response_t
@@ -1180,6 +1192,7 @@ static int
 vm_rx(struct vr_interface *vif, struct vr_packet *pkt,
         unsigned short vlan_id)
 {
+    int rc;
     struct vr_forwarding_md fmd;
     struct vr_interface *sub_vif = NULL;
     struct vr_interface_stats *stats = vif_get_stats(vif, pkt->vp_cpu);
@@ -1217,7 +1230,13 @@ vm_rx(struct vr_interface *vif, struct vr_packet *pkt,
     stats->vis_ibytes += pkt_len(pkt);
     stats->vis_ipackets++;
 
-    return vr_virtual_input(vif->vif_vrf, vif, pkt, &fmd, vlan_id);
+    rc = vr_virtual_input(vif->vif_vrf, vif, pkt, &fmd, vlan_id);
+
+    if (fmd.packet_not_freed) {
+        return RX_HANDLER_PASS;
+    } else {
+        return rc;
+    }
 }
 
 static int
@@ -1262,7 +1281,11 @@ tun_rx(struct vr_interface *vif, struct vr_packet *pkt,
 
     vr_l3_input(pkt, &fmd);
 
-    return 0;
+    if (fmd.packet_not_freed) {
+        return RX_HANDLER_PASS;
+    } else {
+        return 0;
+    }
 }
 
 /*
@@ -1352,6 +1375,7 @@ static int
 eth_rx(struct vr_interface *vif, struct vr_packet *pkt,
         unsigned short vlan_id)
 {
+    int rc;
     struct vr_forwarding_md fmd;
     struct vr_interface *sub_vif = NULL;
     struct vr_interface_stats *stats = vif_get_stats(vif, pkt->vp_cpu);
@@ -1391,8 +1415,13 @@ eth_rx(struct vr_interface *vif, struct vr_packet *pkt,
         if (sub_vif)
             return sub_vif->vif_rx(sub_vif, pkt, VLAN_ID_INVALID);
     }
+    rc = vr_fabric_input(vif, pkt, &fmd, vlan_id);
 
-    return vr_fabric_input(vif, pkt, &fmd, vlan_id);
+    if (fmd.packet_not_freed) {
+        return RX_HANDLER_PASS;
+    } else {
+        return rc;
+    }
 }
 
 static int
