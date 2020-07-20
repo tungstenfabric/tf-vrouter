@@ -536,12 +536,7 @@ dpdk_vlan_forwarding_if_add(void)
         sizeof(vr_dpdk.vlan_vif->vif_name));
     vr_dpdk.vlan_vif->vif_type = VIF_TYPE_VLAN;
 
-    /* Probe KNI. */
-    ret = vr_dpdk_knidev_init(0, vr_dpdk.vlan_vif);
-    if (ret == -ENOTSUP) {
-        /* Try TAP instead. */
-        ret = vr_dpdk_tapdev_init(vr_dpdk.vlan_vif);
-    }
+    ret = vr_dpdk_tapdev_init(vr_dpdk.vlan_vif);
 
     if (ret != 0) {
         RTE_LOG(ERR, VROUTER,
@@ -562,10 +557,7 @@ dpdk_vlan_forwarding_if_add(void)
     if (!vr_dpdk.vlan_ring) {
         RTE_LOG(ERR, VROUTER, "Error allocating ring for VLAN forwarding interface\n");
         vr_dpdk.vlan_dev = NULL;
-        if (vr_dpdk.kni_state > 0)
-            vr_dpdk_knidev_release(vr_dpdk.vlan_vif);
-        else
-            vr_dpdk_tapdev_release(vr_dpdk.vlan_vif);
+        vr_dpdk_tapdev_release(vr_dpdk.vlan_vif);
         return -1;
     }
 
@@ -944,7 +936,7 @@ dpdk_vhost_if_add(struct vr_interface *vif)
                 MAC_VALUE(mac_addr.addr_bytes), MAC_VALUE(vif->vif_mac));
 
     /* If there is a tapdev VLAN device, assign vhost0 MAC address to it */
-    if (vr_dpdk.vlan_dev && (vr_dpdk.kni_state <= 0)) {
+    if (vr_dpdk.vlan_dev) {
         struct ifreq ifr;
         struct vr_dpdk_tapdev *tapdev = vr_dpdk.vlan_dev;
         memset(&ifr, 0, sizeof(ifr));
@@ -978,32 +970,17 @@ dpdk_vhost_if_add(struct vr_interface *vif)
     if (ret < 0)
         return ret;
 
-    /* Probe KNI. */
-    ret = vr_dpdk_knidev_init(port_id, vif);
-    switch (ret) {
-    case 0:
-        ret = vr_dpdk_lcore_if_schedule(vif, vr_dpdk_lcore_least_used_get(),
-                1, &vr_dpdk_kni_rx_queue_init,
-                1, &vr_dpdk_kni_tx_queue_init);
-        break;
-    case -ENOTSUP:
-        /* Try TAP instead. */
-        ret = vr_dpdk_tapdev_init(vif);
-        if (ret != 0)
-            return ret;
-
-        /* We use few single-producer rings, so we assign TX queue to each lcore */
-        nb_txqs = (uint16_t)-1;
-
-        /* Schedule the TAP interface with 1 RX queue and unlimited TX queues. */
-        ret = vr_dpdk_lcore_if_schedule(vif, vr_dpdk_lcore_least_used_get(),
-                1, &vr_dpdk_tapdev_rx_queue_init,
-                nb_txqs, &vr_dpdk_tapdev_tx_queue_init);
-        break;
-    default:
-        /* Other KNI error. */
+    ret = vr_dpdk_tapdev_init(vif);
+    if (ret != 0)
         return ret;
-    }
+
+    /* We use few single-producer rings, so we assign TX queue to each lcore */
+    nb_txqs = (uint16_t)-1;
+
+    /* Schedule the TAP interface with 1 RX queue and unlimited TX queues. */
+    ret = vr_dpdk_lcore_if_schedule(vif, vr_dpdk_lcore_least_used_get(),
+            1, &vr_dpdk_tapdev_rx_queue_init,
+            nb_txqs, &vr_dpdk_tapdev_tx_queue_init);
 
     return ret;
 }
@@ -1019,11 +996,7 @@ dpdk_vhost_if_del(struct vr_interface *vif)
 
     dpdk_vif_queue_free(vif);
 
-    /* Release KNI or TAP device. */
-    if (vr_dpdk.kni_state > 0)
-        return vr_dpdk_knidev_release(vif);
-    else
-        return vr_dpdk_tapdev_release(vif);
+    return vr_dpdk_tapdev_release(vif);
 }
 
 /* Start interface monitoring */
@@ -1094,34 +1067,18 @@ dpdk_monitoring_if_add(struct vr_interface *vif)
      * or we have few eth ports and don't want to use the first one.
      */
 
-    /* Probe KNI. */
-    ret = vr_dpdk_knidev_init(0, vif);
-    switch (ret) {
-    case 0:
-        /* Write-only interface. */
-        ret = vr_dpdk_lcore_if_schedule(vif, vr_dpdk_lcore_least_used_get(),
-                0, NULL,
-                1, &vr_dpdk_kni_tx_queue_init);
-        break;
-    case -ENOTSUP:
-        /* Try TAP instead. */
-        ret = vr_dpdk_tapdev_init(vif);
-        if (ret != 0)
-            return ret;
-
-        /* We use few single-producer rings, so we assign TX queue to each lcore */
-        nb_txqs = (uint16_t)-1;
-
-        /* Schedule the TAP interface with 1 RX queue and unlimited TX queues. */
-        /* Write-only interface. */
-        ret = vr_dpdk_lcore_if_schedule(vif, vr_dpdk_lcore_least_used_get(),
-                0, NULL,
-                nb_txqs, &vr_dpdk_tapdev_tx_queue_init);
-        break;
-    default:
-        /* Other KNI error. */
+    ret = vr_dpdk_tapdev_init(vif);
+    if (ret != 0)
         return ret;
-    }
+
+    /* We use few single-producer rings, so we assign TX queue to each lcore */
+    nb_txqs = (uint16_t)-1;
+
+    /* Schedule the TAP interface with 1 RX queue and unlimited TX queues. */
+    /* Write-only interface. */
+    ret = vr_dpdk_lcore_if_schedule(vif, vr_dpdk_lcore_least_used_get(),
+            0, NULL,
+            nb_txqs, &vr_dpdk_tapdev_tx_queue_init);
 
     if (ret == 0) {
         /* Start monitoring. */
@@ -1157,11 +1114,8 @@ dpdk_monitoring_if_del(struct vr_interface *vif)
 
     dpdk_vif_queue_free(vif);
 
-    /* Release KNI or TAP device. */
-    if (vr_dpdk.kni_state > 0)
-        return vr_dpdk_knidev_release(vif);
-    else
-        return vr_dpdk_tapdev_release(vif);
+    /* Release TAP device. */
+    return vr_dpdk_tapdev_release(vif);
 }
 
 /* Add agent interface */
@@ -1923,8 +1877,7 @@ dpdk_if_rx(struct vr_interface *vif, struct vr_packet *pkt)
      * VM and destined to the host. If offloads are enabled in the VM
      * it would not compute the checksum and the host would drop it
      */
-    if (unlikely((vr_dpdk.kni_state <= 0) && vif_is_virtual(pkt->vp_if)
-                  && vif_is_vhost(vif)))
+    if (vif_is_virtual(pkt->vp_if) && vif_is_vhost(vif))
         dpdk_sw_checksum_at_offset(pkt, pkt_get_network_header_off(pkt));
 
 #ifdef VR_DPDK_TX_PKT_DUMP
