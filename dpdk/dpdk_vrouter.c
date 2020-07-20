@@ -113,8 +113,8 @@ enum vr_opt_index {
     VR_SERVICE_CORE_MASK_OPT_INDEX,
 #define VR_DPDK_CTRL_THREAD_MASK_OPT "dpdk_ctrl_thread_mask"
     VR_DPDK_CTRL_THREAD_MASK_OPT_INDEX,
-#define CLOSE_FLOW_ON_TCP_RST_OPT   "vr_close_flow_on_tcp_rst"
-    CLOSE_FLOW_ON_TCP_RST_OPT_INDEX,
+#define VR_UNCOND_CLOSE_FLOW_ON_TCP_RST_OPT "vr_uncond_close_flow_on_tcp_rst"
+    VR_UNCOND_CLOSE_FLOW_ON_TCP_RST_OPT_INDEX,
 #define VR_NO_LOAD_BALANCE_OPT       "vr_no_load_balance"
     VR_NO_LOAD_BALANCE_OPT_INDEX,
 #define LCORES_OPT              "lcores"
@@ -130,7 +130,7 @@ extern unsigned int vr_nexthops;
 extern unsigned int vr_vrfs;
 extern unsigned int datapath_offloads;
 extern unsigned int vr_pkt_droplog_bufsz;
-extern unsigned int vr_close_flow_on_tcp_rst;
+extern unsigned int vr_uncond_close_flow_on_tcp_rst;
 
 unsigned int vr_dpdk_rx_ring_sz = VR_DPDK_RX_RING_SZ;
 unsigned int vr_dpdk_tx_ring_sz = VR_DPDK_TX_RING_SZ;
@@ -738,8 +738,8 @@ dpdk_argv_update(void)
                 vr_service_core_mask);
     RTE_LOG(INFO, VROUTER, "VR_DPDK_CTRL_THREAD_MASK:    0x%x\n",
 		vr_dpdk_ctrl_thread_mask);
-    RTE_LOG(INFO, VROUTER, "Close Flow on TCP RST:       %" PRIu32 "\n",
-		vr_close_flow_on_tcp_rst);
+    RTE_LOG(INFO, VROUTER, "Unconditional Close Flow on TCP RST:       %" PRIu32 "\n",
+		vr_uncond_close_flow_on_tcp_rst);
     RTE_LOG(INFO, VROUTER, "EAL arguments:\n");
     for (i = 1; i < RTE_DIM(dpdk_argv) - 1; i += 2) {
         if (dpdk_argv[i] == NULL)
@@ -1093,7 +1093,8 @@ static struct option long_options[] = {
                                                     NULL,                   0},
     [VR_NO_LOAD_BALANCE_OPT_INDEX] = {VR_NO_LOAD_BALANCE_OPT, no_argument,
                                                     NULL,                   0},
-    [CLOSE_FLOW_ON_TCP_RST_OPT_INDEX] = {CLOSE_FLOW_ON_TCP_RST_OPT, required_argument,
+    [VR_UNCOND_CLOSE_FLOW_ON_TCP_RST_OPT_INDEX] = {VR_UNCOND_CLOSE_FLOW_ON_TCP_RST_OPT,
+                                                    required_argument,
 	                                            NULL,                   0},
     [MAX_OPT_INDEX]                 =   {NULL,                  0,
                                                     NULL,                   0},
@@ -1144,7 +1145,7 @@ Usage(void)
 	"    --"VR_DPDK_CTRL_THREAD_MASK_OPT" NUM LIST OR HEXADECIMAL BITMASK "
 	                                     "Configurable parameter for dpdk "
 					     "control threads\n"
-        "    --"CLOSE_FLOW_ON_TCP_RST_OPT" NUM Enable/Disable closure of Flow "
+        "    --"VR_UNCOND_CLOSE_FLOW_ON_TCP_RST_OPT" NUM Enable/Disable unconditional closure of Flow "
                                            "on TCP RST\n"
         );
 
@@ -1339,10 +1340,10 @@ parse_long_opts(int opt_flow_index, char *optarg)
 	}
 	break;
 
-    case CLOSE_FLOW_ON_TCP_RST_OPT_INDEX:
-	vr_close_flow_on_tcp_rst = (unsigned int) strtoul(optarg, NULL, 0);
+    case VR_UNCOND_CLOSE_FLOW_ON_TCP_RST_OPT_INDEX:
+	vr_uncond_close_flow_on_tcp_rst = (unsigned int) strtoul(optarg, NULL, 0);
 	if (errno != 0) {
-            vr_close_flow_on_tcp_rst = 0;
+            vr_uncond_close_flow_on_tcp_rst = 0;
 	}
 
     case VR_NO_LOAD_BALANCE_OPT_INDEX:
