@@ -126,13 +126,13 @@ dpdk_gro_rx_csum_fixup(struct gro_entry *entry, uint8_t is_ipv6, void *nw_hdr,
         if (entry->mbuf_cnt == 1)
             cs = rte_be_to_cpu_16(ip4->ip_len) - sizeof(*ip4);
         else
-            cs = rte_be_to_cpu_16(rte_ipv4_phdr_cksum((const struct ipv4_hdr*)ip4,0));
+            cs = rte_be_to_cpu_16(rte_ipv4_phdr_cksum((const struct rte_ipv4_hdr*)ip4,0));
     } else {
         struct vr_ip6* ip6 = nw_hdr;
         if (entry->mbuf_cnt == 1)
             cs = rte_be_to_cpu_16(ip6->ip6_plen);
         else
-            cs = rte_be_to_cpu_16(rte_ipv6_phdr_cksum((const struct ipv6_hdr*)ip6,0));
+            cs = rte_be_to_cpu_16(rte_ipv6_phdr_cksum((const struct rte_ipv6_hdr*)ip6,0));
     }
 
     cs = ~cs;

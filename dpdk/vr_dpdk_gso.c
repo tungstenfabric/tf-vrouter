@@ -52,10 +52,10 @@ struct dpdk_gso_state {
    void    (*internal)
        (struct rte_mbuf*, struct dpdk_gso_state*);
    union {
-       struct ipv4_hdr *ip;
-       struct ipv6_hdr *ip6;
+       struct rte_ipv4_hdr *ip;
+       struct rte_ipv6_hdr *ip6;
    };
-   struct tcp_hdr *tcp;
+   struct rte_tcp_hdr *tcp;
    int mac_hlen;
    int ip_hlen;
    int tcp_hlen;
@@ -80,7 +80,7 @@ struct dpdk_gso_state {
  *   The complemented checksum to set in the IP packet.
  */
 inline uint16_t
-dpdk_ipv6_udptcp_cksum(struct rte_mbuf *m, const struct ipv6_hdr *ipv6_hdr,
+dpdk_ipv6_udptcp_cksum(struct rte_mbuf *m, const struct rte_ipv6_hdr *ipv6_hdr,
                                                                     uint8_t *l4_hdr)
 {
     uint32_t cksum = 0;
@@ -125,7 +125,7 @@ dpdk_ipv6_udptcp_cksum(struct rte_mbuf *m, const struct ipv6_hdr *ipv6_hdr,
  */
 inline uint16_t
 dpdk_ipv4_udptcp_cksum(struct rte_mbuf *m,
-                       const struct ipv4_hdr *ipv4_hdr,
+                       const struct rte_ipv4_hdr *ipv4_hdr,
                        uint8_t *l4_hdr)
 {
     uint32_t cksum = 0;
@@ -213,8 +213,8 @@ dpdk_split_chained_mbuf(struct rte_mbuf *pkt_in, struct rte_mbuf **pkts_out,
 static inline void
 dpdk_gso_ipv6_tcp_update(struct rte_mbuf *m, struct dpdk_gso_state *state)
 {
-   state->ip6 = (struct ipv6_hdr *)(rte_pktmbuf_mtod(m, uint8_t *) + state->mac_hlen);
-   state->tcp = (struct tcp_hdr *)((uint8_t*)(state->ip6) + state->ip_hlen);
+   state->ip6 = (struct rte_ipv6_hdr *)(rte_pktmbuf_mtod(m, uint8_t *) + state->mac_hlen);
+   state->tcp = (struct rte_tcp_hdr *)((uint8_t*)(state->ip6) + state->ip_hlen);
    state->pay_len = m->pkt_len - state->hlen;
 }
 
@@ -224,8 +224,8 @@ dpdk_gso_ipv6_tcp_update(struct rte_mbuf *m, struct dpdk_gso_state *state)
 static inline void
 dpdk_gso_ipv4_tcp_update(struct rte_mbuf *m, struct dpdk_gso_state *state)
 {
-   state->ip = (struct ipv4_hdr *)(rte_pktmbuf_mtod(m, uint8_t *) + state->mac_hlen);
-   state->tcp = (struct tcp_hdr *)((uint8_t*)(state->ip) + state->ip_hlen);
+   state->ip = (struct rte_ipv4_hdr *)(rte_pktmbuf_mtod(m, uint8_t *) + state->mac_hlen);
+   state->tcp = (struct rte_tcp_hdr *)((uint8_t*)(state->ip) + state->ip_hlen);
    state->pay_len = m->pkt_len - state->hlen;
 }
 
@@ -245,14 +245,14 @@ dpdk_gso_ipv6_tcp_internal(struct rte_mbuf *m, struct dpdk_gso_state *state)
        m->l2_len = state->mac_hlen;
        m->l3_len = state->ip_hlen;
        state->tcp->cksum = 0;
-       state->tcp->cksum = rte_ipv6_phdr_cksum((struct ipv6_hdr *)state->ip6,
+       state->tcp->cksum = rte_ipv6_phdr_cksum((struct rte_ipv6_hdr *)state->ip6,
                                                                      m->ol_flags);
        m->ol_flags |= PKT_TX_IPV6;
        m->ol_flags |= PKT_TX_TCP_CKSUM;
    } else {
        /* TCP Checksum */
        state->tcp->cksum = 0;
-       state->tcp->cksum = rte_ipv6_udptcp_cksum((struct ipv6_hdr *)state->ip6,
+       state->tcp->cksum = rte_ipv6_udptcp_cksum((struct rte_ipv6_hdr *)state->ip6,
                                                             (uint8_t*)state->tcp);
    }
    state->tcp_seq += state->pay_len;
@@ -276,14 +276,14 @@ dpdk_gso_ipv4_tcp_internal(struct rte_mbuf *m, struct dpdk_gso_state *state)
        m->l3_len = state->ip_hlen;
        state->ip->hdr_checksum = 0;
        state->tcp->cksum = 0;
-       state->tcp->cksum = rte_ipv4_phdr_cksum((struct ipv4_hdr *)state->ip,
+       state->tcp->cksum = rte_ipv4_phdr_cksum((struct rte_ipv4_hdr *)state->ip,
                                                                      m->ol_flags);
        m->ol_flags |= PKT_TX_IP_CKSUM | PKT_TX_IPV4;
        m->ol_flags |= PKT_TX_TCP_CKSUM;
    } else {
        /* TCP Checksum */
        state->tcp->cksum = 0;
-       state->tcp->cksum = rte_ipv4_udptcp_cksum((struct ipv4_hdr *)state->ip,
+       state->tcp->cksum = rte_ipv4_udptcp_cksum((struct rte_ipv4_hdr *)state->ip,
                                                             (uint8_t*)state->tcp);
        /* IP Checksum */
        state->ip->hdr_checksum = 0;
@@ -302,20 +302,20 @@ dpdk_gso_init_state(struct dpdk_gso_state *state,
    uint32_t ip_hlen;
 
    if (isipv6) {
-       ip_hlen = sizeof(struct ipv6_hdr);
-       state->ip6 = (struct ipv6_hdr *)(rte_pktmbuf_mtod(m, uint8_t *) + mac_hlen);
+       ip_hlen = sizeof(struct rte_ipv6_hdr);
+       state->ip6 = (struct rte_ipv6_hdr *)(rte_pktmbuf_mtod(m, uint8_t *) + mac_hlen);
        if (state->ip6->proto != VR_IP_PROTO_TCP)
            return -1;
-       state->tcp = (struct tcp_hdr *)((uint8_t*)(state->ip6) + ip_hlen);
+       state->tcp = (struct rte_tcp_hdr *)((uint8_t*)(state->ip6) + ip_hlen);
        state->update = dpdk_gso_ipv6_tcp_update;
        state->internal = dpdk_gso_ipv6_tcp_internal;
    } else {
-       state->ip = (struct ipv4_hdr *)(rte_pktmbuf_mtod(m, uint8_t *) + mac_hlen);
+       state->ip = (struct rte_ipv4_hdr *)(rte_pktmbuf_mtod(m, uint8_t *) + mac_hlen);
        state->ip_id = rte_be_to_cpu_16(state->ip->packet_id);
        ip_hlen = ((state->ip->version_ihl) & 0xf) << 2;
        if (state->ip->next_proto_id != VR_IP_PROTO_TCP)
            return -1;
-       state->tcp = (struct tcp_hdr *)((uint8_t*)state->ip + ip_hlen);
+       state->tcp = (struct rte_tcp_hdr *)((uint8_t*)state->ip + ip_hlen);
        state->update = dpdk_gso_ipv4_tcp_update;
        state->internal = dpdk_gso_ipv4_tcp_internal;
    }
@@ -365,7 +365,7 @@ dpdk_gso_segment_ip_tcp(struct rte_mbuf *pkt_in,
             if (i > 0)
                 state->tcp->tcp_flags &= ~TCP_CWR_FLAG;
             if (i < nsegs-1)
-                state->tcp->tcp_flags &= ~(TCP_FIN_FLAG | TCP_PSH_FLAG);
+                state->tcp->tcp_flags &= ~(RTE_TCP_FIN_FLAG | RTE_TCP_PSH_FLAG);
         }
 
         state->internal(mbufs_out[i], state);
