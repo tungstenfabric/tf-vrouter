@@ -769,7 +769,7 @@ dpdk_virtio_get_ip_tcp_hdr_len(char *pkt_addr, uint32_t pkt_len)
         if (unlikely(pkt_len < pull_len + sizeof(struct vr_ip)))
             return 0;
 
-        ipv4_hlen = ((ipv4_hdr->ip_hl) * IPV4_IHL_MULTIPLIER);
+        ipv4_hlen = ((ipv4_hdr->ip_hl) * RTE_IPV4_IHL_MULTIPLIER);
         pull_len += ipv4_hlen;
         tcp_hdr = (struct vr_tcp*)((uint8_t*)ipv4_hdr + ipv4_hlen);
     } else if (eth_proto == rte_cpu_to_be_16(VR_ETH_PROTO_IP6)) {
