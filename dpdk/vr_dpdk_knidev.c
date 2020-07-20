@@ -1,3 +1,4 @@
+<<<<<<< HEAD   (95914b Added other lua scripts to Sconscript)
 /*
  * Copyright (C) 2014 Semihalf.
  *
@@ -828,3 +829,5 @@ vr_dpdk_knidev_all_handle(void)
     }
     vr_dpdk_if_unlock();
 }
+=======
+>>>>>>> CHANGE (94b2de DPDK 19.11 - Remove KNI code)
