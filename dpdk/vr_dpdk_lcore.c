@@ -30,7 +30,6 @@
 #include <rte_malloc.h>
 #include <rte_port_ethdev.h>
 #include <rte_timer.h>
-#include <rte_kni.h>
 
 extern unsigned int datapath_offloads;
 
@@ -1167,12 +1166,8 @@ dpdk_lcore_vlan_fwd(struct vr_dpdk_lcore* lcore)
 
         tx_queue = &lcore->lcore_tx_queues[eth_vif->vif_idx][hw_queue];
         if (tx_queue && tx_queue->txq_ops.f_tx) {
-            if (vr_dpdk.kni_state > 0)
-                nb_pkts = rte_kni_rx_burst(vr_dpdk.vlan_dev, pkts,
-                        VR_DPDK_RX_BURST_SZ);
-            else
-                nb_pkts = vr_dpdk_tapdev_rx_burst(vr_dpdk.vlan_dev, pkts,
-                                         VR_DPDK_RX_BURST_SZ, VR_DPDK_DATAPATH);
+            nb_pkts = vr_dpdk_tapdev_rx_burst(vr_dpdk.vlan_dev, pkts,
+                                     VR_DPDK_RX_BURST_SZ, VR_DPDK_DATAPATH);
             for (i = 0; i < nb_pkts; i++)
                 tx_queue->txq_ops.f_tx(tx_queue->q_queue_h, pkts[i]);
         }
@@ -1180,10 +1175,7 @@ dpdk_lcore_vlan_fwd(struct vr_dpdk_lcore* lcore)
     /* Get packets from VLAN ring and forward them to kernel. */
     nb_pkts = rte_ring_sc_dequeue_burst(vr_dpdk.vlan_ring, (void**) &pkts,
             VR_DPDK_RX_BURST_SZ, NULL);
-    if (vr_dpdk.kni_state > 0)
-        i = rte_kni_tx_burst(vr_dpdk.vlan_dev, pkts, nb_pkts);
-    else
-        i = vr_dpdk_tapdev_tx_burst(vr_dpdk.vlan_dev, pkts, nb_pkts,
+    i = vr_dpdk_tapdev_tx_burst(vr_dpdk.vlan_dev, pkts, nb_pkts,
                                     VR_DPDK_DATAPATH);
     for (; i < nb_pkts; i++)
         vr_dpdk_pfree(pkts[i], NULL, VP_DROP_VLAN_FWD_TX);
@@ -1789,32 +1781,7 @@ dpdk_lcore_packet_loop(void)
 }
 
 /*
- * dpdk_lcore_knidev_loop - KNI handling loop.
- */
-static int
-dpdk_lcore_knidev_loop(void)
-{
-    unsigned lcore_id = rte_lcore_id();
-    RTE_LOG_DP(DEBUG, VROUTER, "Hello from KNI lcore %u\n", lcore_id);
-
-    rcu_thread_offline();
-
-    while (1) {
-        vr_dpdk_knidev_all_handle();
-
-        /* Check for the global stop flag. */
-        if (unlikely(vr_dpdk_is_stop_flag_set()))
-            break;
-
-        usleep(VR_DPDK_SLEEP_KNI_US);
-    };
-
-    RTE_LOG_DP(DEBUG, VROUTER, "Bye-bye from KNI lcore %u\n", lcore_id);
-    return 0;
-}
-
-/*
- * dpdk_lcore_tapdev_loop - TAP device handling loop.
+ * dpdk_lcore_tapdev_loop - KNI or TAP handling loop.
  */
 static int
 dpdk_lcore_tapdev_loop(void)
@@ -1846,38 +1813,6 @@ dpdk_lcore_tapdev_loop(void)
     };
 
     RTE_LOG_DP(DEBUG, VROUTER, "Bye-bye from TAP lcore %u\n", lcore_id);
-    return 0;
-}
-
-/*
- * dpdk_lcore_knitap_loop - KNI or TAP handling loop.
- *
- * Once KNI is enabled, run KNI handling loop. In case KNI is not
- * available on the host, run TAP handling loop.
- */
-static int
-dpdk_lcore_knitap_loop(void)
-{
-    unsigned lcore_id = rte_lcore_id();
-    RTE_LOG_DP(DEBUG, VROUTER, "Hello from KNI and TAP lcore %u\n", lcore_id);
-
-    rcu_thread_offline();
-    while (vr_dpdk.kni_state == 0) {
-        /* Check for the global stop flag. */
-        if (unlikely(vr_dpdk_is_stop_flag_set()))
-            break;
-
-        usleep(VR_DPDK_SLEEP_KNI_US);
-    };
-    rcu_thread_online();
-
-    if (vr_dpdk.kni_state > 0) {
-        dpdk_lcore_knidev_loop();
-    } else {
-        dpdk_lcore_tapdev_loop();
-    }
-
-    RTE_LOG_DP(DEBUG, VROUTER, "Bye-bye from KNI and TAP lcore %u\n", lcore_id);
     return 0;
 }
 
@@ -1939,8 +1874,8 @@ vr_dpdk_lcore_launch(__attribute__((unused)) void *dummy)
         return -ENOMEM;
 
     switch (lcore_id) {
-    case VR_DPDK_KNITAP_LCORE_ID:
-        dpdk_lcore_knitap_loop();
+    case VR_DPDK_TAPDEV_LCORE_ID:
+        dpdk_lcore_tapdev_loop();
         break;
     case VR_DPDK_TIMER_LCORE_ID:
         dpdk_lcore_timer_loop();

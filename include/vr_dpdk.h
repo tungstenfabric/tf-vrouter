@@ -322,7 +322,7 @@ extern unsigned vr_packet_sz;
  * DPDK LCore IDs
  */
 enum {
-    VR_DPDK_KNITAP_LCORE_ID = 0,
+    VR_DPDK_TAPDEV_LCORE_ID = 0,
     VR_DPDK_TIMER_LCORE_ID,
     VR_DPDK_UVHOST_LCORE_ID,
     /*
@@ -906,24 +906,6 @@ unsigned vr_dpdk_tapdev_tx_burst(struct vr_dpdk_tapdev *, struct rte_mbuf **,
 unsigned vr_dpdk_tapdev_enqueue_burst(struct vr_dpdk_tapdev *, struct rte_mbuf **,
         unsigned num);
 void vr_dpdk_tapdev_handle_notifications(void);
-
-/*
- * vr_dpdk_knidev.c
- */
-/* Init KNI */
-int vr_dpdk_knidev_init(uint8_t port_id, struct vr_interface *vif);
-/* Release KNI */
-int vr_dpdk_knidev_release(struct vr_interface *vif);
-/* Init KNI RX queue */
-struct vr_dpdk_queue *
-vr_dpdk_kni_rx_queue_init(unsigned lcore_id, struct vr_interface *vif,
-    unsigned host_lcore_id);
-/* Init KNI TX queue */
-struct vr_dpdk_queue *
-vr_dpdk_kni_tx_queue_init(unsigned lcore_id, struct vr_interface *vif,
-    unsigned host_lcore_id);
-/* Handle all KNIs attached */
-void vr_dpdk_knidev_all_handle(void);
 
 /*
  * vr_dpdk_packet.c
