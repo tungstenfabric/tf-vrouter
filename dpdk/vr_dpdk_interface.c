@@ -384,7 +384,7 @@ dpdk_set_addr_vlan_filter_strip(uint32_t port_id, struct vr_interface *vif)
          */
         if ((ethdev->ethdev_nb_slaves != -1) && vr_dpdk.vf_lcore_id) {
             ret = rte_eth_dev_default_mac_addr_set(*port_id_ptr,
-                    (struct ether_addr *)vif->vif_mac);
+                    (struct rte_ether_addr *)vif->vif_mac);
             if (ret == 0) {
                 RTE_LOG(INFO, VROUTER, "Bond slave port %d now uses vif MAC "
                         MAC_FORMAT "\n",
@@ -469,7 +469,7 @@ void
 dpdk_vif_attach_ethdev(struct vr_interface *vif,
         struct vr_dpdk_ethdev *ethdev)
 {
-    struct ether_addr mac_addr;
+    struct rte_ether_addr mac_addr;
     struct rte_eth_dev_info dev_info;
     int ret;
 
@@ -500,19 +500,19 @@ dpdk_vif_attach_ethdev(struct vr_interface *vif,
      * Set only if the address is null.
      */
     memset(&mac_addr, 0, sizeof(mac_addr));
-    if (memcmp(vif->vif_mac, mac_addr.addr_bytes, ETHER_ADDR_LEN) == 0) {
+    if (memcmp(vif->vif_mac, mac_addr.addr_bytes, RTE_ETHER_ADDR_LEN) == 0) {
         rte_eth_macaddr_get(ethdev->ethdev_port_id, &mac_addr);
-        memcpy(vif->vif_mac, mac_addr.addr_bytes, ETHER_ADDR_LEN);
+        memcpy(vif->vif_mac, mac_addr.addr_bytes, RTE_ETHER_ADDR_LEN);
     } else {
         /*
          * On some hardware (e100e, virtual functions, etc) the MAC is random,
          * so we check if vif and NIC MACs are match and set the NIC MAC.
          */
         rte_eth_macaddr_get(ethdev->ethdev_port_id, &mac_addr);
-        if (memcmp(vif->vif_mac, mac_addr.addr_bytes, ETHER_ADDR_LEN) != 0) {
+        if (memcmp(vif->vif_mac, mac_addr.addr_bytes, RTE_ETHER_ADDR_LEN) != 0) {
             /* No match, so set vif MAC to NIC. */
             ret = rte_eth_dev_default_mac_addr_set(ethdev->ethdev_port_id,
-                    (struct ether_addr *)vif->vif_mac);
+                    (struct rte_ether_addr *)vif->vif_mac);
             if (ret == 0) {
                 RTE_LOG(INFO, VROUTER, "    eth dev %s now use vif MAC "
                         MAC_FORMAT "\n",
@@ -693,8 +693,8 @@ vr_ethdev_conf_update(struct rte_eth_conf *dev_conf)
     struct rte_eth_dev_info dev_info;
 
     if (vr_dpdk.vf_lcore_id) {
-        if (dev_conf->rxmode.max_rx_pkt_len > ETHER_MAX_LEN) {
-            dev_conf->rxmode.max_rx_pkt_len = ETHER_MAX_LEN;
+        if (dev_conf->rxmode.max_rx_pkt_len > RTE_ETHER_MAX_LEN) {
+            dev_conf->rxmode.max_rx_pkt_len = RTE_ETHER_MAX_LEN;
         }
     }
 
@@ -726,7 +726,7 @@ dpdk_fabric_if_add(struct vr_interface *vif)
     uint16_t mtu;
     struct rte_pci_addr pci_address;
     struct vr_dpdk_ethdev *ethdev;
-    struct ether_addr mac_addr;
+    struct rte_ether_addr mac_addr;
     struct rte_eth_conf fabric_ethdev_conf;
 
     ports_num = rte_eth_dev_count_avail();
@@ -903,7 +903,7 @@ dpdk_vhost_if_add(struct vr_interface *vif)
 {
     uint8_t port_id;
     int ret;
-    struct ether_addr mac_addr;
+    struct rte_ether_addr mac_addr;
     struct vr_dpdk_ethdev *ethdev;
     uint16_t nb_txqs, ports_num;
 
@@ -945,7 +945,7 @@ dpdk_vhost_if_add(struct vr_interface *vif)
         struct vr_dpdk_tapdev *tapdev = vr_dpdk.vlan_dev;
         memset(&ifr, 0, sizeof(ifr));
         strncpy(ifr.ifr_name, vr_dpdk.vlan_name, sizeof(ifr.ifr_name) - 1);
-        rte_memcpy(ifr.ifr_hwaddr.sa_data, vif->vif_mac, ETHER_ADDR_LEN);
+        rte_memcpy(ifr.ifr_hwaddr.sa_data, vif->vif_mac, RTE_ETHER_ADDR_LEN);
         ifr.ifr_hwaddr.sa_family = ARPHRD_ETHER;
         if (ioctl(tapdev->tapdev_fd, SIOCSIFHWADDR, &ifr) < 0) {
             RTE_LOG(ERR, VROUTER, "    error assigning MAC address to %s: %s(%d)\n",
@@ -1301,17 +1301,17 @@ dpdk_hw_checksum_at_offset(struct vr_packet *pkt, unsigned offset)
         udph = (struct vr_udp *)pkt_data_at_offset(pkt, offset + iph_len);
         udph->udp_csum = 0;
         if (iph)
-            udph->udp_csum = rte_ipv4_phdr_cksum((struct ipv4_hdr *)iph, m->ol_flags);
+            udph->udp_csum = rte_ipv4_phdr_cksum((struct rte_ipv4_hdr *)iph, m->ol_flags);
         else if (ip6h)
-            udph->udp_csum = rte_ipv6_phdr_cksum((struct ipv6_hdr *)ip6h, m->ol_flags);
+            udph->udp_csum = rte_ipv6_phdr_cksum((struct rte_ipv6_hdr *)ip6h, m->ol_flags);
     } else if (likely(iph_proto == VR_IP_PROTO_TCP)) {
         m->ol_flags |= PKT_TX_TCP_CKSUM;
         tcph = (struct vr_tcp *)pkt_data_at_offset(pkt, offset + iph_len);
         tcph->tcp_csum = 0;
         if (iph)
-            tcph->tcp_csum = rte_ipv4_phdr_cksum((struct ipv4_hdr *)iph, m->ol_flags);
+            tcph->tcp_csum = rte_ipv4_phdr_cksum((struct rte_ipv4_hdr *)iph, m->ol_flags);
         else if (ip6h)
-            tcph->tcp_csum = rte_ipv6_phdr_cksum((struct ipv6_hdr *)ip6h, m->ol_flags);
+            tcph->tcp_csum = rte_ipv6_phdr_cksum((struct rte_ipv6_hdr *)ip6h, m->ol_flags);
     }
 }
 
@@ -1356,16 +1356,16 @@ dpdk_sw_checksum_at_offset(struct vr_packet *pkt, unsigned offset)
         udph = (struct vr_udp *)pkt_data_at_offset(pkt, offset + iph_len);
         udph->udp_csum = 0;
         if (iph)
-            udph->udp_csum = dpdk_ipv4_udptcp_cksum(m, (struct ipv4_hdr *)iph, (uint8_t*)udph);
+            udph->udp_csum = dpdk_ipv4_udptcp_cksum(m, (struct rte_ipv4_hdr *)iph, (uint8_t*)udph);
         else if (ip6h)
-            udph->udp_csum = dpdk_ipv6_udptcp_cksum(m, (struct ipv6_hdr *)ip6h, (uint8_t*)udph);
+            udph->udp_csum = dpdk_ipv6_udptcp_cksum(m, (struct rte_ipv6_hdr *)ip6h, (uint8_t*)udph);
     } else if (iph_proto == VR_IP_PROTO_TCP) {
         tcph = (struct vr_tcp *)pkt_data_at_offset(pkt, offset + iph_len);
         tcph->tcp_csum = 0;
         if (iph)
-            tcph->tcp_csum = dpdk_ipv4_udptcp_cksum(m, (struct ipv4_hdr *)iph, (uint8_t*)tcph);
+            tcph->tcp_csum = dpdk_ipv4_udptcp_cksum(m, (struct rte_ipv4_hdr *)iph, (uint8_t*)tcph);
         else if (ip6h)
-            tcph->tcp_csum = dpdk_ipv6_udptcp_cksum(m, (struct ipv6_hdr *)ip6h, (uint8_t*)tcph);
+            tcph->tcp_csum = dpdk_ipv6_udptcp_cksum(m, (struct rte_ipv6_hdr *)ip6h, (uint8_t*)tcph);
     }
 }
 
@@ -1689,12 +1689,12 @@ dpdk_if_tx(struct vr_interface *vif, struct vr_packet *pkt)
 
         if (unlikely((vif->vif_flags & VIF_FLAG_VLAN_OFFLOAD) == 0)) {
             /* Software VLAN TCI insert. */
-            if (unlikely(pkt_push(pkt, sizeof(struct vlan_hdr)) == NULL)) {
+            if (unlikely(pkt_push(pkt, sizeof(struct rte_vlan_hdr)) == NULL)) {
                 RTE_LOG_DP(DEBUG, VROUTER,"%s: Error inserting VLAN tag\n", __func__);
                 vr_dpdk_pfree(m, pkt->vp_if, VP_DROP_INTERFACE_DROP);
                 return -1;
             }
-            m->l2_len += sizeof(struct vlan_hdr);
+            m->l2_len += sizeof(struct rte_vlan_hdr);
             if (unlikely(rte_vlan_insert(&m))) {
                 RTE_LOG_DP(DEBUG, VROUTER,"%s: Error inserting VLAN tag\n", __func__);
                 vr_dpdk_pfree(m, pkt->vp_if, VP_DROP_INTERFACE_DROP);
