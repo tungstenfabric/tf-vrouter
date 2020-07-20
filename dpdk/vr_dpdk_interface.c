@@ -20,21 +20,13 @@
 #include "vr_dpdk_virtio.h"
 
 #include <rte_errno.h>
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
 #include <rte_ethdev_pci.h>
 #include <rte_ethdev_vdev.h>
-#endif
 #include <rte_ethdev.h>
 #include <rte_ip_frag.h>
 #include <rte_ip.h>
 #include <rte_port_ethdev.h>
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
 #include <rte_pci.h>
-#endif
-
-#if (RTE_VERSION == RTE_VERSION_NUM(2, 1, 0, 0))
-#include <rte_eth_af_packet.h>
-#endif
 
 #include <linux/if_tun.h>
 #include <net/if_arp.h>
@@ -346,14 +338,12 @@ dpdk_find_port_id_by_pci_addr(const struct rte_pci_addr *addr)
     return VR_DPDK_INVALID_PORT_ID;
 }
 
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 2, 0, 0))
 uint8_t
 dpdk_find_port_id_by_drv_name(void)
 {
     uint8_t i;
 
     VR_DPDK_RTE_ETH_FOREACH_DEV(i) {
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
         if (rte_eth_devices[i].device == NULL)
             continue;
 
@@ -366,38 +356,16 @@ dpdk_find_port_id_by_drv_name(void)
 
         if (strcmp(rte_eth_devices[i].device->driver->name, "net_bonding") == 0)
             return i;
-#else
-        if (rte_eth_devices[i].data == NULL)
-            continue;
-
-        if (strcmp(rte_eth_devices[i].data->drv_name, "net_bonding") == 0)
-            return i;
-#endif
     }
 
     return VR_DPDK_INVALID_PORT_ID;
-}
-#endif
-
-static inline void
-dpdk_find_pci_addr_by_port(struct rte_pci_addr *addr, uint8_t port_id)
-{
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 2, 0, 0))
-    rte_memcpy(addr, &(RTE_DEV_TO_PCI(rte_eth_devices[port_id].device)->addr), sizeof(struct rte_pci_addr));
-#else
-    rte_memcpy(addr, &rte_eth_devices[port_id].pci_dev->addr, sizeof(struct rte_pci_addr));
-#endif
 }
 
 static inline void
 dpdk_set_addr_vlan_filter_strip(uint32_t port_id, struct vr_interface *vif)
 {
     uint32_t i, ret;
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
     uint16_t *port_id_ptr;
-#else
-    uint8_t *port_id_ptr;
-#endif
     int port_num = 0;
     struct vr_dpdk_ethdev *ethdev = &vr_dpdk.ethdevs[port_id];
 
@@ -471,11 +439,7 @@ static int
 vr_ethdev_inner_cksum_capable(struct vr_dpdk_ethdev *ethdev)
 {
     struct rte_eth_dev_info dev_info;
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
     uint16_t *port_id_ptr;
-#else
-    uint8_t *port_id_ptr;
-#endif
     int port_num = 0;
 
     port_id_ptr = (ethdev->ethdev_nb_slaves == -1)?
@@ -677,11 +641,7 @@ dpdk_af_packet_if_add(struct vr_interface *vif)
         return ret;
     }
 
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
     ret = rte_vdev_init(name, params);
-#else
-    ret = rte_eal_vdev_init(name, params);
-#endif
     if (ret < 0) {
         RTE_LOG(ERR, VROUTER,
                 "    error initializing af_packet device %s\n", name);
@@ -777,11 +737,7 @@ dpdk_fabric_if_add(struct vr_interface *vif)
     struct ether_addr mac_addr;
     struct rte_eth_conf fabric_ethdev_conf;
 
-#if (RTE_VERSION >= RTE_VERSION_NUM(18, 05, 0, 0))
     ports_num = rte_eth_dev_count_avail();
-#else
-    ports_num = rte_eth_dev_count();
-#endif
 
     /* When there is no PCI ports for DPDK, considered to be running on
      * vtest(Vrouter Unit Test simulation framework) and create virtual port instead
@@ -799,16 +755,9 @@ dpdk_fabric_if_add(struct vr_interface *vif)
             return -ENOENT;
         }
 
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 2, 0, 0))
         port_id = dpdk_find_port_id_by_drv_name();
         if (port_id == VR_DPDK_INVALID_PORT_ID)
-#endif
             port_id = vif->vif_os_idx;
-
-        /* TODO: does not work for host interfaces
-        dpdk_find_pci_addr_by_port(&pci_address, port_id);
-        vif->vif_os_idx = dpdk_pci_to_dbdf(&pci_address);
-        */
 
         rte_eth_macaddr_get(port_id, &mac_addr);
         RTE_LOG(INFO, VROUTER, "Adding vif %u (gen. %u) eth device %" PRIu8
@@ -905,9 +854,6 @@ dpdk_fabric_af_packet_if_del(struct vr_interface *vif)
 {
     uint8_t port_id;
     struct vr_dpdk_ethdev *ethdev;
-#if (RTE_VERSION < RTE_VERSION_NUM(17, 11, 0, 0))
-    struct rte_eth_dev *ethdev_ptr;
-#else
     char name[VR_INTERFACE_NAME_LEN];
     int ret;
 
@@ -918,7 +864,6 @@ dpdk_fabric_af_packet_if_del(struct vr_interface *vif)
         return ret;
     }
 
-#endif
 
     RTE_LOG(INFO, VROUTER, "Deleting vif %u %s device\n", vif->vif_idx,
             vif_is_fabric(vif) ? "eth" : "af_packet");
@@ -934,9 +879,6 @@ dpdk_fabric_af_packet_if_del(struct vr_interface *vif)
     }
 
     ethdev = (struct vr_dpdk_ethdev *)(vif->vif_os);
-#if (RTE_VERSION < RTE_VERSION_NUM(17, 11, 0, 0))
-    ethdev_ptr = ethdev->ethdev_ptr;
-#endif
     port_id = ethdev->ethdev_port_id;
 
     /* unschedule RX/TX queues */
@@ -955,20 +897,6 @@ dpdk_fabric_af_packet_if_del(struct vr_interface *vif)
          * _release_port().
          */
         rte_eth_dev_close(port_id);
-
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
-        rte_eth_dev_detach(port_id, name);
-#else
-        rte_free(ethdev_ptr->data->dev_private);
-        rte_free(ethdev_ptr->data);
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 2, 0, 0))
-        rte_free(ethdev_ptr->device);
-#else
-        rte_free(ethdev_ptr->pci_dev);
-#endif
-
-        rte_eth_dev_release_port(ethdev_ptr);
-#endif
     }
 
     dpdk_vif_queue_free(vif);
@@ -987,11 +915,7 @@ dpdk_vhost_if_add(struct vr_interface *vif)
     struct vr_dpdk_ethdev *ethdev;
     uint16_t nb_txqs, ports_num;
 
-#if (RTE_VERSION >= RTE_VERSION_NUM(18, 05, 0, 0))
     ports_num = rte_eth_dev_count_avail();
-#else
-    ports_num = rte_eth_dev_count();
-#endif
 
     /* When there is no PCI ports for DPDK, considered to be running on
      * vtest(Vrouter Unit Test simulation framework) and create virtual port instead
@@ -1251,11 +1175,7 @@ dpdk_agent_if_add(struct vr_interface *vif)
     int ret;
     uint16_t ports_num;
 
-#if (RTE_VERSION >= RTE_VERSION_NUM(18, 05, 0, 0))
     ports_num = rte_eth_dev_count_avail();
-#else
-    ports_num = rte_eth_dev_count();
-#endif
 
     RTE_LOG(INFO, VROUTER, "Adding vif %u (gen. %u) packet device %s\n",
                 vif->vif_idx, vif->vif_gen, vif->vif_name);
@@ -1989,12 +1909,7 @@ dpdk_if_rx(struct vr_interface *vif, struct vr_packet *pkt)
     m->data_off = pkt_head_space(pkt);
     m->data_len = pkt_head_len(pkt);
 
-#if (RTE_VERSION == RTE_VERSION_NUM(2, 1, 0, 0))
-    /* TODO: we do not support mbuf chains */
-    m->pkt_len = pkt_head_len(pkt);
-#else
     m->pkt_len = pkt_len(pkt);
-#endif
 
     if (unlikely(vif->vif_flags & VIF_FLAG_MONITORED)) {
         monitoring_tx_queue =
@@ -2257,48 +2172,12 @@ vr_dpdk_eth_xstats_get(uint32_t port_id, struct rte_eth_stats *eth_stats)
      * we count out the XEC from ierrors using rte_eth_xstats_get()
      */
 
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
     uint16_t *port_id_ptr;
-#else
-    uint8_t *port_id_ptr;
-#endif
     int port_num = 0;
     struct vr_dpdk_ethdev *ethdev = &vr_dpdk.ethdevs[port_id];
     port_id_ptr = (ethdev->ethdev_nb_slaves == -1)?
                    &ethdev->ethdev_port_id:ethdev->ethdev_slaves;
     do {
-#if (RTE_VERSION < RTE_VERSION_NUM(17, 2, 0, 0))
-        struct rte_eth_xstats *eth_xstats = NULL;
-        int nb_xstats, i;
-        nb_xstats = rte_eth_xstats_get(*port_id_ptr, eth_xstats, 0);
-        if (nb_xstats > 0) {
-            eth_xstats = rte_malloc("xstats",
-                sizeof(*eth_xstats)*nb_xstats, 0);
-            if (eth_xstats != NULL) {
-                if (rte_eth_xstats_get(*port_id_ptr, eth_xstats, nb_xstats)
-                        == nb_xstats) {
-                    /* look for XEC counter */
-                    for (i = 0; i < nb_xstats; i++) {
-                        if (strncmp(eth_xstats[i].name, "l3_l4_xsum_error",
-                            sizeof(eth_xstats[i].name)) == 0) {
-                            eth_stats->ierrors -= eth_xstats[i].value;
-                            break;
-                        }
-                    }
-                }
-                /*
-                 * observed bug: in the kni code, when a memzone is allocated
-                 * and used for kni, it is not zalloced. If that memory happens
-                 * to be part/full of the freed memory below, then we will run
-                 * into issues. For e.g a subsequent check for a particular value
-                 * in the non-zalloced code fails. Hence, this workaround, which
-                 * zeroes out the memory before freeing. Things seem to work.
-                 */
-                memset(eth_xstats, 0, sizeof(*eth_xstats)*nb_xstats);
-                rte_free(eth_xstats);
-            }
-        }
-#else
         struct rte_eth_xstat *eth_xstats = NULL;
         struct rte_eth_xstat_name *xstats_names;
         int nb_xstats, i;
@@ -2334,7 +2213,6 @@ vr_dpdk_eth_xstats_get(uint32_t port_id, struct rte_eth_stats *eth_stats)
             }
             rte_free(xstats_names);
         }
-#endif
         port_num++;
         port_id_ptr++;
     } while (port_num < ethdev->ethdev_nb_slaves);
@@ -2367,9 +2245,7 @@ dpdk_dev_stats_update(struct vr_interface *vif, unsigned lcore_id)
     if (rte_eth_stats_get(port_id, &eth_stats) != 0)
         return;
 
-#if (RTE_VERSION >= RTE_VERSION_NUM(2, 1, 0, 0))
     vr_dpdk_eth_xstats_get(port_id, &eth_stats);
-#endif
 
     /* per-lcore device counters */
     lcore = vr_dpdk.lcores[lcore_id];

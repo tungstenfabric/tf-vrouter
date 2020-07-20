@@ -376,12 +376,6 @@ vr_dpdk_pktmbuf_copy_mon(struct rte_mbuf *md, struct rte_mempool *mp)
 static struct vr_packet *
 dpdk_pclone(struct vr_packet *pkt)
 {
-    /*
-     * TODO: We have not tested pclone option on DPDK 2.0. - (mbuf leak).
-     */
-
-/* Macro RTE_VERSION is workaround, we have mbuf leak in DPDK 2.0 */
-#if (RTE_VERSION >= RTE_VERSION_NUM(2, 1, 0, 0))
     struct rte_mbuf *m, *m_clone;
     struct vr_packet *pkt_clone;
 
@@ -397,25 +391,6 @@ dpdk_pclone(struct vr_packet *pkt)
     pkt_clone->vp_cpu = vr_get_cpu();
 
     return pkt_clone;
-#else
-    /* if no scatter/gather enabled -> just copy the mbuf */
-    struct rte_mbuf *m, *m_copy;
-    struct vr_packet *pkt_copy;
-
-    m = vr_dpdk_pkt_to_mbuf(pkt);
-
-    m_copy = vr_dpdk_pktmbuf_copy(m, vr_dpdk.rss_mempool);
-    if (!m_copy)
-        return NULL;
-
-    /* copy vr_packet data */
-    pkt_copy = vr_dpdk_mbuf_to_pkt(m_copy);
-    *pkt_copy = *pkt;
-    /* set head pointer to a copy */
-    pkt_copy->vp_head = m_copy->buf_addr;
-
-    return pkt_copy;
-#endif
 }
 
 /* Copy the specified number of bytes from the source mbuf to the
@@ -1239,11 +1214,7 @@ dpdk_set_log_level(unsigned int log_level)
     }
 
     if (level > 0) {
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
         rte_log_set_global_level(level);
-#else
-        rte_set_log_level(level);
-#endif
     } else
         RTE_LOG(ERR, VROUTER, "Error: wrong log level (%u) specified\n",
                 level);
@@ -1252,11 +1223,7 @@ dpdk_set_log_level(unsigned int log_level)
 static unsigned int
 dpdk_get_log_level(void)
 {
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
     unsigned int level = rte_log_get_global_level();
-#else
-    unsigned int level = rte_get_log_level();
-#endif
 
     switch(level) {
     case RTE_LOG_EMERG:
@@ -1316,11 +1283,7 @@ dpdk_set_log_type(unsigned int log_type, int enable)
     }
 
     if (type > 0) {
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
         rte_log_set_level(type, enable);
-#else
-        rte_set_log_type(type, enable);
-#endif
     } else
         RTE_LOG(ERR, VROUTER, "Error: wrong log type (0x%x) specified\n",
                 type);
@@ -1347,7 +1310,6 @@ dpdk_log_type_to_vr_type(unsigned int type)
     return 0;
 }
 
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
 static unsigned int *
 dpdk_get_enabled_log_types(int *size)
 {
@@ -1368,31 +1330,6 @@ dpdk_get_enabled_log_types(int *size)
 
     return enabled_array;
 }
-#else
-static unsigned int *
-dpdk_get_enabled_log_types(int *size)
-{
-    unsigned int enabled_flags = rte_get_log_type() & ~(RTE_LOGTYPE_USER1 - 1);
-
-    /* Count number of enabled types (set bits in a number) */
-    int num = __builtin_popcount(enabled_flags);
-
-    unsigned int *enabled_array =
-            vr_malloc(sizeof(int) * num, VR_LOG_TYPES_OBJECT);
-    int i;
-    unsigned int shift = 1;
-
-    RTE_VERIFY(enabled_array != NULL);
-    for (i = 0; i < num; shift <<= 1) {
-        if (enabled_flags & shift) {
-            enabled_array[i++] = dpdk_log_type_to_vr_type(shift);
-        }
-    }
-
-    *size = i;
-    return enabled_array;
-}
-#endif
 
 static void
 dpdk_soft_reset(struct vrouter *router)
