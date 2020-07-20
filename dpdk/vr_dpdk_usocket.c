@@ -518,13 +518,8 @@ vr_dpdk_packet_ring_drain(struct vr_usocket *usockp)
 
     stats = vif_get_stats(usockp->usock_parent->usock_vif, lcore_id);
     do {
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
         nb_pkts = rte_ring_sc_dequeue_burst(vr_dpdk.packet_ring,
             (void **)&mbuf_arr, VR_DPDK_RX_BURST_SZ, NULL);
-#else
-        nb_pkts = rte_ring_sc_dequeue_burst(vr_dpdk.packet_ring,
-            (void **)&mbuf_arr, VR_DPDK_RX_BURST_SZ);
-#endif
         for (i = 0; i < nb_pkts; i++) {
             if (usock_mbuf_write(usockp->usock_parent, mbuf_arr[i]) >= 0)
                 stats->vis_port_opackets++;
