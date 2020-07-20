@@ -21,9 +21,7 @@
 
 #include <rte_eth_bond.h>
 #include <rte_errno.h>
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
 #include <rte_ethdev_pci.h>
-#endif
 #include <rte_ethdev.h>
 #include <rte_hash_crc.h>
 #include <rte_ip.h>
@@ -73,9 +71,12 @@ struct rte_eth_conf ethdev_conf = {
     },
     .txmode = { /* Port TX configuration. */
         .mq_mode            = ETH_MQ_TX_NONE, /* TX multi-queues mode */
+<<<<<<< HEAD   (95914b Added other lua scripts to Sconscript)
 #if (RTE_VERSION >= RTE_VERSION_NUM(18, 05, 0, 0))
         .offloads = DEV_TX_OFFLOAD_UDP_CKSUM | DEV_TX_OFFLOAD_TCP_CKSUM | DEV_TX_OFFLOAD_IPV4_CKSUM,
 #endif
+=======
+>>>>>>> CHANGE (42a531 DPDK 19.11: Cleanup vRouter code)
         /* For i40e specifically */
         .pvid               = 0,
         .hw_vlan_reject_tagged      = 0, /* If set, reject sending out tagged pkts */
@@ -91,9 +92,6 @@ struct rte_eth_conf ethdev_conf = {
         .status = RTE_FDIR_NO_REPORT_STATUS,
 #endif
         .pballoc = RTE_FDIR_PBALLOC_64K,        /* Space for FDIR filters. */
-        /* Offset of flexbytes field in RX packets (in 16-bit word units). */
-        /* TODO: flow director API has changed since DPDK 1.7 */
-//        .flexbytes_offset = VR_DPDK_MPLS_OFFSET,
         /* RX queue of packets matching a "drop" filter in perfect mode. */
         .drop_queue = 0,
         .flex_conf = {
@@ -449,11 +447,7 @@ dpdk_ethdev_info_update(struct vr_dpdk_ethdev *ethdev)
     RTE_LOG_DP(DEBUG, VROUTER, "dev_info: driver_name=%s if_index=%u"
             " max_rx_queues=%" PRIu16 " max_tx_queues=%" PRIu16
             " max_vfs=%" PRIu16 " max_vmdq_pools=%" PRIu16
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
             " rx_offload_capa=%" PRIx64 " tx_offload_capa=%" PRIx64 "\n",
-#else
-            " rx_offload_capa=%" PRIx32 " tx_offload_capa=%" PRIx32 "\n",
-#endif
             dev_info.driver_name, dev_info.if_index,
             dev_info.max_rx_queues, dev_info.max_tx_queues,
             dev_info.max_vfs, dev_info.max_vmdq_pools,
@@ -717,11 +711,7 @@ dpdk_ethdev_bond_info_update(struct vr_dpdk_ethdev *ethdev)
             }
             memset(&mac_addr, 0, sizeof(mac_addr));
             rte_eth_macaddr_get(slave_port_id, &mac_addr);
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 2, 0, 0))
             pci_addr = &(RTE_DEV_TO_PCI(rte_eth_devices[slave_port_id].device)->addr);
-#else
-            pci_addr = &rte_eth_devices[slave_port_id].pci_dev->addr;
-#endif
             RTE_LOG(INFO, VROUTER, "    bond member eth device %" PRIu8
                 " PCI " PCI_PRI_FMT " MAC " MAC_FORMAT "\n",
                 slave_port_id, pci_addr->domain, pci_addr->bus,
@@ -979,12 +969,7 @@ vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf
         return ret;
     }
 
-#if (RTE_VERSION < RTE_VERSION_NUM(17, 2, 0, 0))
-    /* update device bond information after the device has been configured */
-    if (ethdev->ethdev_ptr->driver) { /* af_packet has no driver and no bond info */
-#else
     if (dpdk_find_port_id_by_drv_name() != VR_DPDK_INVALID_PORT_ID) {
-#endif
         dpdk_ethdev_bond_info_update(ethdev);
 
     }
