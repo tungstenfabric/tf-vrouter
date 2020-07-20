@@ -1,0 +1,188 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "24dab1e4_16d68e4b",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2603,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-07-20T18:31:13Z",
+      "side": 1,
+      "message": "why not do memset() of stats?",
+      "range": {
+        "startLine": 2603,
+        "startChar": 0,
+        "endLine": 2603,
+        "endChar": 18
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "91d19ad8_7190f625",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 3398,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-07-20T18:31:13Z",
+      "side": 1,
+      "message": "nit: both these in the same line",
+      "range": {
+        "startLine": 3397,
+        "startChar": 0,
+        "endLine": 3398,
+        "endChar": 10
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "25125484_728a08c5",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 3416,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-07-20T18:31:13Z",
+      "side": 1,
+      "message": "This portion can be made into a static function and can be called from if() and else() condition?",
+      "range": {
+        "startLine": 3401,
+        "startChar": 1,
+        "endLine": 3416,
+        "endChar": 13
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d1720198_90307764",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 3424,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-07-20T18:31:13Z",
+      "side": 1,
+      "message": "nit: same line",
+      "range": {
+        "startLine": 3423,
+        "startChar": 0,
+        "endLine": 3424,
+        "endChar": 18
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d18175dc_a9941776",
+        "filename": "dpdk/vr_dpdk_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2065,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-07-20T18:31:13Z",
+      "side": 1,
+      "message": "Did you check if this is reset for all slave ports?",
+      "range": {
+        "startLine": 2065,
+        "startChar": 8,
+        "endLine": 2065,
+        "endChar": 27
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "764faffb_b049196f",
+        "filename": "dpdk/vr_dpdk_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2114,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-07-20T18:31:13Z",
+      "side": 1,
+      "message": "Will this work for all types of interfaces - vhost0 (tapdev), fabric, af_packet, vlan and virtio stats?",
+      "range": {
+        "startLine": 2114,
+        "startChar": 8,
+        "endLine": 2114,
+        "endChar": 32
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6c9dc397_3f4dab06",
+        "filename": "tests/test_vif_clear_stats.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-07-20T18:31:13Z",
+      "side": 1,
+      "message": "No need to instantiate any object here. Can we do something like:\nObjectBase.ClearAllVifStats()",
+      "range": {
+        "startLine": 33,
+        "startChar": 1,
+        "endLine": 34,
+        "endChar": 24
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "df28e32d_80a87974",
+        "filename": "utils/vif.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 936,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-07-20T18:31:13Z",
+      "side": 1,
+      "message": "1 line with 2 curly braces\n\nif () {\n} else {\n}\n\nPl do this change everywhere",
+      "range": {
+        "startLine": 935,
+        "startChar": 0,
+        "endLine": 936,
+        "endChar": 12
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
