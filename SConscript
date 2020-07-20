@@ -262,13 +262,7 @@ if sys.platform != 'darwin':
         else:
             rte_libs = ('-lrte_ethdev',)
 
-        year_matches = re.findall("define RTE_VER_YEAR .*", file_content)
-        month_matches = re.findall("define RTE_VER_MONTH .*", file_content)
-        year = int(year_matches[0].split(" ")[2])
-        month = int(month_matches[0].split(" ")[2])
-
-        if (year > 17) or (year == 17 and month >= 11):
-            rte_libs = rte_libs + ('-lrte_mempool_ring', '-lrte_bus_pci', '-lrte_pci', '-lrte_bus_vdev')
+        rte_libs = rte_libs + ('-lrte_mempool_ring', '-lrte_bus_pci', '-lrte_pci', '-lrte_bus_vdev')
 
         #
         # DPDK libraries need to be linked as a whole archive, otherwise some
@@ -281,27 +275,15 @@ if sys.platform != 'darwin':
         # The list is from the rte.app.mk file
         DPDK_LIBS = [
             '-Wl,--whole-archive',
-        #    '-lrte_distributor',
-        #    '-lrte_reorder',
             '-lrte_kni',
-        #    '-lrte_ivshmem',
-        #    '-lrte_pipeline',
-        #    '-lrte_table',
             '-lrte_port',
             '-lrte_timer',
             '-lrte_hash',
-        #    '-lrte_jobstats',
-        #    '-lrte_lpm',
-        #    '-lrte_power',
-        #    '-lrte_acl',
-        #    '-lrte_meter',
+            '-lrte_net',
             '-lrte_sched',
             '-lm',
             '-lrt',
-        #    '-lrte_vhost',
-        #    '-lpcap',
-        #    '-lfuse',
-        #    '-libverbs',
+            '-lrte_cryptodev',
             '-Wl,--start-group',
             '-lrte_kvargs',
             '-lrte_mbuf',
@@ -311,22 +293,14 @@ if sys.platform != 'darwin':
             '-lrte_ring',
             '-lrte_eal',
             '-lrte_cmdline',
-        #    '-lrte_cfgfile',
+            "-lrte_eventdev",
             '-lrte_pmd_bond',
             '-lrte_pmd_bnxt',
-        #    '-lrte_pmd_xenvirt',
-        #    '-lxenstore',
-        #    '-lrte_pmd_vmxnet3_uio',
-        #    '-lrte_pmd_virtio_uio',
             '-lrte_pmd_enic',
             '-lrte_pmd_i40e',
-        #    '-lrte_pmd_fm10k',
             '-lrte_pmd_ixgbe',
             '-lrte_pmd_nfp',
             '-lrte_pmd_e1000',
-        #    '-lrte_pmd_mlx4',
-        #    '-lrte_pmd_ring',
-        #    '-lrte_pmd_pcap',
             '-lrte_pmd_af_packet'
         ]
         if env['OPT'] == 'coverage':
@@ -339,9 +313,7 @@ if sys.platform != 'darwin':
 
         DPDK_LIBS.append('-Wl,--end-group')
         DPDK_LIBS.append('-Wl,--no-whole-archive')
-
-        if year_matches and month_matches:
-            DPDK_LIBS.append('-Wl,-lnuma')
+        DPDK_LIBS.append('-Wl,-lnuma')
 
         env.Append(CPPPATH = DPDK_INC_DIR);
         env.Append(LIBPATH = DPDK_LIB_DIR)
