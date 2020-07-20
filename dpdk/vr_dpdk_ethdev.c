@@ -694,8 +694,8 @@ dpdk_ethdev_bond_info_update(struct vr_dpdk_ethdev *ethdev)
     int port_id = ethdev->ethdev_port_id;
     uint16_t mtu = 0;
     struct rte_pci_addr *pci_addr;
-    struct ether_addr bond_mac, mac_addr;
-    struct ether_addr lacp_mac = { .addr_bytes = {0x01, 0x80, 0xc2, 0, 0, 0x02} };
+    struct rte_ether_addr bond_mac, mac_addr;
+    struct rte_ether_addr lacp_mac = { .addr_bytes = {0x01, 0x80, 0xc2, 0, 0, 0x02} };
 
     if (rte_eth_bond_mode_get(port_id) == -1) {
         ethdev->ethdev_nb_slaves = -1;
@@ -1050,7 +1050,8 @@ dpdk_mbuf_rss_hash(struct rte_mbuf *mbuf, struct vr_ip *ipv4_hdr,
 
         if (likely(!vr_ip_fragment(ipv4_hdr))) {
             ip_proto = ipv4_hdr->ip_proto;
-            l4_ptr = (uint32_t *)((uintptr_t)ipv4_hdr + (ipv4_hdr->ip_hl) * IPV4_IHL_MULTIPLIER);
+            l4_ptr = (uint32_t *)((uintptr_t)ipv4_hdr +
+                            (ipv4_hdr->ip_hl) * RTE_IPV4_IHL_MULTIPLIER);
         } else {
             ip_proto = 0;
         }
@@ -1066,13 +1067,13 @@ dpdk_mbuf_rss_hash(struct rte_mbuf *mbuf, struct vr_ip *ipv4_hdr,
          */
         for (i = 0; i < 4; i++) {
             ip_addr_ptr = (uint64_t *)((uintptr_t)ipv6_hdr +
-                            offsetof(struct ipv6_hdr, src_addr) + 8*i);
+                            offsetof(struct rte_ipv6_hdr, src_addr) + 8*i);
             hash = rte_hash_crc_8byte(*ip_addr_ptr, hash);
         }
 
         ip_proto = ipv6_hdr->ip6_nxt;
          /* In case of extended header L4 is not hashed. */
-        l4_ptr = (uint32_t *)((uintptr_t)ipv6_hdr + sizeof(struct ipv6_hdr));
+        l4_ptr = (uint32_t *)((uintptr_t)ipv6_hdr + sizeof(struct rte_ipv6_hdr));
     } else {
         return 0;
     }
@@ -1128,7 +1129,7 @@ dpdk_mbuf_parse_and_hash_packets(struct rte_mbuf *mbuf)
     struct vr_ip6 *ipv6_inner_hdr = NULL;
     struct vr_udp *udp_hdr = NULL;
     struct vr_gre *gre_hdr = NULL;
-    struct vlan_hdr *vlan_hdr;
+    struct rte_vlan_hdr *vlan_hdr;
     unsigned int pull_len = VR_ETHER_HLEN, ipv4_len;
     int encap_type, helper_ret;
     unsigned short gre_udp_encap = 0, gre_hdr_len = VR_GRE_BASIC_HDR_LEN,
@@ -1147,7 +1148,7 @@ dpdk_mbuf_parse_and_hash_packets(struct rte_mbuf *mbuf)
 
         /* Store the first VLAN TCI for further use. */
         if (likely((mbuf->ol_flags & PKT_RX_VLAN) == 0)) {
-            vlan_hdr = (struct vlan_hdr *)(eth_hdr + 1);
+            vlan_hdr = (struct rte_vlan_hdr *)(eth_hdr + 1);
             mbuf->ol_flags |= PKT_RX_VLAN;
             mbuf->vlan_tci = rte_be_to_cpu_16(vlan_hdr->vlan_tci);
         }
@@ -1162,7 +1163,7 @@ dpdk_mbuf_parse_and_hash_packets(struct rte_mbuf *mbuf)
         if (unlikely(mbuf_data_len < pull_len + sizeof(struct vr_ip)))
             return -1;
 
-        ipv4_len = (ipv4_hdr->ip_hl) * IPV4_IHL_MULTIPLIER;
+        ipv4_len = (ipv4_hdr->ip_hl) * RTE_IPV4_IHL_MULTIPLIER;
         pull_len += ipv4_len;
 
         if (ipv4_hdr->ip_proto == VR_IP_PROTO_GRE) {
