@@ -356,7 +356,12 @@ struct vr_dpdk_bond_member_info {
 /* Maximum number of IO lcores */
 #define VR_DPDK_MAX_IO_LORES (VR_DPDK_LAST_IO_LCORE_ID - VR_DPDK_IO_LCORE_ID + 1)
 
-
+/*
+ * As we cannot ensure re-usuage of these flags in an easy way, for now check that DPDK
+ * used is below 18.05.2 version to ensure avoiding re-usage of same bit
+ * Note: section below kicks in only if we are using DPDK from upstream
+ */
+/* TODO(prabhjot) need to check if these flags can move more towards upstream code */
 /* needs to have a place holder for RX flags, to allow usuage of dpdk from upstream */
 #ifndef PKT_RX_GSO_TCP4
 #define PKT_RX_GSO_TCP4      (1ULL << 23)  /**< RX packet with TCPv4 segment offload */
@@ -364,21 +369,6 @@ struct vr_dpdk_bond_member_info {
 #ifndef PKT_RX_GSO_TCP6
 #define PKT_RX_GSO_TCP6      (1ULL << 24)  /**< RX packet with TCPv6 segment offload */
 #endif /* PKT_RX_GSO_TCP6 */
-
-#define IPV4_IHL_MULTIPLIER RTE_IPV4_IHL_MULTIPLIER
-#define ether_hdr rte_ether_hdr
-#define ether_addr rte_ether_addr
-#define vlan_hdr rte_vlan_hdr
-#define ipv4_hdr rte_ipv4_hdr
-#define ipv6_hdr rte_ipv6_hdr
-#define tcp_hdr rte_tcp_hdr
-#define TCP_FIN_FLAG RTE_TCP_FIN_FLAG
-#define TCP_PSH_FLAG RTE_TCP_PSH_FLAG
-#define RTE_MBUF_INDIRECT(mb)   RTE_MBUF_CLONED(mb)
-#define ETHER_ADDR_LEN RTE_ETHER_ADDR_LEN
-#define ETHER_MAX_LEN RTE_ETHER_MAX_LEN
-
-
 
 /*
  * VRouter/DPDK Data Structures
@@ -867,12 +857,12 @@ static inline int vr_dpdk_if_unlock()
 static inline uint16_t
 dpdk_get_ether_header_len(const void *data)
 {
-    struct ether_hdr *eth = (struct ether_hdr *)data;
+    struct rte_ether_hdr *eth = (struct rte_ether_hdr *)data;
 
     if (eth->ether_type == rte_cpu_to_be_16(RTE_ETHER_TYPE_VLAN))
-        return sizeof(struct ether_hdr) + sizeof(struct vlan_hdr);
+        return sizeof(struct rte_ether_hdr) + sizeof(struct rte_vlan_hdr);
     else
-        return sizeof(struct ether_hdr);
+        return sizeof(struct rte_ether_hdr);
 }
 
 
@@ -1018,10 +1008,10 @@ int dpdk_segment_packet(struct vr_packet *pkt, struct rte_mbuf *mbuf_in,
                 struct rte_mbuf **mbuf_out, const unsigned short out_num,
                 const unsigned short mss_size, bool do_outer_ip_csum);
 uint16_t dpdk_ipv4_udptcp_cksum(struct rte_mbuf *m,
-                       const struct ipv4_hdr *ipv4_hdr,
+                       const struct rte_ipv4_hdr *ipv4_hdr,
                        uint8_t *l4_hdr);
 uint16_t dpdk_ipv6_udptcp_cksum(struct rte_mbuf *m,
-                       const struct ipv6_hdr *ipv6_hdr,
+                       const struct rte_ipv6_hdr *ipv6_hdr,
                        uint8_t *l4_hdr);
 int dpdk_check_rx_mrgbuf_disable(void);
 

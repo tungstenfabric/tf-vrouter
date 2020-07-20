@@ -805,7 +805,7 @@ dpdk_pcow(struct vr_packet **pktp, unsigned short head_room)
      * If this is an indirect mbuf, allocate a new mbuf and copy
      * its data. Then free the original mbuf.
      */
-    if (RTE_MBUF_INDIRECT(mbuf)) {
+    if (RTE_MBUF_CLONED(mbuf)) {
         m_copy = vr_dpdk_pktmbuf_copy(mbuf, mbuf->pool);
         if (!m_copy) {
             return -ENOMEM;
