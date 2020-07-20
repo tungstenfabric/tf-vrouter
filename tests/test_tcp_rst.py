@@ -13,7 +13,7 @@ class TestTcpReset(unittest.TestCase):
 
     def setup_method(self, method):
         if (method.__name__ == 'test_tcp_reset_1'):
-            os.environ['DPDK_ARGS'] = '--vr_close_flow_on_tcp_rst 1'
+            os.environ['DPDK_ARGS'] = '--vr_uncond_close_flow_on_tcp_rst 1'
         if (os.environ['VTEST_ONLY_MODE']):
             ObjectBase.restart_vrouter_vtest_mode()
         else:
@@ -151,13 +151,27 @@ class TestTcpReset(unittest.TestCase):
         rst_pkt.show()
         return rst_pkt
 
-    def test_tcp_reset_0(self):
+    def test_tcp_reset_0_inseq_rst(self):
         rst_pkt = self.establish_flow()
 
         check_flow_delete_cmd = ("flow --get ")
 
-        # Case when vr_close_flow_on_tcp_rst is zero (Default)
-        # Flow will not be closed on RST packet
+        # Case when vr_uncond_close_flow_on_tcp_rst is zero (Default)
+        # and we send inseq TCP RST; Flow should be closed
+        self.vif4.send_packet(rst_pkt)
+
+        check_flow_delete_cmd += str(self.f_flow.get_fr_index())
+        flow_stats = ObjectBase.get_cli_output(check_flow_delete_cmd)
+        self.assertEqual(1, ("EVICTED" in flow_stats))
+
+    def test_tcp_reset_0_outseq_rst(self):
+        rst_pkt = self.establish_flow()
+
+        check_flow_delete_cmd = ("flow --get ")
+
+        # Case when vr_uncond_close_flow_on_tcp_rst is zero (Default)
+        # and we send out of sequence TCP RST; Flow shouldn't be closed
+        rst_pkt[TCP].seq = rst_pkt[TCP].seq + 2
         self.vif4.send_packet(rst_pkt)
 
         check_flow_delete_cmd += str(self.f_flow.get_fr_index())
@@ -169,7 +183,7 @@ class TestTcpReset(unittest.TestCase):
 
         check_flow_delete_cmd = ("flow --get ")
 
-        # Case when vr_close_flow_on_tcp_rst is one
+        # Case when vr_uncond_close_flow_on_tcp_rst is one
         # Flow will be closed on RST packet
         self.vif4.send_packet(rst_pkt)
 
