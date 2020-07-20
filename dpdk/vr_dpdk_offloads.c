@@ -39,7 +39,6 @@ dpdk_offload_flow_destroy(struct vr_offload_flow *oflow)
 int
 dpdk_offload_flow_create(struct vr_offload_flow *oflow)
 {
-#if (RTE_VERSION >= RTE_VERSION_NUM(18, 5, 0, 0))
     static struct rte_flow_attr attr = {
         .ingress = 1,
     };
@@ -379,12 +378,6 @@ dpdk_offload_flow_create(struct vr_offload_flow *oflow)
         return -rte_errno;
     }
     return 0;
-#else
-    RTE_SET_USED(oflow);
-    RTE_LOG(DEBUG, VROUTER, "Cannot create a dpdk offload flow, the version must be"
-            " at least 18.05\n");
-    return -ENOTSUP;
-#endif
 }
 
 void
