@@ -179,7 +179,6 @@ static FILE *dpdk_log = NULL;
 /* A packet mbuf pool constructor with vr_packet support */
 void vr_dpdk_pktmbuf_pool_init(struct rte_mempool *mp, void *opaque_arg)
 {
-#if (RTE_VERSION >= RTE_VERSION_NUM(2, 1, 0, 0))
     struct rte_pktmbuf_pool_private priv;
 
     /* Set private mbuf size for vr_packet. */
@@ -188,10 +187,6 @@ void vr_dpdk_pktmbuf_pool_init(struct rte_mempool *mp, void *opaque_arg)
     priv.mbuf_priv_size = sizeof(struct vr_packet);
 
     rte_pktmbuf_pool_init(mp, &priv);
-#else
-    rte_pktmbuf_pool_init(mp, (void *)(mp->elt_size - sizeof(struct rte_mbuf)
-        - sizeof(struct vr_packet)));
-#endif
 }
 
 /* The packet mbuf constructor with vr_packet support */
@@ -201,16 +196,6 @@ vr_dpdk_pktmbuf_init(struct rte_mempool *mp, void *opaque_arg, void *_m, unsigne
     struct rte_mbuf *m = _m;
     struct vr_packet *pkt;
     rte_pktmbuf_init(mp, opaque_arg, _m, i);
-
-#if (RTE_VERSION < RTE_VERSION_NUM(2, 1, 0, 0))
-    /* decrease rte packet size to fit vr_packet struct */
-    m->buf_len -= sizeof(struct vr_packet);
-    RTE_VERIFY(0 < m->buf_len);
-
-    /* start of buffer is just after vr_packet structure */
-    m->buf_addr += sizeof(struct vr_packet);
-    m->buf_physaddr += sizeof(struct vr_packet);
-#endif
 
     /* basic vr_packet initialization */
     pkt = vr_dpdk_mbuf_to_pkt(m);
@@ -845,29 +830,17 @@ dpdk_init(void)
     rte_openlog_stream(timestamp_log_stream);
 
     /* disable unwanted logtypes for debug purposes */
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
     rte_log_set_level(VR_DPDK_LOGTYPE_DISABLE, 0);
-#else
-    rte_set_log_type(VR_DPDK_LOGTYPE_DISABLE, 0);
-#endif
 
     /* set default log level to INFO */
-#if (RTE_VERSION >= RTE_VERSION_NUM(17, 11, 0, 0))
     rte_log_set_global_level(RTE_LOG_INFO);
-#else
-    rte_set_log_level(RTE_LOG_INFO);
-#endif
 
     ret = dpdk_mempools_create();
     if (ret < 0)
         return ret;
 
     /* get number of available ports found in scan */
-#if (RTE_VERSION >= RTE_VERSION_NUM(18, 05, 0, 0))
     nb_sys_ports = rte_eth_dev_count_avail();
-#else
-    nb_sys_ports = rte_eth_dev_count();
-#endif
     RTE_LOG(INFO, VROUTER, "Found %d eth device(s)\n", nb_sys_ports);
 
     /* get number of cores */
