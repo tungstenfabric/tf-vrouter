@@ -127,7 +127,7 @@ dpdk_bond_info_show_slave(VR_INFO_ARGS, uint16_t port_id,
     int i, ret;
     uint16_t slave_id;
     char *duplex[] = {"half", "full"};
-    struct ether_addr mac_addr;
+    struct rte_ether_addr mac_addr;
     struct rte_eth_link link;
     char name[VR_INTERFACE_NAME_LEN];
     struct rte_eth_bond_8023ad_slave_info info;
