@@ -49,6 +49,30 @@
     },
     {
       "key": {
+        "uuid": "8fb7f1d3_94afc648",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2603,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-07-22T13:03:27Z",
+      "side": 1,
+      "message": "ok that you can memset separately? The problem with your current approach is user need to explicity add his counter here.",
+      "parentUuid": "a7c55ba8_232a5365",
+      "range": {
+        "startLine": 2603,
+        "startChar": 0,
+        "endLine": 2603,
+        "endChar": 18
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "91d19ad8_7190f625",
         "filename": "dp-core/vr_interface.c",
         "patchSetId": 3
@@ -272,6 +296,30 @@
       "side": 1,
       "message": "yeah.. based on type, will call the corresponding API\u0027s.\nqueue-\u003erxq_ops.f_stats(queue-\u003eq_queue_h, \u0026rx_stats, 1); \nqueue-\u003etxq_ops.f_stats(queue-\u003eq_queue_h, \u0026tx_stats, 1);",
       "parentUuid": "764faffb_b049196f",
+      "range": {
+        "startLine": 2114,
+        "startChar": 8,
+        "endLine": 2114,
+        "endChar": 32
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cdcb2d6c_34634d46",
+        "filename": "dpdk/vr_dpdk_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2114,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-07-22T13:03:27Z",
+      "side": 1,
+      "message": "Yes that I understand, but did you check in code if all types of interfaces has this implemented?",
+      "parentUuid": "a838a315_ba4c7a7c",
       "range": {
         "startLine": 2114,
         "startChar": 8,
