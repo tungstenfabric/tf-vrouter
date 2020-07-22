@@ -2607,6 +2607,45 @@ error_exit:
 }
 
 static int
+vr_vif_stats_reset(struct vr_interface_stats *stats)
+{
+    unsigned int i;
+
+    /* vif counters */
+    stats->vis_ibytes = 0;
+    stats->vis_ipackets = 0;
+    stats->vis_ierrors = 0;
+    stats->vis_obytes = 0;
+    stats->vis_opackets = 0;
+    stats->vis_oerrors = 0;
+    /* queue counters */
+    stats->vis_queue_ipackets = 0;
+    for (i = 0; i < vr_num_cpus; i++)
+        stats->vis_queue_ierrors_to_lcore[i] = 0;
+    stats->vis_queue_ierrors = 0;
+    stats->vis_queue_opackets = 0;
+    stats->vis_queue_oerrors = 0;
+    /* port counters */
+    stats->vis_port_ipackets = 0;
+    stats->vis_port_ierrors = 0;
+    stats->vis_port_isyscalls = 0;
+    stats->vis_port_inombufs = 0;
+    stats->vis_port_opackets = 0;
+    stats->vis_port_oerrors = 0;
+    stats->vis_port_osyscalls = 0;
+    /* device counters */
+    stats->vis_dev_ibytes = 0;
+    stats->vis_dev_ipackets = 0;
+    stats->vis_dev_ierrors = 0;
+    stats->vis_dev_inombufs = 0;
+    stats->vis_dev_obytes = 0;
+    stats->vis_dev_opackets = 0;
+    stats->vis_dev_oerrors = 0;
+
+    return 0;
+}
+
+static int
 __vr_interface_make_req(vr_interface_req *req, struct vr_interface *intf,
         unsigned int core)
 {
@@ -2700,7 +2739,6 @@ __vr_interface_make_req(vr_interface_req *req, struct vr_interface *intf,
         req->vifr_pbb_mac_size = 0;
     }
     req->vifr_vhostuser_mode = intf->vif_vhostuser_mode;
-
 
     /* vif counters */
     req->vifr_ibytes = 0;
@@ -3326,6 +3364,90 @@ generate_response:
     return 0;
 }
 
+static int
+vr_interface_stats_reset(struct vr_interface *vif, int core)
+{
+    int cpu = 0;
+
+    if (hif_ops->hif_stats_update)
+        hif_ops->hif_clear_stats(vif);
+
+    /* Clearing Tx/Rx packets on all cores */
+    if(core == -1) {
+        for (cpu = 0; cpu < vr_num_cpus; cpu++) {
+            vr_vif_stats_reset(&vif->vif_stats[cpu]);
+        }
+    } else {
+        if(core > (vr_num_cpus - 1)) {
+            vr_printf("vif clear stats: Invalid core id: %d\n", core);
+            return -1;
+        } else {
+            vr_vif_stats_reset(&vif->vif_stats[core]);
+        }
+    }
+    return 0;
+}
+
+static int
+vr_interface_clear_stats(vr_interface_req *r)
+{
+    int i, ret = 0;
+    struct vr_interface *vif;
+    struct vrouter *router = vrouter_get(0);
+    vr_interface_req *response = NULL;
+    int core = r->vifr_core - 1;
+
+    response = vr_zalloc(sizeof(*response), VR_INTERFACE_REQ_OBJECT);
+    if (!response && (ret = -ENOMEM))
+        goto exit_get;
+
+    if(r->vifr_idx == -1) {
+        for (i = 0; i < router->vr_max_interfaces; i++) {
+            vif = router->vr_interfaces[i];
+            if(vif) {
+                ret = vr_interface_stats_reset(vif, core);
+                if(ret < 0)
+                    goto exit_get;
+            }
+        }
+    } else {
+        vif = router->vr_interfaces[r->vifr_idx];
+        if (vif) {
+            ret = vr_interface_stats_reset(vif, core);
+            if(ret < 0)
+                goto exit_get;
+
+            response->vifr_name = vr_zalloc(VR_INTERFACE_NAME_LEN,
+                    VR_INTERFACE_REQ_NAME_OBJECT);
+            if (response->vifr_name) {
+                snprintf(response->vifr_name, (sizeof(vif->vif_name) - 1),
+                        "%s", vif->vif_name);
+            } else {
+                ret = -ENOMEM;
+                goto exit_get;
+            }
+
+        } else {
+            vr_printf("vif clear stats: Invalid vif id: %d\n", r->vifr_idx);
+            goto exit_get;
+        }
+    }
+    response->h_op = SANDESH_OP_RESET;
+    response->vifr_core = r->vifr_core;
+    response->vifr_idx = r->vifr_idx;
+
+exit_get:
+    vr_message_response(VR_INTERFACE_OBJECT_ID, ret ? NULL : response, ret, false);
+
+    if(response->vifr_name)
+        vr_free(response->vifr_name, VR_INTERFACE_REQ_NAME_OBJECT);
+    if (response != NULL)
+        vr_free(response, VR_INTERFACE_REQ_OBJECT);
+
+    return ret;
+}
+
+
 void
 vr_interface_req_process(void *s_req)
 {
@@ -3348,6 +3470,10 @@ vr_interface_req_process(void *s_req)
 
     case SANDESH_OP_DUMP:
         ret = vr_interface_dump(req);
+        break;
+
+    case SANDESH_OP_RESET:
+        ret = vr_interface_clear_stats(req);
         break;
 
     default:

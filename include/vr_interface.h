@@ -475,6 +475,7 @@ struct vr_host_interface_ops {
             struct vr_interface_bond_info *bond_info);
     int (*hif_get_vlan_info)(struct vr_interface *vif,
             struct vr_interface_vlan_info *vlan_info);
+    int (*hif_clear_stats)(struct vr_interface *vif);
 };
 
 extern int vr_interface_init(struct vrouter *);
