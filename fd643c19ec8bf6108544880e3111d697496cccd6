@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "a7c55ba8_232a5365",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2603,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-07-22T09:26:00Z",
+      "side": 1,
+      "message": "stats-\u003evis_queue_ierrors_to_lcore is a pointer and its allocated during vif creation.\nso we can\u0027t do memset here",
+      "parentUuid": "24dab1e4_16d68e4b",
+      "range": {
+        "startLine": 2603,
+        "startChar": 0,
+        "endLine": 2603,
+        "endChar": 18
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "91d19ad8_7190f625",
         "filename": "dp-core/vr_interface.c",
         "patchSetId": 3
@@ -45,6 +69,30 @@
       "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "29b694d2_7d6604e8",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 3398,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-07-22T09:26:00Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "91d19ad8_7190f625",
+      "range": {
+        "startLine": 3397,
+        "startChar": 0,
+        "endLine": 3398,
+        "endChar": 10
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "ad4ba5ee_11577df7",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 3416,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-07-22T09:26:00Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "25125484_728a08c5",
+      "range": {
+        "startLine": 3401,
+        "startChar": 1,
+        "endLine": 3416,
+        "endChar": 13
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d1720198_90307764",
         "filename": "dp-core/vr_interface.c",
         "patchSetId": 3
@@ -91,6 +163,30 @@
       "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a5b35e5a_0d782ee0",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 3424,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-07-22T09:26:00Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "d1720198_90307764",
+      "range": {
+        "startLine": 3423,
+        "startChar": 0,
+        "endLine": 3424,
+        "endChar": 18
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "683c8f67_b35de3c8",
+        "filename": "dpdk/vr_dpdk_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2065,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-07-22T09:26:00Z",
+      "side": 1,
+      "message": "yeah.. it resets for all slave ports\nstatic void                                                                         \nbond_ethdev_stats_reset(struct rte_eth_dev *dev)                                    \n{                                                                                   \n        struct bond_dev_private *internals \u003d dev-\u003edata-\u003edev_private;                \n        int i;                                                                      \n                                                                                    \n        for (i \u003d 0; i \u003c internals-\u003eslave_count; i++)                                \n                rte_eth_stats_reset(internals-\u003eslaves[i].port_id);                  \n}",
+      "parentUuid": "d18175dc_a9941776",
+      "range": {
+        "startLine": 2065,
+        "startChar": 8,
+        "endLine": 2065,
+        "endChar": 27
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "764faffb_b049196f",
         "filename": "dpdk/vr_dpdk_interface.c",
         "patchSetId": 3
@@ -128,6 +248,30 @@
       "writtenOn": "2020-07-20T18:31:13Z",
       "side": 1,
       "message": "Will this work for all types of interfaces - vhost0 (tapdev), fabric, af_packet, vlan and virtio stats?",
+      "range": {
+        "startLine": 2114,
+        "startChar": 8,
+        "endLine": 2114,
+        "endChar": 32
+      },
+      "revId": "fd643c19ec8bf6108544880e3111d697496cccd6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a838a315_ba4c7a7c",
+        "filename": "dpdk/vr_dpdk_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2114,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-07-22T09:26:00Z",
+      "side": 1,
+      "message": "yeah.. based on type, will call the corresponding API\u0027s.\nqueue-\u003erxq_ops.f_stats(queue-\u003eq_queue_h, \u0026rx_stats, 1); \nqueue-\u003etxq_ops.f_stats(queue-\u003eq_queue_h, \u0026tx_stats, 1);",
+      "parentUuid": "764faffb_b049196f",
       "range": {
         "startLine": 2114,
         "startChar": 8,
