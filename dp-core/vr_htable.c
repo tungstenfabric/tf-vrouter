@@ -45,7 +45,7 @@ int
 vr_htable_trav_range(vr_htable_t htable, unsigned int start,
         unsigned int range, htable_trav_cb cb, void *data)
 {
-    unsigned int i, hindex;
+    unsigned int i, hindex = 0;
     vr_hentry_t *ent;
     struct vr_htable *table = (struct vr_htable *)htable;
 
@@ -58,7 +58,7 @@ vr_htable_trav_range(vr_htable_t htable, unsigned int start,
         cb(htable, ent, hindex, data);
     }
 
-    return i;
+    return hindex;
 }
 
 void
