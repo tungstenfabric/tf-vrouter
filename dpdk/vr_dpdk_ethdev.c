@@ -477,7 +477,7 @@ dpdk_ethdev_info_update(struct vr_dpdk_ethdev *ethdev)
 
 /* Setup ethdev hardware queues */
 static int
-dpdk_ethdev_queues_setup(struct vr_dpdk_ethdev *ethdev)
+dpdk_ethdev_queues_setup(struct vr_dpdk_ethdev *ethdev, struct rte_eth_dev_info* dev_info)
 {
     int ret, i;
     uint8_t port_id = ethdev->ethdev_port_id;
@@ -506,6 +506,17 @@ dpdk_ethdev_queues_setup(struct vr_dpdk_ethdev *ethdev)
             continue;
         }
 
+        if ((rx_queue_conf.offloads & dev_info->rx_queue_offload_capa) !=
+             rx_queue_conf.offloads) {
+            RTE_ETHDEV_LOG(ERR,
+             "Ethdev port_id=%d rx_queue_id=%d, new added offloads 0x%"PRIx64" must be "
+             "within per-queue offload capabilities 0x%"PRIx64" in %s()\n",
+             port_id, rx_queue_id, local_conf.offloads,
+             dev_info.rx_queue_offload_capa,
+             __func__);
+            return -EINVAL;
+        }
+
         ret = rte_eth_rx_queue_setup(port_id, i, vr_rxd_sz,
             SOCKET_ID_ANY, &rx_queue_conf, mempool);
         if (ret < 0) {
@@ -525,6 +536,17 @@ dpdk_ethdev_queues_setup(struct vr_dpdk_ethdev *ethdev)
     i = ethdev->ethdev_nb_rx_queues - ethdev->ethdev_nb_rss_queues;
     RTE_LOG(INFO, VROUTER, "    setup %d RSS queue(s) and %d filtering queue(s)\n",
         (int)ethdev->ethdev_nb_rss_queues, i);
+
+    if ((tx_queue_conf.offloads & dev_info->tx_queue_offload_capa) !=
+         tx_queue_conf.offloads) {
+        RTE_ETHDEV_LOG(ERR,
+            "Ethdev port_id=%d tx_queue_id=%d, new added offloads 0x%"PRIx64" must be "
+            "within per-queue offload capabilities 0x%"PRIx64" in %s()\n",
+            port_id, tx_queue_id, local_conf.offloads,
+            dev_info.tx_queue_offload_capa,
+            __func__);
+        return -EINVAL;
+    }
 
     /* configure TX queues */
     for (i = 0; i < ethdev->ethdev_nb_tx_queues; i++) {
@@ -956,6 +978,63 @@ vr_dpdk_bond_intf_cb_register(struct vr_dpdk_ethdev *ethdev)
     }
 }
 
+static int
+dpdk_eth_dev_check_offload_cap(struct vr_dpdk_ethdev *ethdev,
+                               struct rte_eth_conf *dev_conf,
+                               struct rte_eth_dev_info *dev_info)
+{
+    uint8_t port_id = ethdev->ethdev_port_id;
+    struct rte_eth_dev_info dev_info;
+    int ret = 0;
+
+    if ((dev_conf->rxmode.offloads & dev_info->rx_offload_capa) !=
+         dev_conf->rxmode.offloads) {
+        RTE_ETHDEV_LOG(ERR,
+            "Ethdev port_id=%u requested Rx offloads 0x%"PRIx64" doesn't match Rx offloads "
+            "capabilities 0x%"PRIx64" in %s()\n",
+            port_id, dev_conf->rxmode.offloads,
+            dev_info.rx_offload_capa,
+            __func__);
+        ret = -EINVAL;
+        goto exit;
+    }
+    if ((dev_conf->txmode.offloads & dev_info->tx_offload_capa) !=
+         dev_conf->txmode.offloads) {
+        RTE_ETHDEV_LOG(ERR,
+            "Ethdev port_id=%u requested Tx offloads 0x%"PRIx64" doesn't match Tx offloads "
+            "capabilities 0x%"PRIx64" in %s()\n",
+            port_id, dev_conf->txmode.offloads,
+            dev_info.tx_offload_capa,
+            __func__);
+        ret = -EINVAL;
+        goto exit;
+    }
+    /* Check that device supports requested rss hash functions. */
+    if ((dev_info->flow_type_rss_offloads |
+         dev_conf->rx_adv_conf.rss_conf.rss_hf) !=
+        dev_info->flow_type_rss_offloads) {
+        RTE_ETHDEV_LOG(ERR,
+            "Ethdev port_id=%u invalid rss_hf: 0x%"PRIx64", valid value: 0x%"PRIx64"\n",
+            port_id, dev_conf->rx_adv_conf.rss_conf.rss_hf,
+            dev_info.flow_type_rss_offloads);
+        ret = -EINVAL;
+        goto exit;
+    }
+
+    /* Check if Rx RSS distribution is disabled but RSS hash is enabled. */
+    if (((dev_conf->rxmode.mq_mode & ETH_MQ_RX_RSS_FLAG) == 0) &&
+        (dev_conf->rxmode.offloads & DEV_RX_OFFLOAD_RSS_HASH)) {
+        RTE_ETHDEV_LOG(ERR,
+            "Ethdev port_id=%u config invalid Rx mq_mode without RSS but %s offload is requested\n",
+            port_id,
+            rte_eth_dev_rx_offload_name(DEV_RX_OFFLOAD_RSS_HASH));
+        ret = -EINVAL;
+        goto exit;
+    }
+exit:
+    return ret;
+}
+
 /* Init ethernet device */
 int
 vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf)
@@ -969,7 +1048,17 @@ vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf
     vif = __vrouter_get_interface(vrouter_get(0), ethdev->ethdev_vif_idx);
 
     dpdk_ethdev_info_update(ethdev);
-
+    ret = rte_eth_dev_info_get(port_id, &dev_info);
+    if (ret < 0) {
+        return ret;
+    }
+    ret = dpdk_eth_dev_check_offload_cap(ethdev, dev_conf, dev_info);
+    if (ret < 0) {
+        RTE_LOG(ERR, VROUTER, "    error configuring eth dev %" PRIu8
+                ": %s (%d)\n",
+            port_id, rte_strerror(-ret), -ret);
+        return ret;
+    }
     ret = rte_eth_dev_configure(port_id, ethdev->ethdev_nb_rx_queues,
         ethdev->ethdev_nb_tx_queues, dev_conf);
     if (ret < 0) {
@@ -993,7 +1082,7 @@ vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf
     if (vif_is_fabric(vif))
         vr_dpdk_bond_intf_cb_register(ethdev);
 
-    ret = dpdk_ethdev_queues_setup(ethdev);
+    ret = dpdk_ethdev_queues_setup(ethdev, dev_info);
     if (ret < 0)
         return ret;
 
