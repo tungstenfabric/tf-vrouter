@@ -22,6 +22,30 @@
       "revId": "6759ee0826f4070678a6f4485491c9a0c3de6036",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3e17b2af_031bcad2",
+        "filename": "dpdk/vr_dpdk_interface.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 365,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-07-30T15:53:46Z",
+      "side": 0,
+      "message": "not required as per the code.. can you too check once?",
+      "parentUuid": "ab4a0ecb_49d93cfa",
+      "range": {
+        "startLine": 365,
+        "startChar": 0,
+        "endLine": 365,
+        "endChar": 26
+      },
+      "revId": "6759ee0826f4070678a6f4485491c9a0c3de6036",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
