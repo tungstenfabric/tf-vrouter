@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab4a0ecb_49d93cfa",
+        "filename": "dpdk/vr_dpdk_interface.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 365,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-07-30T15:16:36Z",
+      "side": 0,
+      "message": "this function is not required ?",
+      "range": {
+        "startLine": 365,
+        "startChar": 0,
+        "endLine": 365,
+        "endChar": 26
+      },
+      "revId": "6759ee0826f4070678a6f4485491c9a0c3de6036",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
