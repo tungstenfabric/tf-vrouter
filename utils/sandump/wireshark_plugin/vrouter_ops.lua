@@ -232,3 +232,6 @@ vrouter_ops_table[45] = {}
 vrouter_ops_table[45].field_name = "vo_pkt_droplog_min_en"
 vrouter_ops_table[45].ProtoField = ProtoField.int8
 
+vrouter_ops_table[46] = {}
+vrouter_ops_table[46].field_name = "vo_uncond_close_flow_on_tcp_rst"
+vrouter_ops_table[46].ProtoField = ProtoField.int8
