@@ -85,7 +85,7 @@ static int if_kindex = -1, vrf_id, vr_ifindex = -1;
 static int if_pmdindex = -1, vif_index = -1;
 static bool need_xconnect_if = false;
 static bool need_vif_id = false;
-static int if_xconnect_kindex = -1;
+static int if_xconnect_kindex[VR_MAX_PHY_INF] = {-1, -1, -1};
 static short vlan_id = -1;
 static int vr_ifflags;
 static unsigned int core = (unsigned)-1;
@@ -1277,6 +1277,8 @@ static void
 parse_long_opts(int option_index, char *opt_arg)
 {
     errno = 0;
+    int i;
+    char *sep_arg;
 
     if (!*(long_options[option_index].flag))
         *(long_options[option_index].flag) = 1;
@@ -1416,13 +1418,19 @@ parse_long_opts(int option_index, char *opt_arg)
             break;
 
         case XCONNECT_OPT_INDEX:
-            if_xconnect_kindex = if_nametoindex(opt_arg);
-            if (isdigit(opt_arg[0])) {
-                if_pmdindex = strtol(opt_arg, NULL, 0);
-            } else if (!if_xconnect_kindex) {
-                printf("%s does not seem to be a valid physical interface name\n",
-                        opt_arg);
-                Usage();
+            i = 0;
+            opt_arg = strdup(opt_arg);
+            while ((sep_arg = strsep(&opt_arg, ",")) != NULL) {
+                if_xconnect_kindex[i++] = if_nametoindex(sep_arg);
+                if (isdigit(sep_arg[0])) {
+                    if_pmdindex = strtol(sep_arg, NULL, 0);
+                } else if (!if_xconnect_kindex[i]) {
+                    printf("%s does not seem to be a valid physical interface name\n",
+                           sep_arg);
+                    Usage();
+                }
+                if (if_pmdindex != -1)
+                    break;
             }
 
             break;
@@ -1468,7 +1476,7 @@ validate_options(void)
 
     if (pmd_set || pci_set) {
         if_kindex = if_pmdindex;
-        if_xconnect_kindex = if_pmdindex;
+        if_xconnect_kindex[0] = if_pmdindex;
     }
 
     if (create_set) {
