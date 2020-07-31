@@ -33,6 +33,9 @@ extern "C" {
 #define VR_UNIX_PATH_MAX    108
 #define VR_MAX_CPUS         256
 
+// Comment--
+#define VR_MAX_PHY_INF 3
+
 #define VR_CPU_MASK     0xffff
 extern unsigned int vr_num_cpus;
 
