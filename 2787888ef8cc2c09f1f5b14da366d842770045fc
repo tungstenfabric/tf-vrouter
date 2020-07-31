@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "04086778_2f7086e3",
+        "filename": "tests/test_cem_16046.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-07-31T15:07:20Z",
+      "side": 1,
+      "message": "As discussed, pl introduce a 1s delay so that no flakiness",
+      "range": {
+        "startLine": 80,
+        "startChar": 8,
+        "endLine": 81,
+        "endChar": 77
+      },
+      "revId": "2787888ef8cc2c09f1f5b14da366d842770045fc",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
