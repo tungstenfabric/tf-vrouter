@@ -16,6 +16,24 @@
       "revId": "512ffcc11df51687f325bacf4ac3f5572e079d7e",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "20f3ae19_dd2a380a",
+        "filename": "include/vr_dpdk.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-08-01T18:46:09Z",
+      "side": 0,
+      "message": "Yes, they will need to move to 19.11. Sachin will be announcing this in the next TF meeting.",
+      "parentUuid": "d554a20f_f06a9969",
+      "revId": "512ffcc11df51687f325bacf4ac3f5572e079d7e",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
