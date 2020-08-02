@@ -1279,7 +1279,14 @@ ipsec_rx(struct vr_interface *vif, struct vr_packet *pkt,
         unsigned short vlan_id)
 {
     struct vrouter *router = vrouter_get(0);
-    pkt->vp_if = router->vr_eth_if;
+    int i;
+    for (i = 0; i < VR_MAX_PHY_INF; i++) {
+        if (router->vr_eth_if[i] &&
+            (strcmp(vif->vif_mac, router->vr_eth_if[i]->vif_mac) == 0)) {
+            pkt->vp_if = router->vr_eth_if[i];
+            break;
+        }
+    }
     return eth_rx(vif, pkt, vlan_id);
 }
 
@@ -1766,6 +1773,7 @@ static void
 vrouter_del_interface(struct vr_interface *vif)
 {
     struct vrouter *router;
+    int i;
 
     if (!vif || !(router = vrouter_get(vif->vif_rid)))
         return;
@@ -1798,9 +1806,10 @@ vrouter_del_interface(struct vr_interface *vif)
             vif->vif_bridge = NULL;
         }
 
-        if (router->vr_eth_if == vif)
-            router->vr_eth_if = NULL;
-
+        for (i = 0; i < VR_MAX_PHY_INF; i++) {
+            if (router->vr_eth_if[i] == vif)
+                router->vr_eth_if[i] = NULL;
+        }
         break;
 
     case VIF_TYPE_VIRTUAL:
@@ -1878,7 +1887,8 @@ static int
 vrouter_add_interface(struct vr_interface *vif, vr_interface_req *vifr)
 {
     struct vrouter *router = vrouter_get(vif->vif_rid);
-    struct vr_interface *eth_vif = NULL;
+    struct vr_interface *eth_vif[VR_MAX_PHY_INF] = {NULL};
+    int i;
 
     if (!router)
         return -ENODEV;
@@ -1887,12 +1897,14 @@ vrouter_add_interface(struct vr_interface *vif, vr_interface_req *vifr)
         return -EEXIST;
 
     if (vif->vif_type == VIF_TYPE_HOST) {
-        if (vifr->vifr_cross_connect_idx[0] < 0)
-            return -EINVAL;
+        for (i = 0; i < VR_MAX_PHY_INF; i++) {
+            if (vifr->vifr_cross_connect_idx[i] < 0)
+                continue;
 
-        eth_vif = __vrouter_get_interface_os(router, vifr->vifr_cross_connect_idx[0]);
-        if (!eth_vif)
-            return -ENODEV;
+            eth_vif[i] = __vrouter_get_interface_os(router, vifr->vifr_cross_connect_idx[i]);
+            if (!eth_vif[i])
+                return -ENODEV;
+        } 
     }
 
     vif->vif_router = router;
@@ -1907,10 +1919,13 @@ vrouter_add_interface(struct vr_interface *vif, vr_interface_req *vifr)
 
     case VIF_TYPE_HOST:
         router->vr_host_if = vif;
-        router->vr_eth_if = eth_vif;
-        vif->vif_bridge = eth_vif;
-        eth_vif->vif_bridge = vif;
-
+        for (i = 0; i < VR_MAX_PHY_INF; i++) {
+            if (eth_vif[i]) {
+                router->vr_eth_if[i] = eth_vif[i];
+                vif->vif_bridge = eth_vif[i];
+                eth_vif[i]->vif_bridge = vif;
+            }
+        }
         break;
 
     default:

@@ -560,8 +560,8 @@ dpdk_knidev_change_mtu(uint8_t port_id, unsigned new_mtu)
      * set the MTU manually for all the slaves.
      */
     /* Bond vif uses first slave port ID. */
-    if (router->vr_eth_if)
-        ethdev = (struct vr_dpdk_ethdev *)router->vr_eth_if->vif_os;
+    if (router->vr_eth_if[0])
+        ethdev = (struct vr_dpdk_ethdev *)router->vr_eth_if[0]->vif_os;
 
     if (ethdev && vr_dpdk_ethdev_bond_port_match(port_id, ethdev)) {
         RTE_LOG(INFO, VROUTER, "Changing bond eth device %" PRIu8 " MTU\n",
@@ -644,8 +644,8 @@ dpdk_knidev_config_network_if(uint8_t port_id, uint8_t if_up)
         return -EINVAL;
     }
 
-    if (router->vr_eth_if)
-        ethdev = (struct vr_dpdk_ethdev *)router->vr_eth_if->vif_os;
+    if (router->vr_eth_if[0])
+        ethdev = (struct vr_dpdk_ethdev *)router->vr_eth_if[0]->vif_os;
 
     if (ethdev && vr_dpdk_ethdev_bond_port_match(port_id, ethdev))
         port_id = ethdev->ethdev_port_id;

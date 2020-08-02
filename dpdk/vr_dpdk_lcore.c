@@ -1198,7 +1198,7 @@ dpdk_lcore_vlan_fwd(struct vr_dpdk_lcore* lcore)
      * Receive packets from VLAN interface and send them to the wire.
      * Those packets will not be seen in vifdump on the physical vif.
      */
-    eth_vif = router->vr_eth_if;
+    eth_vif = router->vr_eth_if[0];
     if (eth_vif) {
         hw_queue = lcore->lcore_hw_queue[eth_vif->vif_idx];
         if (hw_queue < 0)

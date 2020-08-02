@@ -586,8 +586,8 @@ static void vr_dpdk_handle_vhost0_notification(uint32_t mtu, uint32_t if_up)
     uint8_t slave_port_id, port_id = 0;
     int ret = 0, i;
 
-    if (router->vr_eth_if)
-        ethdev = (struct vr_dpdk_ethdev *)router->vr_eth_if->vif_os;
+    if (router->vr_eth_if[0])
+        ethdev = (struct vr_dpdk_ethdev *)router->vr_eth_if[0]->vif_os;
 
     if (ethdev == NULL) {
         RTE_LOG(ERR, VROUTER, "%s error: NULL ethdev\n", __func__);
