@@ -516,7 +516,7 @@ fh_adjust_tcp_mss(struct tcphdr *tcph, struct mbuf *m)
 	router = vrouter_get(0);
 	KASSERT(router, ("NULL vrouter"));
 
-	if (router->vr_eth_if == NULL)
+	if (router->vr_eth_if[0] == NULL)
 		return;
 
 	opt_ptr = (uint8_t *)tcph;
@@ -537,7 +537,7 @@ fh_adjust_tcp_mss(struct tcphdr *tcph, struct mbuf *m)
 
 			pkt_mss = be16dec(&opt_ptr[opt_off+2]);
 
-			ifp = (struct ifnet *) router->vr_eth_if->vif_os;
+			ifp = (struct ifnet *) router->vr_eth_if[0]->vif_os;
 			if (!ifp)
 				return;
 			max_mss = ifp->if_mtu -

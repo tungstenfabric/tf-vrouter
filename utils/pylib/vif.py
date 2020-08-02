@@ -262,6 +262,7 @@ class VhostVif(Vif):
             mtu=1514,
             flags=(constants.VIF_FLAG_L3_ENABLED |
                    constants.VIF_FLAG_DHCP_ENABLED),
+            xconnect_idx=None,
             **kwargs):
         name = 'vhost0'
         super(VhostVif, self).__init__(idx, name, ipv4_str, mac_str, ipv6_str,
@@ -273,6 +274,7 @@ class VhostVif(Vif):
         self.vifr_mcast_vrf = mcast_vrf
         self.vifr_mtu = mtu
         self.vifr_flags = flags
+        self.vifr_cross_connect_idx = xconnect_idx
 
 
 class FabricVif(Vif):
