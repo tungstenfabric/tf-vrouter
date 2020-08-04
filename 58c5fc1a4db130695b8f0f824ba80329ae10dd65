@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c4e9e3c1_d6b94ba4",
+        "filename": "gdb/flowindexscript.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-08-04T12:41:27Z",
+      "side": 1,
+      "message": "can you rename this script as dump_flow.sh?",
+      "revId": "58c5fc1a4db130695b8f0f824ba80329ae10dd65",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "be75cb04_c6a04045",
+        "filename": "gdb/flowindexscript.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-08-04T12:41:27Z",
+      "side": 1,
+      "message": "Can you have a usage() function printing the usage of this script? If user doesn\u0027t pass the argument you can call the usage().",
+      "revId": "58c5fc1a4db130695b8f0f824ba80329ae10dd65",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c9e37462_2856ff9e",
+        "filename": "gdb/gdbscript.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-08-04T12:41:27Z",
+      "side": 1,
+      "message": "Can you rename this script to dump_vrouter_all_minimal.sh? Also before starting the dump, display a warning msg that this script may take several minutes to complete.",
+      "revId": "58c5fc1a4db130695b8f0f824ba80329ae10dd65",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
