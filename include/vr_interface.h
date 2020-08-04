@@ -126,6 +126,9 @@
 /* When vRouter act as gateway, allow traffic between fabric-fabric */
 #define VIF_FLAG_FAB_GW_MODE       0x20000000
 
+/* Interface flag for MAC-IP Learning feature */
+#define VIF_FLAG_MAC_IP_LEARNING   0x40000000
+
 /* vrouter capabilities mask (cannot be changed by agent) */
 #define VIF_VR_CAP_MASK (VIF_FLAG_TX_CSUM_OFFLOAD | \
                          VIF_FLAG_VLAN_OFFLOAD | \

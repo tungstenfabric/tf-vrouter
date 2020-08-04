@@ -286,6 +286,60 @@ class IcmpPacket(IpPacket):
             return self.ip / self.icmp
 
 
+class Icmpv6Packet(Ipv6Packet):
+    """
+    Icmpv6Packet class for creating ICMP packet
+
+    Mandatory Parameters:
+    --------------------
+    sipv6 : str
+        Source IP address
+    dipv6 : str
+        Destination IP address
+
+    Optional Parameters:
+    -------------------
+    smac : str
+       Source mac address
+    dmac : str
+        Destination mac address
+    icmp_type : int
+        Icmp type
+    id : int
+        Identifier
+    """
+
+    def __init__(
+            self,
+            sipv6=None,
+            dipv6=None,
+            smac=None,
+            dmac=None,
+            icmp_type=constants.ECHO_REQUEST,
+            id=1,
+            size=0,
+            nh=0,
+            **kwargs):
+        super(Icmpv6Packet, self).__init__(
+            sipv6,
+            dipv6,
+            smac,
+            dmac,
+            nh,
+            **kwargs)
+        self.icmp = ICMP(type=icmp_type, code=0, id=id)
+        self.size = size
+
+    def get_packet(self):
+        if self.size and self.eth:
+            payload = "x" * self.size
+            return self.eth / self.ipv6 / self.icmp / payload
+        elif self.eth:
+            return self.eth / self.ipv6 / self.icmp
+        else:
+            return self.ipv6 / self.icmp
+
+
 class UdpPacket(IpPacket):
     """
     UdpPacket class for creating udp packet
