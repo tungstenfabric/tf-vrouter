@@ -144,6 +144,7 @@ buffer sandesh vr_interface_req {
     90: list<byte>  vifr_bond_slave_drv_name;
     91: u32         vifr_vlan_tag;
     92: list<byte>  vifr_vlan_name;
+    93: u32         vifr_macip_learn;
 }
 
 buffer sandesh vr_vxlan_req {

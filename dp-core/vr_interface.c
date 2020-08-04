@@ -458,14 +458,14 @@ agent_tx(struct vr_interface *vif, struct vr_packet *pkt,
     int ret;
     struct vr_interface_stats *stats = vif_get_stats(vif, pkt->vp_cpu);
 
+    stats->vis_obytes += pkt_len(pkt);
+    stats->vis_opackets++;
+
     if (vif->vif_flags & VIF_FLAG_MOCK_DEVICE) {
         PKT_LOG(VP_DROP_INTERFACE_DROP, pkt, 0, VR_INTERFACE_C, __LINE__);
         vr_pfree(pkt, VP_DROP_INTERFACE_DROP);
         return 0;
     }
-
-    stats->vis_obytes += pkt_len(pkt);
-    stats->vis_opackets++;
 
     ret = hif_ops->hif_tx(vif, pkt);
     if (ret != 0) {
@@ -604,6 +604,7 @@ agent_send(struct vr_interface *vif, struct vr_packet *pkt,
     case AGENT_TRAP_DIAG:
     case AGENT_TRAP_MAC_LEARN:
     case AGENT_TRAP_MAC_MOVE:
+    case AGENT_TRAP_MAC_IP_LEARNING:
         if (params->trap_param)
             hdr->hdr_cmd_param = htonl(*(unsigned int *)(params->trap_param));
         break;
