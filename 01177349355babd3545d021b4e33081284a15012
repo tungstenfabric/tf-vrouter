@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "79587388_37ddb845",
+        "filename": "dpdk/vr_dpdk_interface.c",
+        "patchSetId": 9
+      },
+      "lineNbr": 938,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-08-04T04:53:12Z",
+      "side": 1,
+      "message": "Is this condition required ?",
+      "range": {
+        "startLine": 938,
+        "startChar": 0,
+        "endLine": 938,
+        "endChar": 50
+      },
+      "revId": "01177349355babd3545d021b4e33081284a15012",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d1096176_00559e6e",
+        "filename": "include/vr_dpdk.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-08-04T04:53:12Z",
+      "side": 1,
+      "message": "by default, we have configured MAX_LCORE as 128, then this will be printed always.",
+      "range": {
+        "startLine": 136,
+        "startChar": 0,
+        "endLine": 136,
+        "endChar": 25
+      },
+      "revId": "01177349355babd3545d021b4e33081284a15012",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
