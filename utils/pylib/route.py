@@ -99,9 +99,12 @@ class InetRoute(Route):
         Rtr label flags
     rtr_label : int
         Rtr label
+    mac_str : str
+        Stitched MAC address
+
     """
 
-    def __init__(self, vrf, prefix, nh_idx, prefix_len=32,
+    def __init__(self, vrf, prefix, nh_idx, prefix_len=32, mac_str=None,
                  h_op=constants.SANDESH_OPER_ADD, rtr_label_flags=None,
                  rtr_label=None, **kwargs):
         super(InetRoute, self).__init__(
@@ -109,7 +112,7 @@ class InetRoute(Route):
             vrf,
             prefix,
             prefix_len,
-            None,
+            mac_str,
             nh_idx,
             h_op,
             rtr_label_flags,
