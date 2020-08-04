@@ -29,11 +29,21 @@ No. of arguments:0
 end
 
 define dump_flow_index
+    set $rflow = 0
     if ($arg0 < vr_flow_entries)
         dump_flow_internal $arg0 1 $flowtable.ht_htable
     else
         set $oflow_index = $arg0 - vr_flow_entries
         dump_flow_internal $oflow_index 1 vr_flowtable.ht_otable
+    end
+    if($rflow > 0)
+        printf "Reverse Flow\n"
+        if($rflow < vr_flow_entries)
+            dump_flow_internal $rflow 1 $flowtable.ht_htable
+        else
+            set $oflow_index = $rflow - vr_flow_entries
+            dump_flow_internal $oflow_index 1 vr_flowtable.ht_otable
+        end
     end
 end
 
@@ -57,6 +67,7 @@ define dump_flow_internal
             print_flow_fe_flags1 $cur_flow.fe_flags1
             printf "\n            Action:"
             print_flow_fe_action $cur_flow.fe_action
+            set $rflow = $cur_flow.fe_rflow
             printf " rFlow:%d", $cur_flow.fe_rflow
             printf " vrf:%u dvrf:%u", $cur_flow.fe_vrf, $cur_flow.fe_dvrf
             if($arg1)

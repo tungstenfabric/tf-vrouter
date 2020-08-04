@@ -1,6 +1,23 @@
 #   File: "vr_rtable.gdb"
 #   This file contains the gdb macros to dump the route table
 
+define dump_rtable_all
+    set $vrf_iter = 0
+    set $max_vrf = 4096
+    while($vrf_iter < $max_vrf)
+        dump_rtable $vrf_iter 2
+        printf "\n"
+        dump_rtable $vrf_iter 10
+        set $vrf_iter += 1
+    end
+end
+
+document dump_rtable_all
+Syntax: dump_rtable_all
+This gdb macro dumps all the ipv4 and ipv6 route tables present on a vRouter
+
+end
+
 define dump_rtable
     set $rtable = (struct ip_mtrie ***)(vn_rtable)
     set $family = $arg1
@@ -17,10 +34,10 @@ define dump_rtable
         end
     end
     if($rtable)
-        if($family == 2 && $rtable[0][$arg0])
+        if($family == 2 && ($rtable[0][$arg0] != 0))
             dump_rtable_ip4 $rtable[0][$arg0].root
         end
-        if($family == 10 && $rtable[1][$arg0])
+        if($family == 10 && ($rtable[1][$arg0] != 0))
             dump_rtable_ip6 $rtable[1][$arg0].root
         end
     end
