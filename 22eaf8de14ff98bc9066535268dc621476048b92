@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d8c8af7f_79336011",
+        "filename": "gdb/dump_flow.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-08-06T09:01:25Z",
+      "side": 1,
+      "message": "Since you are writing to a file, I think its a good idea to also add the data/timestamp when this log was generated.",
+      "revId": "22eaf8de14ff98bc9066535268dc621476048b92",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7778d70c_7af1e89f",
+        "filename": "gdb/dump_vrouter_all_minimal.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-08-06T09:01:25Z",
+      "side": 1,
+      "message": "Since you are writing to a file, I think its a good idea to also add the data/timestamp when this log was generated.",
+      "revId": "22eaf8de14ff98bc9066535268dc621476048b92",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
