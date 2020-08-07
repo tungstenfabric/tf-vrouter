@@ -690,6 +690,22 @@ vr_ethdev_conf_update(struct rte_eth_conf *dev_conf)
                     dev_conf->rxmode.max_rx_pkt_len = VT_DPDK_MAX_RX_PKT_LEN_9022;
                 }
             }
+            //#if (RTE_VERSION >= RTE_VERSION_NUM(19, 11, 0, 0)
+            if ((strncmp(dev_info.driver_name, "net_bonding",
+                       strlen("net_bonding") + 1) == 0)) {
+                if ((dev_conf->rxmode.offloads & dev_info.rx_offload_capa) != dev_conf->rxmode.offloads) {
+                    dev_conf->rxmode.offloads = dev_conf->rxmode.offloads & dev_info.rx_offload_capa;
+                }
+
+                if ((dev_conf->txmode.offloads & dev_info.tx_offload_capa) != dev_conf->txmode.offloads) {
+                    dev_conf->txmode.offloads = dev_conf->txmode.offloads & dev_info.tx_offload_capa;
+                }
+
+                if ((dev_info.flow_type_rss_offloads | dev_conf->rx_adv_conf.rss_conf.rss_hf) != dev_info.flow_type_rss_offloads) {
+                   dev_conf->rx_adv_conf.rss_conf.rss_hf = dev_info.flow_type_rss_offloads | dev_conf->rx_adv_conf.rss_conf.rss_hf;
+                }
+            }
+            //#endif
         }
     }
 
@@ -784,7 +800,16 @@ dpdk_fabric_if_add(struct vr_interface *vif)
     ret = vr_dpdk_ethdev_init(ethdev, &fabric_ethdev_conf);
     if (ret != 0)
         return ret;
-
+    //#if (RTE_VERSION == RTE_VERSION_NUM(19, 11, 0, 0)
+    struct rte_eth_dev_info dev_info;
+    rte_eth_dev_info_get(port_id, &dev_info);
+    if ((strncmp(dev_info.driver_name, "net_bonding",
+               strlen("net_bonding") + 1) == 0)) {
+        fabric_ethdev_conf.rxmode.offloads = ethdev_conf.rxmode.offloads;
+        fabric_ethdev_conf.txmode.offloads = ethdev_conf.txmode.offloads;
+        fabric_ethdev_conf.rx_adv_conf.rss_conf.rss_hf = ethdev_conf.rx_adv_conf.rss_conf.rss_hf;
+    }
+    //#endif
     dpdk_vif_attach_ethdev(vif, ethdev);
 
     ret = dpdk_vif_queue_setup(vif);
