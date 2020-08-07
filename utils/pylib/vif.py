@@ -126,6 +126,25 @@ class Vif(ObjectBase, vr_interface_req):
         """
         return int(self.get('vifr_nh_id'))
 
+    def clear(self):
+        """
+        Clear stats for the specified interface
+        """
+        self.h_op = constants.SANDESH_OPER_RESET
+        self.sync()
+
+    @classmethod
+    def clear_all_vif_stats(self):
+        """ Clear stats for all interfaces """
+        vif = Vif(
+                idx=-1,
+                name="clear_stats",
+                ipv4_str=0,
+                mac_str=0,
+                ipv6_str=0,
+                h_op=constants.SANDESH_OPER_RESET)
+        vif.send_sandesh_req(vif)
+
 
 class VirtualVif(Vif):
     """
