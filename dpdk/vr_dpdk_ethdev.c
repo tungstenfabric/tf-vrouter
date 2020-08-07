@@ -48,7 +48,7 @@ struct rte_eth_conf ethdev_conf = {
             .rss_key            = NULL, /* If not NULL, 40-byte hash key */
             .rss_key_len        = 0,    /* Hash key length in bytes */
             /* Hash functions to apply */
-            .rss_hf             = ETH_RSS_IP | ETH_RSS_UDP | ETH_RSS_TCP,
+            .rss_hf             = ETH_RSS_IPV4 | ETH_RSS_IPV6 | ETH_RSS_IPV6_EX | ETH_RSS_UDP | ETH_RSS_TCP,
         },
     },
     .txmode = { /* Port TX configuration. */
@@ -84,7 +84,7 @@ struct rte_eth_conf ethdev_conf = {
  * on how these parameters should be set.
  */
 /* RX ring configuration */
-static const struct rte_eth_rxconf rx_queue_conf = {
+static struct rte_eth_rxconf rx_queue_conf = {
     .rx_thresh = {
         .pthresh = 8,   /* Ring prefetch threshold */
         .hthresh = 8,   /* Ring host threshold */
@@ -101,7 +101,7 @@ static const struct rte_eth_rxconf rx_queue_conf = {
  * network controllers and/or network drivers.
  */
 /* TX ring configuration */
-static const struct rte_eth_txconf tx_queue_conf = {
+static struct rte_eth_txconf tx_queue_conf = {
     .tx_thresh = {
         .pthresh = 32,  /* Ring prefetch threshold */
         .hthresh = 0,   /* Ring host threshold */
@@ -375,26 +375,23 @@ vr_max_tx_queues_adjust(struct vr_dpdk_ethdev *ethdev, uint16_t *nb_tx_q)
 
 /* Update device info */
 static void
-dpdk_ethdev_info_update(struct vr_dpdk_ethdev *ethdev)
+dpdk_ethdev_info_update(struct vr_dpdk_ethdev *ethdev, struct rte_eth_dev_info* dev_info)
 {
-    struct rte_eth_dev_info dev_info;
 
-    rte_eth_dev_info_get(ethdev->ethdev_port_id, &dev_info);
-
-    ethdev->ethdev_nb_rx_queues = RTE_MIN(dev_info.max_rx_queues,
+    ethdev->ethdev_nb_rx_queues = RTE_MIN(dev_info->max_rx_queues,
         VR_DPDK_MAX_NB_RX_QUEUES);
 
-    if (dev_info.max_tx_queues > VR_DPDK_MAX_NB_TX_QUEUES)
-        dev_info.max_tx_queues = VR_DPDK_MAX_NB_TX_QUEUES;
+    if (dev_info->max_tx_queues > VR_DPDK_MAX_NB_TX_QUEUES)
+        dev_info->max_tx_queues = VR_DPDK_MAX_NB_TX_QUEUES;
 
     /*
      * If a device advertises max_tx_queues higher than it
      * can actually support, reduce the value to a number
      * that it can support.
      */
-    vr_max_tx_queues_adjust(ethdev, &dev_info.max_tx_queues);
+    vr_max_tx_queues_adjust(ethdev, &dev_info->max_tx_queues);
 
-    ethdev->ethdev_nb_tx_queues = dev_info.max_tx_queues;
+    ethdev->ethdev_nb_tx_queues = dev_info->max_tx_queues;
 
     /* Check if we have dedicated an lcore for SR-IOV VF IO. */
     if (vr_dpdk.vf_lcore_id) {
@@ -403,7 +400,7 @@ dpdk_ethdev_info_update(struct vr_dpdk_ethdev *ethdev)
 
     ethdev->ethdev_nb_rss_queues = RTE_MIN(RTE_MIN(ethdev->ethdev_nb_rx_queues,
         vr_dpdk.nb_fwd_lcores), VR_DPDK_MAX_NB_RSS_QUEUES);
-    ethdev->ethdev_reta_size = RTE_MIN(dev_info.reta_size,
+    ethdev->ethdev_reta_size = RTE_MIN(dev_info->reta_size,
         VR_DPDK_MAX_RETA_SIZE);
 
     /*
@@ -416,10 +413,10 @@ dpdk_ethdev_info_update(struct vr_dpdk_ethdev *ethdev)
             " max_rx_queues=%" PRIu16 " max_tx_queues=%" PRIu16
             " max_vfs=%" PRIu16 " max_vmdq_pools=%" PRIu16
             " rx_offload_capa=%" PRIx64 " tx_offload_capa=%" PRIx64 "\n",
-            dev_info.driver_name, dev_info.if_index,
-            dev_info.max_rx_queues, dev_info.max_tx_queues,
-            dev_info.max_vfs, dev_info.max_vmdq_pools,
-            dev_info.rx_offload_capa, dev_info.tx_offload_capa);
+            dev_info->driver_name, dev_info->if_index,
+            dev_info->max_rx_queues, dev_info->max_tx_queues,
+            dev_info->max_vfs, dev_info->max_vmdq_pools,
+            dev_info->rx_offload_capa, dev_info->tx_offload_capa);
 
 #if !VR_DPDK_USE_HW_FILTERING
     /* use RSS queues only */
@@ -467,7 +464,6 @@ dpdk_ethdev_queues_setup(struct vr_dpdk_ethdev *ethdev)
             ethdev->ethdev_queue_states[i] = VR_DPDK_QUEUE_NONE;
             continue;
         }
-
         ret = rte_eth_rx_queue_setup(port_id, i, vr_rxd_sz,
             SOCKET_ID_ANY, &rx_queue_conf, mempool);
         if (ret < 0) {
@@ -922,12 +918,38 @@ vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf
     uint8_t port_id;
     int ret;
     struct vr_interface *vif;
+    struct rte_eth_dev_info dev_info;
+    bool is_bond_driver = false;
 
     port_id = ethdev->ethdev_port_id;
     ethdev->ethdev_ptr = &rte_eth_devices[port_id];
     vif = __vrouter_get_interface(vrouter_get(0), ethdev->ethdev_vif_idx);
 
-    dpdk_ethdev_info_update(ethdev);
+    rte_eth_dev_info_get(port_id, &dev_info);
+
+    dpdk_ethdev_info_update(ethdev, &dev_info);
+
+    if (dev_info.driver_name && (strncmp(dev_info.driver_name, "net_bonding",
+               strlen("net_bonding") + 1) == 0)) {
+        if ((dev_conf->rxmode.offloads & dev_info.rx_offload_capa) != dev_conf->rxmode.offloads) {
+            dev_conf->rxmode.offloads = dev_conf->rxmode.offloads & dev_info.rx_offload_capa;
+        }
+
+        if ((dev_conf->txmode.offloads & dev_info.tx_offload_capa) != dev_conf->txmode.offloads) {
+            dev_conf->txmode.offloads = dev_conf->txmode.offloads & dev_info.tx_offload_capa;
+        }
+
+        if ((dev_info.flow_type_rss_offloads | dev_conf->rx_adv_conf.rss_conf.rss_hf) != dev_info.flow_type_rss_offloads) {
+           dev_conf->rx_adv_conf.rss_conf.rss_hf = dev_info.flow_type_rss_offloads | dev_conf->rx_adv_conf.rss_conf.rss_hf;
+        }
+        if ((rx_queue_conf.offloads & dev_info.rx_queue_offload_capa) != rx_queue_conf.offloads) {
+	   rx_queue_conf.offloads = rx_queue_conf.offloads & dev_info.rx_queue_offload_capa;
+        }
+        if ((tx_queue_conf.offloads & dev_info.tx_queue_offload_capa) != tx_queue_conf.offloads) {
+	   tx_queue_conf.offloads = tx_queue_conf.offloads & dev_info.tx_queue_offload_capa;
+        }
+        is_bond_driver = true;
+    }
 
     ret = rte_eth_dev_configure(port_id, ethdev->ethdev_nb_rx_queues,
         ethdev->ethdev_nb_tx_queues, dev_conf);
@@ -936,6 +958,16 @@ vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf
                 ": %s (%d)\n",
             port_id, rte_strerror(-ret), -ret);
         return ret;
+    }
+
+    if(is_bond_driver) {
+        dev_conf->rxmode.offloads = ethdev_conf.rxmode.offloads;
+        dev_conf->txmode.offloads = ethdev_conf.txmode.offloads;
+        dev_conf->rx_adv_conf.rss_conf.rss_hf = ethdev_conf.rx_adv_conf.rss_conf.rss_hf;
+        struct rte_eth_dev *dev = &rte_eth_devices[port_id];
+        if (dev) {
+            memcpy(&dev->data->dev_conf, dev_conf, sizeof(dev->data->dev_conf));
+        }
     }
 
     if (dpdk_find_port_id_by_drv_name() != VR_DPDK_INVALID_PORT_ID) {
