@@ -151,7 +151,7 @@ dpdk_bond_info_show_slave(VR_INFO_ARGS, uint16_t port_id,
             rte_eth_devices[slave_id].device->driver->name);
 
         rte_eth_link_get_nowait(slave_id, &link);
-        ret = dpdk_bond_info_mii_status(VR_INFO_PASS_ARGS, slave_id, &link);
+        ret = dpdk_bond_info_mii_status(msg_req, slave_id, &link);
         if (ret < 0) {
             return VR_INFO_FAILED;
         }
@@ -248,7 +248,7 @@ dpdk_bond_info_show_master(VR_INFO_ARGS, uint16_t port_id,
     }
 
     rte_eth_link_get_nowait(port_id, &link);
-    ret = dpdk_bond_info_mii_status(VR_INFO_PASS_ARGS, port_id, &link);
+    ret = dpdk_bond_info_mii_status(msg_req, port_id, &link);
     if (ret < 0) {
         return VR_INFO_FAILED;
     }
@@ -264,7 +264,7 @@ dpdk_bond_info_show_master(VR_INFO_ARGS, uint16_t port_id,
     }
 
     if (bond_mode == BONDING_MODE_8023AD) {
-        ret = dpdk_bond_mode_8023ad(VR_INFO_PASS_ARGS, port_id);
+        ret = dpdk_bond_mode_8023ad(msg_req, port_id);
         if (ret < 0) {
             return VR_INFO_FAILED;
         }
@@ -317,17 +317,19 @@ dpdk_info_get_bond(VR_INFO_ARGS)
 
     VI_PRINTF("No. of bond slaves: %d\n", ethdev->ethdev_nb_slaves);
 
-    ret = dpdk_bond_info_show_master(VR_INFO_PASS_ARGS, port_id, ethdev);
+    ret = dpdk_bond_info_show_master(msg_req, port_id, ethdev);
     if (ret < 0) {
-        return VR_INFO_FAILED;
+        goto err;
     }
 
-    ret = dpdk_bond_info_show_slave(VR_INFO_PASS_ARGS, port_id, ethdev);
+    ret = dpdk_bond_info_show_slave(msg_req, port_id, ethdev);
     if (ret < 0) {
-        return VR_INFO_FAILED;
+        goto err;
     }
 
     return 0;
+err:
+    return ret;
 }
 
 static int
@@ -378,7 +380,7 @@ dpdk_info_get_lacp(VR_INFO_ARGS)
     }
 
     if (strcmp(msg_req->inbuf, "all") == 0) {
-        display_lacp_conf(msg_req, port_id);
+        ret = display_lacp_conf(msg_req, port_id);
 
         ethdev = &vr_dpdk.ethdevs[port_id];
         if (ethdev->ethdev_ptr == NULL) {
@@ -392,27 +394,37 @@ dpdk_info_get_lacp(VR_INFO_ARGS)
             ret = rte_eth_dev_get_name_by_port(slave_id, name);
             if (ret != 0) {
                 RTE_LOG(ERR, VROUTER, "Error getting bond interface name\n");
+                return VR_INFO_FAILED;
             }
 
             ret = rte_eth_bond_8023ad_slave_info(port_id, slave_id, &info);
             if (ret != 0) {
                 RTE_LOG(ERR, VROUTER, "Error getting bond interface name\n");
+                return VR_INFO_FAILED;
             }
 
             VI_PRINTF("Slave Interface(%d): %s \n", i, name);
             VI_PRINTF("Details actor lacp pdu: \n");
-            get_port_states(msg_req, info.actor_state);
+            ret = get_port_states(msg_req, info.actor_state);
+            if (ret < 0)
+                goto err;
 
             VI_PRINTF("Details partner lacp pdu: \n");
-            get_port_states(msg_req, info.partner_state);
+            ret = get_port_states(msg_req, info.partner_state);
+            if (ret < 0)
+                goto err;
         }
     } else if (strcmp(msg_req->inbuf, "conf") == 0) {
-        display_lacp_conf(msg_req, port_id);
+        ret = display_lacp_conf(msg_req, port_id);
+        if(ret < 0)
+            goto err;
     } else {
         RTE_LOG(ERR, VROUTER, "Invalid argument.\n");
         return -1;
     }
     return 0;
+err:
+    return ret;
 }
 
 static void
@@ -641,7 +653,10 @@ dpdk_info_get_stats(VR_INFO_ARGS)
     }
     if (strcmp(msg_req->inbuf, "eth") == 0) {
         VI_PRINTF("Master Info: \n");
-        display_eth_stats(msg_req, eth_stats);
+        ret = display_eth_stats(msg_req, eth_stats);
+        if (ret < 0)
+            goto err;
+
         /* Displaying slave stats */
         for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
             slave_id = ethdev->ethdev_slaves[i];
@@ -654,7 +669,9 @@ dpdk_info_get_stats(VR_INFO_ARGS)
             if (rte_eth_stats_get(slave_id, &eth_stats) != 0) {
                 return -1;
             }
-            display_eth_stats(msg_req, eth_stats);
+            ret = display_eth_stats(msg_req, eth_stats);
+            if(ret < 0)
+                goto err;
         }
     } else {
         RTE_LOG(ERR, VROUTER, "Invalid argument.\n");
@@ -662,6 +679,8 @@ dpdk_info_get_stats(VR_INFO_ARGS)
     }
 
     return 0;
+err:
+    return ret;
 }
 
 static int
@@ -834,7 +853,9 @@ dpdk_info_get_xstats(VR_INFO_ARGS)
         switch (reqd_interface) {
         case 0:
             VI_PRINTF("Master Info: \n");
-            display_xstats(msg_req, port_id, xstats_count, is_all);
+            ret = display_xstats(msg_req, port_id, xstats_count, is_all);
+            if (ret < 0)
+                goto err;
 
             /* Displaying slave stats */
             for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
@@ -852,13 +873,18 @@ dpdk_info_get_xstats(VR_INFO_ARGS)
                     RTE_LOG(ERR, VROUTER, "Cannot get xstats count\n");
                     return -1;
                 }
-                display_xstats(msg_req, slave_id, xstats_count, is_all);
+                ret = display_xstats(msg_req, slave_id, xstats_count, is_all);
+                if (ret < 0)
+                    goto err;
             }
             break;
         case 1:
             if (!strcmp(msg_req->inbuf, "0")) {
                 VI_PRINTF("Master Info: \n");
-                display_xstats(msg_req, port_id, xstats_count, is_all);
+                ret = display_xstats(msg_req, port_id, xstats_count, is_all);
+                if (ret < 0)
+                    goto err;
+
             } else {
                 slave = atoi(msg_req->inbuf) - 1;
                 slave_id = ethdev->ethdev_slaves[slave];
@@ -874,7 +900,9 @@ dpdk_info_get_xstats(VR_INFO_ARGS)
                     RTE_LOG(ERR, VROUTER, "Cannot get xstats count\n");
                     return -1;
                 }
-                display_xstats(msg_req, slave_id, xstats_count, is_all);
+                ret = display_xstats(msg_req, slave_id, xstats_count, is_all);
+                if (ret < 0)
+                    goto err;
             }
             break;
         }
@@ -894,7 +922,10 @@ dpdk_info_get_xstats(VR_INFO_ARGS)
                 return -1;
             }
 
-            display_xstats(msg_req, port_id, xstats_count, is_all);
+            ret = display_xstats(msg_req, port_id, xstats_count, is_all);
+            if (ret < 0)
+                goto err;
+
         } else {
             RTE_LOG(ERR, VROUTER, "Invalid argument.\n");
             return -1;
@@ -902,6 +933,8 @@ dpdk_info_get_xstats(VR_INFO_ARGS)
     }
 
     return 0;
+err:
+    return ret;
 }
 
 int
