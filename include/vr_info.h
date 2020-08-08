@@ -39,8 +39,6 @@
  * */
 #define VR_INFO_ARGS vr_info_t *msg_req
 
-#define VR_INFO_PASS_ARGS msg_req
-
 #define VR_INFO_FAILED         -1
 #define VR_INFO_MSG_TRUNC      -2
 
@@ -51,7 +49,7 @@
 #define VR_INFO_MAX_CALLBACK   256
 
 /* Default Output buffer size */
-#define VR_INFO_DEF_BUF_SIZE 4096
+#define VR_INFO_DEF_BUF_SIZE  4096 * 3
 
 /* We use X-Macro concept, based on elements in VR_INFO_REG(X), message will
  * get expanded.
