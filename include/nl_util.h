@@ -117,7 +117,7 @@ extern uint16_t vr_netlink_port;
 extern struct nl_client *nl_register_client(void);
 extern void nl_free_client(struct nl_client *cl);
 extern int nl_socket(struct nl_client *, int, int , int);
-extern int nl_connect(struct nl_client *, uint32_t, uint16_t);
+extern int nl_connect(struct nl_client *, uint32_t, uint16_t, int);
 extern int nl_sendmsg(struct nl_client *);
 extern int nl_client_datagram_recvmsg(struct nl_client *, bool);
 extern int nl_client_stream_recvmsg(struct nl_client *, bool);
