@@ -47,6 +47,7 @@
 
 /* Suppress NetLink error messages */
 bool vr_ignore_nl_errors = false;
+int genetlink_group_id = 0;
 
 char *
 vr_extract_token(char *string, char token_separator)
@@ -308,7 +309,7 @@ vr_get_nl_client(int proto)
     if (ret <= 0)
         goto fail;
 
-    ret = nl_connect(cl, get_ip(), get_port());
+    ret = nl_connect(cl, get_ip(), get_port(), genetlink_group_id);
     if (ret < 0)
         goto fail;
 

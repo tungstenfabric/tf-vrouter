@@ -56,6 +56,7 @@ volatile bool vr_not_ready = true;
 /* Below hugepage req recv and resp variables are added for debug purpose */
 int vr_hpage_req_recv = 0;
 int vr_hpage_req_resp = 0;
+int vr_genetlink_group_id = 0;
 
 unsigned int vr_memory_alloc_checks = 0;
 unsigned int vr_priority_tagging = 0;
@@ -381,6 +382,7 @@ vrouter_ops_get_process(void *s_req)
     resp->vo_pkt_droplog_en = vr_pkt_droplog_sysctl_en;
     resp->vo_pkt_droplog_min_en = vr_pkt_droplog_min_sysctl_en;
     resp->vo_uncond_close_flow_on_tcp_rst = vr_uncond_close_flow_on_tcp_rst;
+    resp->vo_genetlink_group_id = vr_genetlink_group_id;
 
     if(vr_get_dump_packets != NULL) {
         resp->vo_packet_dump = vr_get_dump_packets();
