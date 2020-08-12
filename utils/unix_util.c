@@ -143,9 +143,9 @@ nl_socket(struct nl_client *cl, int domain, int type, int protocol)
 }
 
 int
-nl_connect(struct nl_client *cl, uint32_t ip, uint16_t port)
+nl_connect(struct nl_client *cl, uint32_t ip, uint16_t port, int group_id)
 {
-    int group = VROUTER_GENETLINK_VROUTER_GROUP_ID;
+    int group = (group_id == 0) ? VROUTER_GENETLINK_VROUTER_GROUP_ID : group_id;
     int ret;
 
     if (cl->cl_socket_domain == AF_NETLINK) {
