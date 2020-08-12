@@ -69,6 +69,7 @@ static char cmd_dst_mac[6];
 static bool dump_pending;
 
 static int monitor = 0;
+extern int genetlink_group_id;
 
 static void Usage(void);
 static void usage_internal(void);
@@ -331,6 +332,13 @@ route_req_process(void *s_req)
 }
 
 static void
+rt_monitor_group_process(void *s_req)
+{
+    vrouter_ops *req = (vrouter_ops *) s_req;
+    genetlink_group_id = req->vo_genetlink_group_id;
+}
+
+static void
 response_process(void *s)
 {
     vr_response_common_process((vr_response *)s, &dump_pending);
@@ -343,6 +351,7 @@ rt_fill_nl_callbacks()
     nl_cb.vr_response_process = response_process;
     nl_cb.vr_route_req_process = route_req_process;
     nl_cb.vr_bridge_table_data_process = bridge_table_data_process;
+    nl_cb.vrouter_ops_process = rt_monitor_group_process;
 }
 
 
@@ -903,12 +912,22 @@ main(int argc, char *argv[])
         exit(1);
     }
 
-    if (monitor)
+    if (monitor) {
+        vr_send_vrouter_get(cl, 0);
+        ret = vr_recvmsg(cl, false);
+        if (ret == -1)
+            exit(1);
+        nl_free_client(cl);
+        cl = vr_get_nl_client(VR_NETLINK_PROTO_DEFAULT);
+        if (!cl) {
+            exit(1);
+        }
         while (1) {
             ret = vr_recvmsg_waitall(cl, false);
             if (ret == -1)
                 exit(1);
         }
+    }
 
     if (cmd_family_id == AF_BRIDGE) {
         if (cmd_op == SANDESH_OP_DUMP || cmd_op == SANDESH_OP_GET) {

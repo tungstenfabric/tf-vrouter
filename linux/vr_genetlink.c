@@ -25,6 +25,7 @@
 #define GENL_ID_GENERATE 0
 #endif /* Linux 4.10.0 */
 static int netlink_trans_request(struct sk_buff *, struct genl_info *);
+extern int vr_genetlink_group_id;
 
 static struct genl_ops vrouter_genl_ops[] = {
     {
@@ -223,13 +224,15 @@ vr_genetlink_init(void)
 
 #if ((LINUX_VERSION_CODE < KERNEL_VERSION(3,13,0)) && \
      (!(defined(RHEL_MAJOR) && (RHEL_MAJOR >= 7))))
-    return genl_register_family_with_ops(&vrouter_genl_family, vrouter_genl_ops,
+    ret = genl_register_family_with_ops(&vrouter_genl_family, vrouter_genl_ops,
         ARRAY_SIZE(vrouter_genl_ops));
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4,10,0)) || \
      (defined(RHEL_MAJOR) && (RHEL_MAJOR >= 7) && (RHEL_MINOR >= 5))
-    return genl_register_family(&vrouter_genl_family);
+    ret = genl_register_family(&vrouter_genl_family);
 #else
-    return genl_register_family_with_ops_groups(&vrouter_genl_family,
+    ret = genl_register_family_with_ops_groups(&vrouter_genl_family,
              vrouter_genl_ops, vrouter_genl_groups);
 #endif
+    vr_genetlink_group_id = vrouter_genl_family.mcgrp_offset;
+    return ret;
 }
