@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b2187172_90fc3feb",
+        "filename": "utils/rt.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 917,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-08-12T07:55:15Z",
+      "side": 1,
+      "message": "you can add a comment above this to say it calls rt_monitor_group_process() which sets the group_id. This group_id will be used in vr_get_nl_client()",
+      "range": {
+        "startLine": 917,
+        "startChar": 14,
+        "endLine": 917,
+        "endChar": 36
+      },
+      "revId": "366f8b919feea7730cb1dbf1e8b251621cd3c0c9",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
