@@ -15,6 +15,7 @@ extern "C" {
 #ifdef __KERNEL__
 
 #define VHOST_MAX_INTERFACES 64
+#define VR_DEF_NIPS_VHOST0 false
 
 struct vhost_priv {
 #if defined(__linux__)

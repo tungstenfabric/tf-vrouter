@@ -56,6 +56,7 @@ struct vr_interface vr_reset_interface;
 #endif
 
 extern volatile bool agent_alive;
+extern bool vr_nips_vhost0;
 static struct cpumask noht_cpumask[VR_MAX_CPUS];
 
 /*
@@ -1271,7 +1272,7 @@ linux_rx_handler(struct sk_buff **pskb)
         }
     }
 
-    pkt->vp_send_thru_vrouter = true; // set this to nips vhost0 enabled flag
+    pkt->vp_send_thru_vrouter = vr_nips_vhost0; // set this to nips vhost0 enabled flag
     ret = vif->vif_rx(vif, pkt, vlan_id);
 
     if (ret == RX_HANDLER_PASS) {

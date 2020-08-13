@@ -32,6 +32,7 @@
 #include "vr_flow.h"
 #include "vr_buildinfo.h"
 #include "vr_mem.h"
+#include "vhost.h"
 
 unsigned int vr_num_cpus = 1;
 
@@ -48,6 +49,7 @@ extern unsigned int vr_pkt_droplog_bufsz;
 extern unsigned int vr_pkt_droplog_buf_en;
 extern unsigned int datapath_offloads;
 extern unsigned int vr_uncond_close_flow_on_tcp_rst;
+extern bool vr_nips_vhost0;
 
 extern char *ContrailBuildInfo;
 
@@ -2689,6 +2691,9 @@ MODULE_PARM_DESC(vr_memory_alloc_checks, "Audit memory frees against allocs. Def
 
 module_param(datapath_offloads, uint, S_IRUGO);
 MODULE_PARM_DESC(datapath_offloads, "Enable hardware offloads. Default is disabled");
+
+module_param(vr_nips_vhost0, bool, S_IRUGO);
+MODULE_PARM_DESC(vr_nips_vhost0, "Enables a state where vhost0 becomes non-ip stealing (nips). Default is "__stringify(VR_DEF_NIPS_VHOST0));
 
 module_init(vrouter_linux_init);
 module_exit(vrouter_linux_exit);

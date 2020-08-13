@@ -29,6 +29,7 @@
  */
 static struct vhost_priv *vhost_priv_db[VHOST_MAX_INTERFACES];
 unsigned int vhost_num_interfaces;
+bool vr_nips_vhost0 = VR_MAX_INTERFACES;
 
 extern struct vr_interface vr_reset_interface;
 
@@ -142,7 +143,7 @@ vhost_rx_handler(struct sk_buff **pskb)
     (void)__sync_fetch_and_add(&vdev->stats.rx_bytes, skb->len);
     (void)__sync_fetch_and_add(&vdev->stats.rx_packets, 1);
 
-    if (true) {  // check for nips vhost0 enabled flag
+    if (vr_nips_vhost0) {  // check for nips vhost0 enabled flag
        *pskb = skb;
        return RX_HANDLER_PASS;
     } else {
