@@ -17,6 +17,7 @@
 #include "vr_btable.h"
 #include "vr_dpdk.h"
 #include "vrouter.h"
+
 #define SEPERATOR 70
 #define LINE 200
 #define MAXBITS 8
@@ -366,6 +367,8 @@ dpdk_info_get_lacp(VR_INFO_ARGS)
     int i, ret = 0;
     char name[VR_INTERFACE_NAME_LEN] = "";
     struct rte_eth_bond_8023ad_slave_info info;
+    uint64_t lacp_rx_cnt, lacp_tx_cnt;
+
 
     VR_INFO_BUF_INIT();
 
@@ -406,6 +409,29 @@ dpdk_info_get_lacp(VR_INFO_ARGS)
             VI_PRINTF("Details partner lacp pdu: \n");
             get_port_states(msg_req, info.partner_state);
         }
+
+        VI_PRINTF("LACP Packet Statistics:\n");
+        VI_PRINTF("\t\t Tx \t Rx\n");
+
+        for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
+            slave_id = ethdev->ethdev_slaves[i];
+
+            ret = rte_eth_dev_get_name_by_port(slave_id, name);
+            if (ret != 0) {
+                RTE_LOG(ERR, VROUTER, "Error getting bond interface name\n");
+            }
+
+            lacp_tx_cnt = rte_eth_bond_8023ad_lacp_tx_count(slave_id, 0);
+            if (lacp_tx_cnt < 0)
+                return VR_INFO_FAILED;
+
+            lacp_rx_cnt = rte_eth_bond_8023ad_lacp_rx_count(slave_id, 0);
+            if (lacp_rx_cnt < 0)
+                return VR_INFO_FAILED;
+
+            VI_PRINTF("%s\t%"PRId64"\t%"PRId64"\n", name, lacp_tx_cnt, lacp_rx_cnt);
+        }
+        VI_PRINTF("\n");
     } else if (strcmp(msg_req->inbuf, "conf") == 0) {
         display_lacp_conf(msg_req, port_id);
     } else {
