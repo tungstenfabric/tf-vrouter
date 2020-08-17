@@ -83,20 +83,20 @@ sandesh_global = {}
 sandesh_global[1] = {}
 sandesh_global[1].name = "vr_response"
 sandesh_global[1].table = vr_response_table
-sandesh_global[1].abv = "vr_resp"
+sandesh_global[1].abv = "resp"
 sandesh_global[1].protocol = "Response"
 
 sandesh_global[2] = {}
 sandesh_global[2].name = "vr_nexthop_req"
 sandesh_global[2].table = nh_req_table
-sandesh_global[2].abv = "nh"
+sandesh_global[2].abv = "nhr"
 sandesh_global[2].protocol = "Nexthop"
 sandesh_global[2].decode_bits = {{nhr_flags, ProtoField.uint32, 0xffffffff}}
 
 sandesh_global[3] = {}
 sandesh_global[3].name = "vr_interface_req"
 sandesh_global[3].table = vif_req_table
-sandesh_global[3].abv = "vif"
+sandesh_global[3].abv = "vifr"
 sandesh_global[3].protocol = "Vif"
 sandesh_global[3].decode_bits = {
                             {vif_flags, ProtoField.uint32, 0xffffffff},

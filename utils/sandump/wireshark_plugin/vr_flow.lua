@@ -26,7 +26,7 @@ vr_flow_extflags["0x0002"] = "VR_FLOW_EXT_FLAG_MOCK_SRC_UDP"
 vr_flow_table = {}
 
 vr_flow_table[1] = {}
-vr_flow_table[1].field_name = "vr_flow_fr_op"
+vr_flow_table[1].field_name = "fr_op"
 vr_flow_table[1].ProtoField = ProtoField.int8
 vr_flow_table[1].base = base.DEC
 vr_flow_table[1].append_value = {
@@ -234,12 +234,12 @@ vr_flow_table[32].ProtoField = ProtoField.uint32
 vr_flow_table[32].base = base.DEC
 
 vr_flow_table[33] = {}
-vr_flow_table[33].field_name = "fr_flow_sport"
+vr_flow_table[33].field_name = "fr_rflow_sport"
 vr_flow_table[33].ProtoField = ProtoField.uint16
 vr_flow_table[33].base = base.DEC
 
 vr_flow_table[34] = {}
-vr_flow_table[34].field_name = "fr_flow_dport"
+vr_flow_table[34].field_name = "fr_rflow_dport"
 vr_flow_table[34].ProtoField = ProtoField.uint16
 vr_flow_table[34].base = base.DEC
 
