@@ -14,6 +14,9 @@ typedef u64 netdev_features_t;
 #endif
 #endif
 
+#define VLAN_CFI_MASK       0x1000
+#define VLAN_TAG_PRESENT    VLAN_CFI_MASK
+
 /*
  * As per lxr, skb_get_rxhash exists in 3.13 versions and disappeared in
  * 3.14. We do not know of in between versions. However, the ubuntu

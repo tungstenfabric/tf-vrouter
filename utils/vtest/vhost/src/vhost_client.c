@@ -168,6 +168,7 @@ static int
 vhost_client_unset_sh_mem_Vhost_Client(Vhost_Client *vhost_client) {
 
     char fd_path_buff[UNIX_PATH_MAX] = {'\0'};
+    int ret = 0;
     Vhost_Client *const vhost_cl = vhost_client;
 
     if (!vhost_client) {
@@ -175,7 +176,7 @@ vhost_client_unset_sh_mem_Vhost_Client(Vhost_Client *vhost_client) {
     }
 
     for (size_t i = 0; i < vhost_client->mem.nregions; i++) {
-        snprintf(fd_path_buff, UNIX_PATH_MAX, "%s.%d.shmem", vhost_cl->client.sh_mem_path, (int)i);
+        ret = snprintf(fd_path_buff, UNIX_PATH_MAX, "%s.%d.shmem", vhost_cl->client.sh_mem_path, (int)i);
 
         sh_mem_unmmap((void *)vhost_cl->mem.regions[i].guest_phys_addr,
                 vhost_cl->mem.regions[i].memory_size);
