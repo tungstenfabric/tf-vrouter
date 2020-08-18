@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "20296b94_90866ec2",
+        "filename": "include/vr_compat.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-08-18T11:04:35Z",
+      "side": 1,
+      "message": "Is this relevant to lower kernel versions as well? If not, please put the KERNEL version check. Also, Please make sure to compile all these changes with Centos kernel as well.",
+      "range": {
+        "startLine": 17,
+        "startChar": 0,
+        "endLine": 18,
+        "endChar": 41
+      },
+      "revId": "9ff319c59603660d346c857c459fd8dca8552a27",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dc2d2992_b841e8e1",
+        "filename": "linux/vrouter_mod.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 412,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-08-18T11:04:35Z",
+      "side": 1,
+      "message": "Will this work with lower kernel versions as well?",
+      "revId": "9ff319c59603660d346c857c459fd8dca8552a27",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
