@@ -43,6 +43,8 @@ def parse(cmd):
                         help="run vRouter alone", action="store_true")
     parser.add_argument('-t', '--test', required=False,
                         help="test a specific file")
+    parser.add_argument('-st', '--skip_tests', required=False,
+                        help="file with tests, that must be skipped")
     parser.add_argument('-gxml', '--xml',
                         help="tpecify xml file", action="store_true")
     parser.add_argument("-a", "--all",
@@ -196,11 +198,27 @@ def parse(cmd):
     os.chdir(vtest_py_venv_path)
     cmd = None
     if args['all']:
+        # Run all tests, except skipped
         logging.info("Executing all the tests in ./tests dir ..")
-        if(args['xml'] is not None):
-            cmd = 'pytest ./tests --junitxml=result.xml'
-        else:
-            cmd = 'pytest ./tests/'
+        xml_key = '--junitxml=result.xml' if args['xml'] is not None else ''
+
+        skip_path = args['skip_tests']
+        skip_list =[]
+        if skip_path:
+            try:
+                with open(skip_path) as skip_file:
+                    skip_list = skip_file.readlines()
+                    skip_list = [test.strip()+'.py' for test in skip_list]
+            except:
+                pass
+
+        test_path = "./tests"
+        test_list = [f for f in os.listdir(test_path) if path.isfile(path.join(test_path, f))]
+        cmd = ''
+        for test in test_list:
+            if not test in skip_list:
+                cmd += ("pytest %s " % path.join(test_path, test)) + xml_key + "\n"
+
     elif args['pycodestyle']:
         logging.info("Running pycodestyle check ..")
         cmd = "source ./bin/activate; pycodestyle lib/*.py tests/test_*.py;"
