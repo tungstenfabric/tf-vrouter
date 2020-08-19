@@ -1037,12 +1037,11 @@ dpdk_info_get_app(VR_INFO_ARGS)
             }
         }
     }
-    VI_PRINTF("Vlan name: %s \n", vr_dpdk.vlan_name);
-    VI_PRINTF("Vlan tag: %d \n", vr_dpdk.vlan_tag);
+    /* Display vlan information */
     if (vr_dpdk.vlan_vif){
         VI_PRINTF("Vlan vif: %s \n", vr_dpdk.vlan_vif->vif_name);
-    } else {
-        VI_PRINTF("Vlan vif: NULL\n");
+        VI_PRINTF("Vlan name: %s \n", vr_dpdk.vlan_name);
+        VI_PRINTF("Vlan tag: %d \n", vr_dpdk.vlan_tag);
     }
     /* Display Ethdev information */
     if (ethdev->ethdev_ptr) {
