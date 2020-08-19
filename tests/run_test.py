@@ -43,6 +43,8 @@ def parse(cmd):
                         help="run vRouter alone", action="store_true")
     parser.add_argument('-t', '--test', required=False,
                         help="test a specific file")
+    parser.add_argument('-st', '--skip_tests', required=False,
+                        help="file with tests, that must be skipped")
     parser.add_argument('-gxml', '--xml',
                         help="tpecify xml file", action="store_true")
     parser.add_argument("-a", "--all",
@@ -196,11 +198,37 @@ def parse(cmd):
     os.chdir(vtest_py_venv_path)
     cmd = None
     if args['all']:
+        # Run all tests, except skipped
         logging.info("Executing all the tests in ./tests dir ..")
-        if(args['xml'] is not None):
-            cmd = 'pytest ./tests --junitxml=result.xml'
-        else:
-            cmd = 'pytest ./tests/'
+        xml_key = "--junitxml=result.xml" if args['xml'] is not None else ""
+
+        skip_path = args['skip_tests']
+        skip_list =[]
+        if skip_path:
+            try:
+                with open(skip_path) as skip_file:
+                    skip_list = skip_file.readlines()
+                    skip_list = [test.strip() for test in skip_list]
+            except:
+                pass
+
+        test_list = []
+        try:
+            collect_cmd = ("source ./bin/activate; "
+                           "pytest ./tests --collect-only -q; "
+                           "deactivate")
+            test_string = subprocess.check_output(collect_cmd, shell=True)
+            test_list   = test_string.splitlines()
+        except Exception as e:
+            logging.error("Script execution failed")
+            exit(1)
+
+        cmd = ""
+        for test in test_list:
+            test_name = test[test.find("::")+2:]
+            if not test_name in skip_list:
+                cmd += ("pytest %s %s;" % (test, xml_key))
+        cmd = cmd[:-1]
     elif args['pycodestyle']:
         logging.info("Running pycodestyle check ..")
         cmd = "source ./bin/activate; pycodestyle lib/*.py tests/test_*.py;"
