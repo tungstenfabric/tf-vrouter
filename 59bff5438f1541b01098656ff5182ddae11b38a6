@@ -70,6 +70,30 @@
       "revId": "59bff5438f1541b01098656ff5182ddae11b38a6",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c4d2b092_32038897",
+        "filename": "utils/vrinfo.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-08-20T17:06:20Z",
+      "side": 1,
+      "message": "what if we want to show data structures in common code?",
+      "parentUuid": "c80e94ff_df7c910e",
+      "range": {
+        "startLine": 183,
+        "startChar": 0,
+        "endLine": 185,
+        "endChar": 5
+      },
+      "revId": "59bff5438f1541b01098656ff5182ddae11b38a6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
