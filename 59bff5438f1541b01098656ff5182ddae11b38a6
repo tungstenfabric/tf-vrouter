@@ -22,6 +22,30 @@
       "revId": "59bff5438f1541b01098656ff5182ddae11b38a6",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7fb2c3dc_75a7f2bf",
+        "filename": "utils/vrinfo.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 928
+      },
+      "writtenOn": "2020-08-20T12:52:16Z",
+      "side": 1,
+      "message": "vrinfo only works for kernel platforms",
+      "parentUuid": "8298e0c7_546d04a6",
+      "range": {
+        "startLine": 183,
+        "startChar": 0,
+        "endLine": 185,
+        "endChar": 5
+      },
+      "revId": "59bff5438f1541b01098656ff5182ddae11b38a6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
