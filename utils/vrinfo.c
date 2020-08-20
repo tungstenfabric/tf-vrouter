@@ -90,7 +90,6 @@ static void
 vrinfo_resp_cb_process(void *s_req)
 {
     int ret = 0;
-    int platform = get_platform();
     vr_info_req *resp = (vr_info_req *)s_req;
 
     if(resp != NULL && resp->vdu_proc_info) {
@@ -181,8 +180,11 @@ main(int argc, char *argv[])
     vrinfo_fill_nl_callbacks();
 
     parse_ini_file();
+    if (get_platform() != LINUX_PLATFORM){
+        Usage();
+    }
 
-    while (((opt = getopt_long(argc, argv, "h:v:s:",
+    while (((opt = getopt_long(argc, argv, "hvs:",
                         long_options, &option_index)) >= 0)) {
         switch (opt) {
         case 'v':
