@@ -287,3 +287,17 @@ vr_drop_stats_table[54].field_name = "vds_invalid_hbs_pkt"
 vr_drop_stats_table[54].ProtoField = ProtoField.int64
 vr_drop_stats_table[54].base = base.DEC
 
+vr_drop_stats_table[55] = {}
+vr_drop_stats_table[55].field_name = "vds_no_frag_entry"
+vr_drop_stats_table[55].ProtoField = ProtoField.int64
+vr_drop_stats_table[55].base = base.DEC
+
+vr_drop_stats_table[56] = {}
+vr_drop_stats_table[56].field_name = "vds_icmp_error"
+vr_drop_stats_table[56].ProtoField = ProtoField.int64
+vr_drop_stats_table[56].base = base.DEC
+
+vr_drop_stats_table[57] = {}
+vr_drop_stats_table[57].field_name = "vds_clone_fail"
+vr_drop_stats_table[57].ProtoField = ProtoField.int64
+vr_drop_stats_table[57].base = base.DEC
