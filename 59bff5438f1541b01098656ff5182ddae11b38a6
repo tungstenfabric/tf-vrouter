@@ -142,6 +142,30 @@
       "revId": "59bff5438f1541b01098656ff5182ddae11b38a6",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9273cc06_ca7e8a2e",
+        "filename": "utils/vrinfo.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-08-21T05:59:57Z",
+      "side": 1,
+      "message": "Infra will call the platform specific callback function.. so, we need this check.\n#define VR_INFO_REG(X) \\                                                           \n    X(INFO_VER,  info_get_version, KERNEL) \\                                       \n    X(INFO_VER_DPDK,  info_get_dpdk_version, DPDK) \\",
+      "parentUuid": "80db4be5_bd102a9f",
+      "range": {
+        "startLine": 183,
+        "startChar": 0,
+        "endLine": 185,
+        "endChar": 5
+      },
+      "revId": "59bff5438f1541b01098656ff5182ddae11b38a6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
