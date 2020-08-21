@@ -118,6 +118,30 @@
       "revId": "59bff5438f1541b01098656ff5182ddae11b38a6",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "80db4be5_bd102a9f",
+        "filename": "utils/vrinfo.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-08-21T05:39:57Z",
+      "side": 1,
+      "message": "So if we want to display these in DPDK node, is it possible with this check?",
+      "parentUuid": "2ac83685_9c44094a",
+      "range": {
+        "startLine": 183,
+        "startChar": 0,
+        "endLine": 185,
+        "endChar": 5
+      },
+      "revId": "59bff5438f1541b01098656ff5182ddae11b38a6",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
