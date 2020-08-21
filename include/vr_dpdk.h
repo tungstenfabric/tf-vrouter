@@ -39,6 +39,10 @@
 #define PKT_RX_VLAN PKT_RX_VLAN_PKT
 #endif
 
+#if (RTE_VERSION < RTE_VERSION_NUM(19, 11, 0, 0))
+     #error "vRouter needs atleast DPDK version 19.11 to start"
+#endif
+
 extern struct vr_interface_stats *vif_get_stats(struct vr_interface *,
         unsigned short);
 extern int dpdk_vlan_forwarding_if_add(void);
