@@ -41,7 +41,7 @@ struct rte_eth_conf ethdev_conf = {
         /* The multi-queue packet distribution mode to be used, e.g. RSS. */
         .mq_mode            = ETH_MQ_RX_RSS,
         .max_rx_pkt_len     = VR_DEF_MAX_PACKET_SZ, /* Only used if jumbo_frame enabled */
-        .offloads           = DEV_RX_OFFLOAD_CHECKSUM | DEV_RX_OFFLOAD_JUMBO_FRAME,
+        .offloads           = 0,
     },
     .rx_adv_conf = {
         .rss_conf = { /* Port RSS configuration */
@@ -58,6 +58,7 @@ struct rte_eth_conf ethdev_conf = {
         .hw_vlan_reject_tagged      = 0, /* If set, reject sending out tagged pkts */
         .hw_vlan_reject_untagged    = 0, /* If set, reject sending out untagged pkts */
         .hw_vlan_insert_pvid        = 0, /* If set, enable port based VLAN insertion */
+        .offloads                   = 0,
     },
     .fdir_conf = {
 #if VR_DPDK_USE_HW_FILTERING
@@ -928,6 +929,13 @@ vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf
     vif = __vrouter_get_interface(vrouter_get(0), ethdev->ethdev_vif_idx);
 
     dpdk_ethdev_info_update(ethdev);
+
+    struct rte_eth_dev_info dev_info;
+    rte_eth_dev_info_get(ethdev->ethdev_port_id, &dev_info);
+    if ((dev_info.flow_type_rss_offloads | dev_conf->rx_adv_conf.rss_conf.rss_hf) !=
+            dev_info.flow_type_rss_offloads) {
+       dev_conf->rx_adv_conf.rss_conf.rss_hf = dev_info.flow_type_rss_offloads;
+    }
 
     ret = rte_eth_dev_configure(port_id, ethdev->ethdev_nb_rx_queues,
         ethdev->ethdev_nb_tx_queues, dev_conf);
