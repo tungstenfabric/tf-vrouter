@@ -16,6 +16,24 @@
       "revId": "a1cdf0c59c2539b63da721af9cec10b311e03712",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a235e09d_2121a85e",
+        "filename": "dp-core/vr_htable.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 240,
+      "author": {
+        "id": 744
+      },
+      "writtenOn": "2020-08-22T17:45:55Z",
+      "side": 1,
+      "message": "The place where the modification of entry is happening is checked. It is atomic write there.",
+      "parentUuid": "3c03d4a0_6a62ee83",
+      "revId": "a1cdf0c59c2539b63da721af9cec10b311e03712",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
