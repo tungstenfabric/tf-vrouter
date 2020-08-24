@@ -121,7 +121,6 @@ static void
 dpdkinfo_resp_cb_process(void *s_req)
 {
     int ret = 0;
-    int platform = get_platform();
     vr_info_req *resp = (vr_info_req *)s_req;
     if(resp != NULL && resp->vdu_proc_info) {
         /* Print the Message buffer(character buffer)
@@ -264,6 +263,9 @@ main(int argc, char *argv[])
     dpdkinfo_fill_nl_callbacks();
 
     parse_ini_file();
+    if (get_platform() != DPDK_PLATFORM){
+        Usage();
+    }
 
     while (((opt = getopt_long(argc, argv, "-:hvbl:m:sn:cax::",
                         long_options, &option_index)) >= 0)) {
