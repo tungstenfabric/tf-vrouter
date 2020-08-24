@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "02369cb9_ce0b9903",
+        "filename": "utils/vrinfo.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-08-24T07:11:54Z",
+      "side": 1,
+      "message": "this restriction needs to be removed since vrinfo need to display common data structures as well",
+      "range": {
+        "startLine": 183,
+        "startChar": 0,
+        "endLine": 185,
+        "endChar": 5
+      },
+      "revId": "5da3f8149af850475032941c37c9744db7780179",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
