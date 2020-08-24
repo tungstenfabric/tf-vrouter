@@ -106,6 +106,8 @@ scripts  = ['vifdump', 'dpdkvifstats.py', 'pkt_droplog.py']
 env.Default(binaries)
 
 env.Alias('install', env.Install(env['INSTALL_BIN'], binaries + scripts))
+env.Alias('install', env.Install(install_root + '/usr/local/lib64/wireshark/plugins/', 'agent_hdr/agent_hdr.lua'))
+
 # Local Variables:
 # mode: python
 # End:
