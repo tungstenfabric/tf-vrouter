@@ -7,10 +7,13 @@
 #ifndef __VR_INFO_H__
 #define __VR_INFO_H__
 
+#define VROUTER	    1
+#define DPDK	    2
+
 /* Register vr_info msg and its corresponsding callback below.
  * */
 #define VR_INFO_REG(X) \
-    X(INFO_VER,  info_get_version, KERNEL) \
+    X(INFO_VER,  info_get_version, VROUTER) \
     X(INFO_VER_DPDK,  info_get_dpdk_version, DPDK) \
     X(INFO_BOND, info_get_bond,    DPDK) \
     X(INFO_LACP, info_get_lacp,    DPDK) \
@@ -20,13 +23,14 @@
     X(INFO_LCORE, info_get_lcore, DPDK) \
     X(INFO_APP, info_get_app, DPDK) \
 
-/* Deifne all supported platforms.
+/* Define all supported platforms.
  * When a new platforms added, define like below.
  * By default, below macro will unmap all hardware dependent callback functions
  * whichever platform its running, only those callback would get registered in
- * thier platform dependent headers(include/vr_dpdk.h, include/vr_linux.h)
+ * thier platform dependent headers(include/vr_dpdk.h, include/vrouter.h).
+ * In short, while building vrouter.ko, DPDK changes shouldn't get compiled.
  * Eg: VR_INFO_HOST_MAP_<non-supported platform> */
-#define VR_INFO_HOST_MAP_KERNEL(MSG, CB)
+#define VR_INFO_HOST_MAP_VROUTER(MSG, CB)
 #define VR_INFO_HOST_MAP_DPDK(MSG, CB)
 
 /* vr_info callback function arguments.
@@ -145,7 +149,7 @@ struct vr_info_buff_table {
 }
 
 /* Below macro would register each callback function in Users callback table */
-#define FOREACH_VR_INFO_INIT(MSG, CB, ...) \
+#define FOREACH_VR_INFO_INIT(MSG, CB, PLTFRM) \
 { \
     if(!MSG && !vrouter_host->hos_vr_##CB) { \
         vr_printf("vrdump: Invalid value %d or Callback function %p\n", \
@@ -159,7 +163,11 @@ struct vr_info_buff_table {
         return -EINVAL;  \
     } \
     users_cb_reg[i].msginfo = MSG; \
-    users_cb_reg[i].cb_fn = vrouter_host->hos_vr_##CB; \
+    if (PLTFRM == VROUTER) { \
+	users_cb_reg[i].cb_fn = vr_##CB; \
+    } else { \
+	users_cb_reg[i].cb_fn = vrouter_host->hos_vr_##CB; \
+    } \
     i++; \
 }
 

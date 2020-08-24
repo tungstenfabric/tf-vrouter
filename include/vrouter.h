@@ -250,6 +250,16 @@ struct host_os {
     FOREACH_VR_INFO_CB_DECLARATION();
 };
 
+#define VR_INFO_DECLARATION_COMMON(MSG, CB, PLTFRM) \
+        int vr_##CB(VR_INFO_ARGS);
+
+#define FOREACH_VR_INFO_DECLARATION_COMMON() \
+    VR_INFO_REG(VR_INFO_DECLARATION_COMMON)
+
+/* Below macro would be expanded for declaring the kernel callback function
+ * used for vr_info */
+FOREACH_VR_INFO_DECLARATION_COMMON()
+
 #define vr_printf                       vrouter_host->hos_printf
 #define vr_malloc                       vrouter_host->hos_malloc
 #define vr_zalloc                       vrouter_host->hos_zalloc
