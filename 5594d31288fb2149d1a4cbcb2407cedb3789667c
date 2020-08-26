@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "58e551c9_515bff92",
+        "filename": "dp-core/vr_datapath.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 647,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-08-26T16:42:25Z",
+      "side": 1,
+      "message": "this is enough for IPv6, it has 128 bits(16 bytes).",
+      "parentUuid": "76c6d72b_daaabd06",
+      "revId": "5594d31288fb2149d1a4cbcb2407cedb3789667c",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "ceba9cc5_8d331bd8",
         "filename": "sandesh/vr.sandesh",
         "patchSetId": 2
@@ -30,6 +48,24 @@
       "writtenOn": "2020-08-26T10:38:53Z",
       "side": 1,
       "message": "What is this used for?",
+      "revId": "5594d31288fb2149d1a4cbcb2407cedb3789667c",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "553c9a04_fff7fc2e",
+        "filename": "sandesh/vr.sandesh",
+        "patchSetId": 2
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-08-26T16:42:25Z",
+      "side": 1,
+      "message": "We initially created this variable for enable/disable MAC-IP learning interface and later updated as part of interface flags.\nI will remove this change..",
+      "parentUuid": "ceba9cc5_8d331bd8",
       "revId": "5594d31288fb2149d1a4cbcb2407cedb3789667c",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
