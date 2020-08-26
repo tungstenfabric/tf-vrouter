@@ -164,6 +164,7 @@ static struct vr_util_flags flag_metadata[] = {
     {VIF_FLAG_HBS_LEFT,         "HbsL",     "HBS Left Intf"},
     {VIF_FLAG_HBS_RIGHT,        "HbsR",     "HBS Right Intf"},
     {VIF_FLAG_IGMP_ENABLED,     "Ig",       "Igmp Trap Enabled"},
+    {VIF_FLAG_MAC_IP_LEARNING,  "Ml",       "MAC-IP Learning Enabled"},
 };
 
 static char *
