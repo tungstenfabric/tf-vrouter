@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "eb4f650b_390d12a8",
+        "filename": "dp-core/vr_datapath.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 647,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-08-26T17:11:09Z",
+      "side": 1,
+      "message": "Ok. I overlooked uint32_t to uint8_t.",
+      "parentUuid": "58e551c9_515bff92",
+      "revId": "5594d31288fb2149d1a4cbcb2407cedb3789667c",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "ceba9cc5_8d331bd8",
         "filename": "sandesh/vr.sandesh",
         "patchSetId": 2
