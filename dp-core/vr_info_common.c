@@ -14,17 +14,17 @@ extern const char *ContrailBuildInfo;
 
 /* NOTE: Callback API's need to be registered in vrouter/include/vr_info.h
  * under VR_INFO_REG(X) macro.
- * All callback API's should start with "lh_<fn.name>"
+ * All callback API's should start with "vr_<fn.name>"
  * Register Format: X(MSG, <fn.name>) \
  *                  eg: X(INFO_VER, info_get_version)
  */
 
 /* Kernel based callback functions */
 int
-lh_info_get_version(VR_INFO_ARGS)
+vr_info_get_version(VR_INFO_ARGS)
 {
     VR_INFO_BUF_INIT();
-    VI_PRINTF("Kernel version: %s\n", ContrailBuildInfo);
+    VI_PRINTF("Kernel version: %s\n\n", ContrailBuildInfo);
     return 0;
 }
 

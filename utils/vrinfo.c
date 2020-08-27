@@ -60,7 +60,7 @@ static struct option long_options[] = {
     [VER_OPT_INDEX]    =    {"version",    no_argument,        &ver_set,      1},
     [BUFFSZ_OPT_INDEX]  =   {"buffsz",  required_argument,  &buffsz,        1},
     [SOCK_DIR_OPT_INDEX]  = {"sock-dir", required_argument, &sock_dir_set,  1},
-    [MAX_OPT_INDEX]     =   {NULL,    0,                  0,              0},
+    [MAX_OPT_INDEX]     =   {NULL,    0,                  NULL,              0},
 };
 
 static void
@@ -182,7 +182,7 @@ main(int argc, char *argv[])
 
     parse_ini_file();
 
-    while (((opt = getopt_long(argc, argv, "h:v:s:",
+    while (((opt = getopt_long(argc, argv, "hvs:",
                         long_options, &option_index)) >= 0)) {
         switch (opt) {
         case 'v':
