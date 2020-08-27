@@ -43,4 +43,4 @@ if 'install' in COMMAND_LINE_TARGETS:
 if add_opts == "checkWiresharkPlugins":
     #Command for running compare_with_vr_sandesh.sh script
     env.Command("compare_with_vr_sandesh", [], \
-                src_root+"/vrouter/utils/sandump/compare_with_vr_sandesh.sh")
+                "sh "+src_root+"/vrouter/utils/sandump/compare_with_vr_sandesh.sh")
