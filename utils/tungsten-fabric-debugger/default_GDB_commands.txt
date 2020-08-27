@@ -1,0 +1,9 @@
+set logging redirect on
+set logging overwrite on
+set logging file gdb_output.log
+set logging on
+bt
+thread apply all bt
+pwd
+quit
+set logging off
