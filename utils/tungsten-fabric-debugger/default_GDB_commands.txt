@@ -1,0 +1,14 @@
+set logging redirect on
+set logging overwrite on
+set logging file gdb_output.log
+set logging on
+echo ====== thread apply all bt ======= \n
+thread apply all bt
+echo ====== pwd ======= \n
+pwd
+echo ====== info threads ======= \n
+info threads
+echo ====== bt ======= \n
+bt
+quit
+set logging off
