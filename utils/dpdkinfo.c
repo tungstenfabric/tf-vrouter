@@ -121,7 +121,6 @@ static void
 dpdkinfo_resp_cb_process(void *s_req)
 {
     int ret = 0;
-    int platform = get_platform();
     vr_info_req *resp = (vr_info_req *)s_req;
     if(resp != NULL && resp->vdu_proc_info) {
         /* Print the Message buffer(character buffer)
@@ -259,6 +258,7 @@ main(int argc, char *argv[])
 {
     char opt;
     int ret, option_index, log_core = 0, i = 0;
+    int platform = 0;
 
     /* Register callback function for Netlink message */
     dpdkinfo_fill_nl_callbacks();
@@ -331,6 +331,10 @@ main(int argc, char *argv[])
     /* Support for running from VTEST(vRouter UT Framework)*/
     if (sock_dir_set) {
         set_platform_vtest();
+    }
+    platform = get_platform();
+    if ((platform != DPDK_PLATFORM) && (platform != VTEST_PLATFORM)) {
+	Usage();
     }
 
     cl = vr_get_nl_client(VR_NETLINK_PROTO_DEFAULT);
