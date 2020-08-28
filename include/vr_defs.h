@@ -42,7 +42,8 @@
 #define AGENT_TRAP_MAC_LEARN        17
 #define AGENT_TRAP_MAC_MOVE         18
 #define AGENT_TRAP_MAC_IP_LEARNING  19
-#define MAX_AGENT_HDR_COMMANDS      20
+#define AGENT_TRAP_BFD              20
+#define MAX_AGENT_HDR_COMMANDS      21
 
 enum rt_type{
     RT_UCAST = 0,
