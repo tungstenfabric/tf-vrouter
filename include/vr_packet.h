@@ -39,6 +39,8 @@
 #define VR_DHCP_SRC_PORT        68
 #define VR_DHCP6_SRC_PORT       546
 
+#define VR_BFD_SINGLE_HOP_PORT  3784
+
 /* Size of basic GRE header */
 #define VR_GRE_BASIC_HDR_LEN    4
 
@@ -1492,6 +1494,31 @@ pkt_drop_stats(struct vr_interface *vif, unsigned short reason, int cpu)
     }
 
     return;
+}
+
+static inline bool
+vr_pkt_is_bfd(struct vr_packet *pkt, uint8_t *bfd_state)
+{
+    struct vr_ip *iph;
+    struct vr_udp *udph;
+    int pkt_off;
+    uint8_t *bfd_data;
+
+    if (vr_pkt_is_ip(pkt)) {
+        iph = (struct vr_ip *)pkt_network_header(pkt);
+        if (iph->ip_proto == VR_IP_PROTO_UDP) {
+            pkt_off = pkt_get_network_header_off(pkt) + (iph->ip_hl << 2);
+            udph = (struct vr_udp *)(pkt_data_at_offset(pkt, pkt_off));
+            if (ntohs(udph->udp_dport) == VR_BFD_SINGLE_HOP_PORT) {
+                pkt_off += sizeof(struct vr_udp);
+                bfd_data = (uint8_t *)(pkt_data_at_offset(pkt, pkt_off));
+                // decode the BFD-state info from the packet
+                *bfd_state = htonl(bfd_data[1] & 0xc0);
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 /* Below function logs the packet drops by getting packet information from vr_packet & vr_flow
