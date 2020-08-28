@@ -328,6 +328,7 @@ agent_set_rewrite(struct vr_interface *vif, struct vr_packet **pkt,
     unsigned char *head;
     unsigned int hdr_len;
     struct agent_hdr *hdr;
+    uint8_t bfd_state;
     struct vr_packet *expanded_pkt;
 
     vr_preset(*pkt);
@@ -350,9 +351,15 @@ agent_set_rewrite(struct vr_interface *vif, struct vr_packet **pkt,
     hdr = (struct agent_hdr *)(head + len);
     hdr->hdr_ifindex = htons((*pkt)->vp_if->vif_idx);
     hdr->hdr_vrf = htons(fmd->fmd_dvrf);
-    /* this needs some thought */
-    hdr->hdr_cmd = htons(AGENT_TRAP_NEXTHOP);
-    hdr->hdr_cmd_param = 0;
+    if (vr_pkt_is_bfd(*pkt, &bfd_state) == true) {
+        hdr->hdr_cmd = htons(AGENT_TRAP_BFD);
+        // set the BFD state info in cmd_param
+        hdr->hdr_cmd_param = htonl(bfd_state);
+    } else {
+        /* this needs some thought */
+        hdr->hdr_cmd = htons(AGENT_TRAP_NEXTHOP);
+        hdr->hdr_cmd_param = 0;
+    }
 
     return len;
 }
