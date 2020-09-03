@@ -1100,11 +1100,15 @@ dpdk_info_get_app(VR_INFO_ARGS)
         VI_PRINTF("\tEthdev reta size: %"PRIu16"\n\n", dev_info.reta_size);
     }
     /* Display Tapdev information */
-    VI_PRINTF("Tapdev:\n");
-    while (tapdev[k].tapdev_fd){
-        VI_PRINTF("\tfd: %d", tapdev[k].tapdev_fd);
-        VI_PRINTF("\tvif name: %s \n", tapdev[k].tapdev_vif->vif_name);
-        k++;
+    if(tapdev) {
+	VI_PRINTF("Tapdev:\n");
+	while (tapdev[k].tapdev_fd){
+	    VI_PRINTF("\tfd: %d", tapdev[k].tapdev_fd);
+	    if(tapdev[k].tapdev_vif) {
+		VI_PRINTF("\tvif name: %s \n", tapdev[k].tapdev_vif->vif_name);
+	    }
+	    k++;
+	}
     }
     VI_PRINTF("\n");
 
