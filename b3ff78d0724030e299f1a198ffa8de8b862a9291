@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4cbb45e7_5681c35e",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1104,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-09-03T06:19:40Z",
+      "side": 1,
+      "message": "tabs are used, pl remove",
+      "revId": "b3ff78d0724030e299f1a198ffa8de8b862a9291",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
