@@ -13,6 +13,7 @@
 #include <linux/netdevice.h>
 #include <linux/cpumask.h>
 #include <linux/time.h>
+#include <linux/ktime.h>
 #include <linux/highmem.h>
 #include <linux/version.h>
 #include <linux/if_vlan.h>
@@ -406,11 +407,11 @@ lh_phead_len(struct vr_packet *pkt)
 static void
 lh_get_time(uint64_t *sec, uint64_t *usec)
 {
-    struct timeval t;
+    struct timespec64 t;
 
-    do_gettimeofday(&t);
+    ktime_get_real_ts64(&t);
     *sec = t.tv_sec;
-    *usec = t.tv_usec;
+    *usec = t.tv_nsec / NSEC_PER_USEC;
 
     return;
 }
@@ -1108,7 +1109,11 @@ lh_pull_inner_headers_fast_udp(struct vr_packet *pkt, int
     frag = &skb_shinfo(skb)->frags[0];
     frag_size = skb_frag_size(frag);
     va = vr_kmap_atomic(skb_frag_page(frag));
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5,4,0))
     va += frag->page_offset;
+#else
+    va += frag->bv_offset;
+#endif
 
     pull_len = 0;
     if (pkt_headlen == 0) {
@@ -1145,7 +1150,11 @@ lh_pull_inner_headers_fast_udp(struct vr_packet *pkt, int
 
     memcpy(skb_tail_pointer(skb), va, pull_len);
     skb_frag_size_sub(frag, pull_len);
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5,4,0))
     frag->page_offset += pull_len;
+#else
+    frag->bv_offset += pull_len;
+#endif
     skb->data_len -= pull_len;
     skb->tail += pull_len;
 
@@ -1353,7 +1362,11 @@ lh_pull_inner_headers_fast_gre(struct vr_packet *pkt, int
     frag = &skb_shinfo(skb)->frags[0];
     frag_size = skb_frag_size(frag);
     va = vr_kmap_atomic(skb_frag_page(frag));
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5,4,0))
     va += frag->page_offset;
+#else
+    va += frag->bv_offset;
+#endif
 
     pull_len = 0;
     if (pkt_headlen == 0) {
@@ -1415,7 +1428,11 @@ lh_pull_inner_headers_fast_gre(struct vr_packet *pkt, int
 
     memcpy(skb_tail_pointer(skb), va, pull_len);
     skb_frag_size_sub(frag, pull_len);
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5,4,0))
     frag->page_offset += pull_len;
+#else
+    frag->bv_offset += pull_len;
+#endif
     skb->data_len -= pull_len;
     skb->tail += pull_len;
 

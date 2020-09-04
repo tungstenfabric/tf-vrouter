@@ -259,6 +259,7 @@ tx_rx_pcap_test(struct vtest *test) {
         S_RECV_TIMEOUT
     } TX_RX_AUTOMATA_STATE;
 
+    int ret = 0;
     char src_vif_ctrl_sock[UNIX_PATH_MAX] = {0};
     char dst_vif_ctrl_sock[UNIX_PATH_MAX] = {0};
 
@@ -277,14 +278,14 @@ tx_rx_pcap_test(struct vtest *test) {
     }
 
     if (!strlen(test->packet.pcap_dest_file)) {
-        snprintf(pcap_dest, PATH_MAX, "/tmp/dest_%u.pcap", (unsigned)(time(NULL)));
+        ret = snprintf(pcap_dest, PATH_MAX, "/tmp/dest_%u.pcap", (unsigned)(time(NULL)));
         strncpy(test->packet.pcap_dest_file, pcap_dest, strlen(pcap_dest));
     }
 
-    snprintf(src_vif_ctrl_sock, UNIX_PATH_MAX, "%s/uvh_vif_%s",
+    ret = snprintf(src_vif_ctrl_sock, UNIX_PATH_MAX, "%s/uvh_vif_%s",
         vr_socket_dir, test->packet_tx.un_socket);
     if (!send_only) {
-        snprintf(dst_vif_ctrl_sock, UNIX_PATH_MAX, "%s/uvh_vif_%s",
+        ret = snprintf(dst_vif_ctrl_sock, UNIX_PATH_MAX, "%s/uvh_vif_%s",
                  vr_socket_dir, test->packet_rx[0].un_socket);
     }
 
