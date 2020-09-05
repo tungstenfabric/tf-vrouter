@@ -46,6 +46,30 @@
       "revId": "46c585ca794fa77420e1f3a6ed7519c53f75133b",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6d168ed2_a7f75e62",
+        "filename": "include/vr_packet.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 1516,
+      "author": {
+        "id": 484
+      },
+      "writtenOn": "2020-09-05T22:12:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ef868b4c_23b35c60",
+      "range": {
+        "startLine": 1516,
+        "startChar": 43,
+        "endLine": 1516,
+        "endChar": 47
+      },
+      "revId": "46c585ca794fa77420e1f3a6ed7519c53f75133b",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
     }
   ]
 }
