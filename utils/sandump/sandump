@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# killing already running socat and tshark processes
+pkill socat
+pkill tshark
+
 if [ ! -f "/usr/sbin/tshark3_2" ]; then
     echo "Error! /usr/sbin/tshark3_2 not available, please install it"
     exit 1
