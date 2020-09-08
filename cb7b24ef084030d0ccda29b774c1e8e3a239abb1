@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "49d360da_5ea0aea1",
+        "filename": "dp-core/vr_proto_ip.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 948,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-09-08T08:09:44Z",
+      "side": 1,
+      "message": "Nice catch this !!. Do add a unit test case for this change.",
+      "revId": "cb7b24ef084030d0ccda29b774c1e8e3a239abb1",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
