@@ -16,6 +16,24 @@
       "revId": "cb7b24ef084030d0ccda29b774c1e8e3a239abb1",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "75b725d3_801858ad",
+        "filename": "dp-core/vr_proto_ip.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 948,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-09T17:52:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "49d360da_5ea0aea1",
+      "revId": "cb7b24ef084030d0ccda29b774c1e8e3a239abb1",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
