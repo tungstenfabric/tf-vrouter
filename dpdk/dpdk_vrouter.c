@@ -1318,6 +1318,7 @@ parse_long_opts(int opt_flow_index, char *optarg)
 	if (errno != 0) {
             vr_uncond_close_flow_on_tcp_rst = 0;
 	}
+        break;
 
     case VR_NO_LOAD_BALANCE_OPT_INDEX:
         vr_no_load_balance = true;
