@@ -130,7 +130,8 @@ class TestBasic(unittest.TestCase):
         self.assertEqual("tap_10", vmi.get_vif_name())
 
         # create an invalid unicast ARP pkt which should get dropped in vrouter
-        arp = ArpPacket(src="de:ad:be:ef:00:02", dst="de:ad:be:ef:00:00")
+        arp = ArpPacket(src="de:ad:be:ef:00:02", dst="de:ad:be:ef:00:00",
+                        plen=0)
         pkt = arp.get_packet()
         pkt.show()
 

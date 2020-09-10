@@ -645,8 +645,7 @@ vr_virtual_input(unsigned short vrf, struct vr_interface *vif,
     struct vr_route_req vr_req;
     struct vr_rtable *rtable = NULL;
     uint32_t rt_prefix[4];
-    struct vr_ip *ip;
-    struct vr_ip6 *ip6;
+    struct vr_arp *arp;
     struct vrouter *router;
 
     fmd->fmd_vlan = vlan_id;
@@ -681,45 +680,41 @@ vr_virtual_input(unsigned short vrf, struct vr_interface *vif,
                 (pkt->vp_if->vif_flags & VIF_FLAG_L3_ENABLED) &&
                 (pkt->vp_if->vif_flags & VIF_FLAG_L2_ENABLED)){
 
-            if((pkt->vp_type == VP_TYPE_IP) || (pkt->vp_type == VP_TYPE_IP6)) {
+            if(pkt->vp_type == VP_TYPE_ARP) {
                 memset(&vr_req, 0, sizeof(struct vr_route_req));
                 rtable = router->vr_inet_rtable;
                 vr_req.rtr_req.rtr_prefix = (uint8_t*)&rt_prefix;
-                if(pkt->vp_type == VP_TYPE_IP) {
-                    vr_req.rtr_req.rtr_prefix_size = sizeof(ip->ip_saddr);
-                    vr_req.rtr_req.rtr_prefix_len = IP4_PREFIX_LEN;
-                    vr_req.rtr_req.rtr_family = AF_INET;
-                    ip = (struct vr_ip *)(pkt_data(pkt) + sizeof(struct vr_eth));
-                    memcpy(vr_req.rtr_req.rtr_prefix, (uint8_t *)&ip->ip_saddr, sizeof(ip->ip_saddr));
-                }
-                else if ((pkt->vp_type == VP_TYPE_IP6)) {
-                    vr_req.rtr_req.rtr_prefix_size = sizeof(ip6->ip6_src);
-                    vr_req.rtr_req.rtr_prefix_len = IP6_PREFIX_LEN;
-                    vr_req.rtr_req.rtr_family = AF_INET6;
-                    ip6 = (struct vr_ip6 *)(pkt_data(pkt) + sizeof(struct vr_eth));
-                    memcpy(vr_req.rtr_req.rtr_prefix, ip6->ip6_src, sizeof(ip6->ip6_src));
-                }
-            }
+                vr_req.rtr_req.rtr_prefix_size = 4;
+                vr_req.rtr_req.rtr_prefix_len = IP4_PREFIX_LEN;
+                vr_req.rtr_req.rtr_family = AF_INET;
+                arp = (struct vr_arp *)(pkt_data(pkt) + sizeof(struct vr_eth));
 
-            rtable->algo_get(fmd->fmd_dvrf, &vr_req);
+                memcpy(vr_req.rtr_req.rtr_prefix, (uint8_t *)&arp->arp_spa, sizeof(arp->arp_spa));
 
-            if(vr_req.rtr_nh && vr_req.rtr_nh->nh_id) {
-                if(vr_req.rtr_req.rtr_mac == NULL ||
-                        !(VR_MAC_CMP(eth->eth_smac, vr_req.rtr_req.rtr_mac))) {
-                    vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_MAC_IP_LEARNING, NULL);
-                    return 0;
+                rtable->algo_get(fmd->fmd_dvrf, &vr_req);
+
+
+                if(vr_req.rtr_nh && vr_req.rtr_nh->nh_id) {
+                    if(vr_req.rtr_req.rtr_mac == NULL ||
+                            !(VR_MAC_CMP(eth->eth_smac, vr_req.rtr_req.rtr_mac))) {
+                        vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_MAC_IP_LEARNING, NULL);
+                        return 0;
+                    }
+                } else {
+                        vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_MAC_IP_LEARNING, NULL);
+                        return 0;
                 }
-            } else {
-                    vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_MAC_IP_LEARNING, NULL);
-                    return 0;
             }
         }
         if ((pkt->vp_if->vif_flags & VIF_FLAG_MAC_IP_LEARNING) &&
-                (pkt->vp_if->vif_flags & VIF_FLAG_L2_ENABLED)) {
-            nh = __vrouter_bridge_lookup(fmd->fmd_dvrf, eth->eth_smac);
-            if(!nh) {
-                vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_MAC_IP_LEARNING, NULL);
-                return 0;
+                (pkt->vp_if->vif_flags & VIF_FLAG_L2_ENABLED) &&
+                !(pkt->vp_if->vif_flags & VIF_FLAG_L3_ENABLED)) {
+            if(pkt->vp_type == VP_TYPE_ARP) {
+                nh = __vrouter_bridge_lookup(fmd->fmd_dvrf, eth->eth_smac);
+                if(!nh) {
+                    vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_MAC_IP_LEARNING, NULL);
+                    return 0;
+                }
             }
         }
 

@@ -135,7 +135,7 @@ de:ad:be:ef::1/128    128                       -             38
 class TestVmToFabricIntraVn(VmToFabricIntraVn):
 
     # program inet route and bridge route, so that packet not trapped to agent.
-    def test_macip_learning_send_fabric_v4(self):
+    def test_macip_learning_send_fabric_arp(self):
         self.tenant_vif.reload()
         self.tenant_vif = VirtualVif(
             name="tapc2234cd0-55",
@@ -164,13 +164,12 @@ class TestVmToFabricIntraVn(VmToFabricIntraVn):
         ObjectBase.sync_all()
 
         # send ping request from vif3
-        icmp = IcmpPacket(
+        arp = ArpPacket(
+            src='02:c2:23:4c:d0:55',
+            dst='02:e7:03:ea:67:f1',
             sip='1.0.0.3',
-            dip='1.0.0.5',
-            smac='02:c2:23:4c:d0:55',
-            dmac='02:e7:03:ea:67:f1',
-            id=4145)
-        pkt = icmp.get_packet()
+            dip='1.0.0.5')
+        pkt = arp.get_packet()
         pkt.show()
 
         # send packet
@@ -181,7 +180,7 @@ class TestVmToFabricIntraVn(VmToFabricIntraVn):
         self.assertEqual(1, self.fabric_vif.get_vif_opackets())
 
     # Verify packet send to agent for MAC-IP learning
-    def test_macip_learning_trap_agent_v4(self):
+    def test_macip_learning_trap_agent_arp(self):
         self.tenant_vif.reload()
         self.tenant_vif = VirtualVif(
             name="tapc2234cd0-55",
@@ -203,13 +202,12 @@ class TestVmToFabricIntraVn(VmToFabricIntraVn):
         inet_rt.sync()
 
         # send ping request from vif3
-        icmp = IcmpPacket(
+        arp = ArpPacket(
             sip='1.0.0.3',
             dip='1.0.0.5',
-            smac='02:c2:23:4c:d0:55',
-            dmac='02:e7:03:ea:67:f1',
-            id=4145)
-        pkt = icmp.get_packet()
+            src='02:c2:23:4c:d0:55',
+            dst='02:e7:03:ea:67:f1')
+        pkt = arp.get_packet()
         pkt.show()
 
         # send packet
@@ -222,7 +220,7 @@ class TestVmToFabricIntraVn(VmToFabricIntraVn):
 
     # Verify stitched MAC programmed with incorrect value other than src mac,
     # so trap pacekt for MAC-IP leanrning
-    def test_macip_learning_verify_stitched_mac_v4(self):
+    def test_macip_learning_verify_stitched_mac_arp(self):
         self.tenant_vif.reload()
         self.tenant_vif = VirtualVif(
             name="tapc2234cd0-55",
@@ -251,226 +249,12 @@ class TestVmToFabricIntraVn(VmToFabricIntraVn):
         ObjectBase.sync_all()
 
         # send ping request from vif3
-        icmp = IcmpPacket(
+        arp = ArpPacket(
             sip='1.0.0.3',
             dip='1.0.0.5',
-            smac='02:c2:23:4c:d0:55',
-            dmac='02:e7:03:ea:67:f1',
-            id=4145)
-        pkt = icmp.get_packet()
-        pkt.show()
-
-        # send packet
-        self.tenant_vif.send_packet(pkt)
-
-        self.tenant_vif.reload()
-        self.agent_vif.reload()
-        # Check if the packet was sent to agent vif
-        self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
-        self.assertEqual(1, self.agent_vif.get_vif_opackets())
-
-    # For IPV6 cases
-    def test_macip_learning_send_fabric_v6(self):
-        self.tenant_vif.reload()
-        self.tenant_vif = VirtualVif(
-            name="tapc2234cd0-55",
-            ipv4_str="1.0.0.3",
-            mac_str="00:00:5e:00:01:00",
-            idx=5,
-            vrf=5,
-            nh_idx=38,
-            flags=constants.VIF_FLAG_POLICY_ENABLED |
-            constants.VIF_FLAG_MAC_IP_LEARNING)
-        self.tenant_vif.sync()
-
-        # add bridge route
-        bridge_rt = BridgeRoute(
-            vrf=5,
-            mac_str="02:c2:23:4c:d0:55",
-            nh_idx=38)
-
-        # add inet route
-        inet_rt = Inet6Route(
-            vrf=5,
-            prefix="de:ad:be:ef::1",
-            prefix_len=128,
-            mac_str="02:c2:23:4c:d0:55",
-            nh_idx=38)
-
-        # sync all objects
-        ObjectBase.sync_all()
-
-        # Add Flow
-        inet6flow = Inet6Flow(
-            sip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0001",
-            dip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0002",
-            sport=0,
-            dport=0,
-            proto=constants.VR_IP_PROTO_ICMP,
-            flow_nh_idx=38,
-            src_nh_idx=38,
-            flow_vrf=5,
-            rflow_nh_idx=21)
-
-        r_inet6flow = Inet6Flow(
-            sip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0002",
-            dip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0001",
-            sport=0,
-            dport=0,
-            proto=constants.VR_IP_PROTO_ICMP,
-            flags=constants.VR_RFLOW_VALID,
-            flow_nh_idx=38,
-            src_nh_idx=21,
-            flow_vrf=5,
-            rflow_nh_idx=21)
-        inet6flow.sync_and_link_flow(r_inet6flow)
-        self.assertGreater(inet6flow.get_fr_index(), 0)
-
-        # send ping request from vif3
-        icmpv6 = Icmpv6Packet(
-            sipv6='de:ad:be:ef::1',
-            dipv6='de:ad:be:ef::2',
-            smac='02:c2:23:4c:d0:55',
-            dmac='02:e7:03:ea:67:f1',
-            nh=constants.VR_IP_PROTO_ICMP,
-            id=4145)
-        pkt = icmpv6.get_packet()
-        pkt.show()
-
-        # send packet
-        self.tenant_vif.send_packet(pkt)
-
-        self.tenant_vif.reload()
-        self.agent_vif.reload()
-        # Check if the packet was sent to agent vif
-        self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
-        self.assertEqual(1, self.fabric_vif.get_vif_opackets())
-
-    def test_macip_learning_trap_agent_v6(self):
-        self.tenant_vif.reload()
-        self.tenant_vif = VirtualVif(
-            name="tapc2234cd0-55",
-            ipv4_str="1.0.0.3",
-            mac_str="00:00:5e:00:01:00",
-            idx=5,
-            vrf=5,
-            nh_idx=38,
-            flags=constants.VIF_FLAG_POLICY_ENABLED |
-            constants.VIF_FLAG_MAC_IP_LEARNING)
-        self.tenant_vif.sync()
-
-        # Add Flow
-        inet6flow = Inet6Flow(
-            sip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0001",
-            dip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0002",
-            sport=0,
-            dport=0,
-            proto=constants.VR_IP_PROTO_ICMP,
-            flow_nh_idx=38,
-            src_nh_idx=38,
-            flow_vrf=5,
-            rflow_nh_idx=21)
-
-        r_inet6flow = Inet6Flow(
-            sip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0002",
-            dip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0001",
-            sport=0,
-            dport=0,
-            proto=constants.VR_IP_PROTO_ICMP,
-            flags=constants.VR_RFLOW_VALID,
-            flow_nh_idx=38,
-            src_nh_idx=21,
-            flow_vrf=5,
-            rflow_nh_idx=21)
-        inet6flow.sync_and_link_flow(r_inet6flow)
-        self.assertGreater(inet6flow.get_fr_index(), 0)
-
-        # send ping request from vif3
-        icmpv6 = Icmpv6Packet(
-            sipv6='de:ad:be:ef::1',
-            dipv6='de:ad:be:ef::2',
-            smac='02:c2:23:4c:d0:55',
-            dmac='02:e7:03:ea:67:f1',
-            nh=constants.VR_IP_PROTO_ICMP,
-            id=4145)
-        pkt = icmpv6.get_packet()
-        pkt.show()
-
-        # send packet
-        self.tenant_vif.send_packet(pkt)
-
-        self.tenant_vif.reload()
-        self.agent_vif.reload()
-
-        # Check if the packet was sent to agent vif
-        self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
-        self.assertEqual(1, self.agent_vif.get_vif_opackets())
-
-    def test_macip_learning_verify_stitched_mac_v6(self):
-        self.tenant_vif.reload()
-        self.tenant_vif = VirtualVif(
-            name="tapc2234cd0-55",
-            ipv4_str="1.0.0.3",
-            mac_str="00:00:5e:00:01:00",
-            idx=5,
-            vrf=5,
-            nh_idx=38,
-            flags=constants.VIF_FLAG_POLICY_ENABLED |
-            constants.VIF_FLAG_MAC_IP_LEARNING)
-        self.tenant_vif.sync()
-
-        # add bridge route
-        bridge_rt = BridgeRoute(
-            vrf=5,
-            mac_str="02:c2:23:4c:d0:56",
-            nh_idx=38)
-
-        # add inet route
-        inet_rt = Inet6Route(
-            vrf=5,
-            prefix="de:ad:be:ef::1",
-            prefix_len=128,
-            mac_str="02:c2:23:4c:d0:56",
-            nh_idx=38)
-
-        # sync all objects
-        ObjectBase.sync_all()
-
-        # Add Flow
-        inet6flow = Inet6Flow(
-            sip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0001",
-            dip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0002",
-            sport=0,
-            dport=0,
-            proto=constants.VR_IP_PROTO_ICMP,
-            flow_nh_idx=38,
-            src_nh_idx=38,
-            flow_vrf=5,
-            rflow_nh_idx=21)
-
-        r_inet6flow = Inet6Flow(
-            sip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0002",
-            dip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0001",
-            sport=0,
-            dport=0,
-            proto=constants.VR_IP_PROTO_ICMP,
-            flags=constants.VR_RFLOW_VALID,
-            flow_nh_idx=38,
-            src_nh_idx=21,
-            flow_vrf=5,
-            rflow_nh_idx=21)
-        inet6flow.sync_and_link_flow(r_inet6flow)
-        self.assertGreater(inet6flow.get_fr_index(), 0)
-
-        # send ping request from vif3
-        icmpv6 = Icmpv6Packet(
-            sipv6='de:ad:be:ef::1',
-            dipv6='de:ad:be:ef::2',
-            smac='02:c2:23:4c:d0:55',
-            dmac='02:e7:03:ea:67:f1',
-            nh=constants.VR_IP_PROTO_ICMP,
-            id=4145)
-        pkt = icmpv6.get_packet()
+            src='02:c2:23:4c:d0:55',
+            dst='02:e7:03:ea:67:f1')
+        pkt = arp.get_packet()
         pkt.show()
 
         # send packet
@@ -531,13 +315,12 @@ class TestVmToFabricIntraVn(VmToFabricIntraVn):
         ObjectBase.sync_all()
 
         # send ping request from vif3
-        icmp = IcmpPacket(
+        arp = ArpPacket(
             sip='1.0.0.3',
             dip='1.0.0.5',
-            smac='02:c2:23:4c:d0:55',
-            dmac='02:e7:03:ea:67:f1',
-            id=4145)
-        pkt = icmp.get_packet()
+            src='02:c2:23:4c:d0:55',
+            dst='02:e7:03:ea:67:f1')
+        pkt = arp.get_packet()
         pkt.show()
 
         # send packet
@@ -545,7 +328,7 @@ class TestVmToFabricIntraVn(VmToFabricIntraVn):
 
         # Check if the packet was sent to tenant vif
         self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
-        self.assertEqual(1, self.vif4.get_vif_opackets())
+        self.assertEqual(0, self.agent_vif.get_vif_opackets())
 
     def test_macip_learning_trap_agent_bridge_route(self):
         self.tenant_vif.reload()
@@ -589,13 +372,12 @@ class TestVmToFabricIntraVn(VmToFabricIntraVn):
         ObjectBase.sync_all()
 
         # send ping request from vif3
-        icmp = IcmpPacket(
+        arp = ArpPacket(
             sip='1.0.0.3',
             dip='1.0.0.5',
-            smac='02:c2:23:4c:d0:55',
-            dmac='02:e7:03:ea:67:f1',
-            id=4145)
-        pkt = icmp.get_packet()
+            src='02:c2:23:4c:d0:55',
+            dst='02:e7:03:ea:67:f1')
+        pkt = arp.get_packet()
         pkt.show()
 
         # send packet
