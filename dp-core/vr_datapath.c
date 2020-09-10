@@ -699,20 +699,20 @@ vr_virtual_input(unsigned short vrf, struct vr_interface *vif,
                     ip6 = (struct vr_ip6 *)(pkt_data(pkt) + sizeof(struct vr_eth));
                     memcpy(vr_req.rtr_req.rtr_prefix, ip6->ip6_src, sizeof(ip6->ip6_src));
                 }
-            }
 
-            rtable->algo_get(fmd->fmd_dvrf, &vr_req);
+		rtable->algo_get(fmd->fmd_dvrf, &vr_req);
 
-            if(vr_req.rtr_nh && vr_req.rtr_nh->nh_id) {
-                if(vr_req.rtr_req.rtr_mac == NULL ||
-                        !(VR_MAC_CMP(eth->eth_smac, vr_req.rtr_req.rtr_mac))) {
-                    vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_MAC_IP_LEARNING, NULL);
-                    return 0;
-                }
-            } else {
-                    vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_MAC_IP_LEARNING, NULL);
-                    return 0;
-            }
+		if(vr_req.rtr_nh && vr_req.rtr_nh->nh_id) {
+		    if(vr_req.rtr_req.rtr_mac == NULL ||
+			    !(VR_MAC_CMP(eth->eth_smac, vr_req.rtr_req.rtr_mac))) {
+			vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_MAC_IP_LEARNING, NULL);
+			return 0;
+		    }
+		} else {
+			vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_MAC_IP_LEARNING, NULL);
+			return 0;
+		}
+	    }
         }
         if ((pkt->vp_if->vif_flags & VIF_FLAG_MAC_IP_LEARNING) &&
                 (pkt->vp_if->vif_flags & VIF_FLAG_L2_ENABLED)) {
