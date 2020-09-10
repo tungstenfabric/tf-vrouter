@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c49b2d9b_392c5716",
+        "filename": "dp-core/vr_datapath.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 703,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-09-10T17:02:30Z",
+      "side": 1,
+      "message": "remove the tabs pl",
+      "revId": "a0afa2832dc6b92f102125cb946ff6a69620d584",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
