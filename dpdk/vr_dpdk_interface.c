@@ -1488,6 +1488,8 @@ dpdk_fragment_packet(struct vr_packet *pkt, struct rte_mbuf *mbuf_in,
         outer_ip->ip_len = rte_cpu_to_be_16(rte_pktmbuf_pkt_len(m) - eth_hlen);
         m->l2_len = mbuf_in->l2_len;
         m->l3_len = mbuf_in->l3_len;
+        m->ol_flags = mbuf_in->ol_flags;
+        m->vlan_tci = mbuf_in->vlan_tci;
 
         /* Copy inner IP id to outer. Currently, the Agent diagnostics depends
          * on that. */
