@@ -142,10 +142,6 @@ dpdk_bond_info_show_slave(VR_INFO_ARGS, uint16_t port_id,
             RTE_LOG(ERR, VROUTER, "Error getting bond interface name\n");
         }
 
-        ret = rte_eth_bond_8023ad_slave_info(port_id, slave_id, &info);
-        if (ret != 0) {
-            RTE_LOG(ERR, VROUTER, "Error getting bond interface name\n");
-        }
 
         VI_PRINTF("Slave Interface(%d): %s \n", i, name);
         VI_PRINTF("Slave Interface Driver: %s\n",
@@ -156,38 +152,45 @@ dpdk_bond_info_show_slave(VR_INFO_ARGS, uint16_t port_id,
         if (ret < 0) {
             return VR_INFO_FAILED;
         }
-        VI_PRINTF("Permanent HW addr:"MAC_FORMAT "\n",
-            MAC_VALUE(info.actor.system.addr_bytes));
-        VI_PRINTF("Aggregator ID: %d\n", info.agg_port_id);
 
-        VI_PRINTF("Duplex: %s\n", duplex[link.link_duplex]);
+        ret = rte_eth_bond_8023ad_slave_info(port_id, slave_id, &info);
+        if (ret == 0) {
+            VI_PRINTF("Permanent HW addr:"MAC_FORMAT "\n",
+                          MAC_VALUE(info.actor.system.addr_bytes));
+            VI_PRINTF("Aggregator ID: %d\n", info.agg_port_id);
 
-        rte_eth_macaddr_get(slave_id, &mac_addr);
-        VI_PRINTF("Bond MAC addr:"MAC_FORMAT "\n",
-            MAC_VALUE(mac_addr.addr_bytes));
+            VI_PRINTF("Duplex: %s\n", duplex[link.link_duplex]);
 
-        VI_PRINTF("Details actor lacp pdu: \n");
-        VI_PRINTF("\tsystem priority: %"PRIu16"\n",
-                       htons(info.actor.system_priority));
-        VI_PRINTF("\tsystem mac address:"MAC_FORMAT "\n",
-            MAC_VALUE(info.actor.system.addr_bytes));
-        VI_PRINTF("\tport key: %"PRIu16"\n", htons(info.actor.key));
-        VI_PRINTF("\tport priority: %"PRIu16 "\n",
-                      htons(info.actor.port_priority));
-        VI_PRINTF("\tport number: %"PRIu16"\n", htons(info.actor.port_number));
-        get_port_states(msg_req, info.actor_state);
+            rte_eth_macaddr_get(slave_id, &mac_addr);
+            VI_PRINTF("Bond MAC addr:"MAC_FORMAT "\n",
+                        MAC_VALUE(mac_addr.addr_bytes));
 
-        VI_PRINTF("Details partner lacp pdu: \n");
-        VI_PRINTF("\tsystem priority: %"PRIu16"\n",
-                         htons(info.partner.system_priority));
-        VI_PRINTF("\tsystem mac address:"MAC_FORMAT "\n",
-            MAC_VALUE(info.partner.system.addr_bytes));
-        VI_PRINTF("\tport key: %"PRIu16"\n", htons(info.partner.key));
-        VI_PRINTF("\tport priority: %"PRIu16"\n",
-                         htons(info.partner.port_priority));
-        VI_PRINTF("\tport number: %"PRIu16"\n",
-                         htons(info.partner.port_number));
-        get_port_states(msg_req, info.partner_state);
+            VI_PRINTF("Details actor lacp pdu: \n");
+            VI_PRINTF("\tsystem priority: %"PRIu16"\n",
+                        htons(info.actor.system_priority));
+            VI_PRINTF("\tsystem mac address:"MAC_FORMAT "\n",
+                        MAC_VALUE(info.actor.system.addr_bytes));
+            VI_PRINTF("\tport key: %"PRIu16"\n", htons(info.actor.key));
+            VI_PRINTF("\tport priority: %"PRIu16 "\n",
+                        htons(info.actor.port_priority));
+            VI_PRINTF("\tport number: %"PRIu16"\n",
+                        htons(info.actor.port_number));
+            get_port_states(msg_req, info.actor_state);
+
+            VI_PRINTF("Details partner lacp pdu: \n");
+            VI_PRINTF("\tsystem priority: %"PRIu16"\n",
+                        htons(info.partner.system_priority));
+            VI_PRINTF("\tsystem mac address:"MAC_FORMAT "\n",
+                        MAC_VALUE(info.partner.system.addr_bytes));
+            VI_PRINTF("\tport key: %"PRIu16"\n", htons(info.partner.key));
+            VI_PRINTF("\tport priority: %"PRIu16"\n",
+                        htons(info.partner.port_priority));
+            VI_PRINTF("\tport number: %"PRIu16"\n",
+                        htons(info.partner.port_number));
+            get_port_states(msg_req, info.partner_state);
+        } else {
+            VI_PRINTF("\n");
+        }
     }
     return 0;
 }
@@ -400,22 +403,22 @@ dpdk_info_get_lacp(VR_INFO_ARGS)
                 return VR_INFO_FAILED;
             }
 
-            ret = rte_eth_bond_8023ad_slave_info(port_id, slave_id, &info);
-            if (ret != 0) {
-                RTE_LOG(ERR, VROUTER, "Error getting bond interface name\n");
-                return VR_INFO_FAILED;
-            }
-
             VI_PRINTF("Slave Interface(%d): %s \n", i, name);
-            VI_PRINTF("Details actor lacp pdu: \n");
-            ret = get_port_states(msg_req, info.actor_state);
-            if (ret < 0)
-                goto err;
 
-            VI_PRINTF("Details partner lacp pdu: \n");
-            ret = get_port_states(msg_req, info.partner_state);
-            if (ret < 0)
-                goto err;
+            ret = rte_eth_bond_8023ad_slave_info(port_id, slave_id, &info);
+            if (ret == 0) {
+                VI_PRINTF("Details actor lacp pdu: \n");
+                ret = get_port_states(msg_req, info.actor_state);
+                if (ret < 0)
+                     goto err;
+
+                VI_PRINTF("Details partner lacp pdu: \n");
+                ret = get_port_states(msg_req, info.partner_state);
+                if (ret < 0)
+                    goto err;
+            } else {
+                VI_PRINTF("Link status: DOWN\n\n");
+            }
         }
 
         VI_PRINTF("LACP Packet Statistics:\n");
@@ -819,6 +822,15 @@ display_xstats(VR_INFO_ARGS, uint16_t port_id, int xstats_count, bool is_all)
     }
 
     VI_PRINTF("%s\n\n", seperator);
+
+    if (values){
+        vr_free(values, VR_INFO_REQ_OBJECT);
+        values = NULL;
+    }
+    if (xstats_names){
+        vr_free(xstats_names, VR_INFO_REQ_OBJECT);
+        xstats_names = NULL;
+    }
     return 0;
 
 err:
@@ -1047,6 +1059,8 @@ dpdk_info_get_app(VR_INFO_ARGS)
             bond_file = fopen(tempbuf, "r");
             if (bond_file == NULL){
                 RTE_LOG(ERR, VROUTER, "Bond file does not exists.\n");
+                if(intf)
+                    fclose(intf);
                 return -1;
             }
             fgets (tempbuf, sizeof(tempbuf), bond_file);
@@ -1149,5 +1163,16 @@ dpdk_info_get_app(VR_INFO_ARGS)
     }
 
     VI_PRINTF("\n");
+
+    if(intf) {
+        fclose(intf);
+        intf = NULL;
+    }
+
+    if(bond_file) {
+        fclose(bond_file);
+        bond_file = NULL;
+    }
+
     return 0;
 }
