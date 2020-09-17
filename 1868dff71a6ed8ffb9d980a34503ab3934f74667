@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "d458db10_3cefb3b6",
+        "filename": "dp-core/vr_datapath.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 647,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-09-17T18:55:55Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "efd9aaa5_6f76884e",
+      "revId": "1868dff71a6ed8ffb9d980a34503ab3934f74667",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "bba162e7_8b3a8f02",
         "filename": "dp-core/vr_datapath.c",
         "patchSetId": 3
@@ -30,6 +48,24 @@
       "writtenOn": "2020-09-14T05:56:11Z",
       "side": 1,
       "message": "So we don\u0027t want to support IPv6 address learning ? Is it not a requirement?",
+      "revId": "1868dff71a6ed8ffb9d980a34503ab3934f74667",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "11fb1c80_b4d13d3b",
+        "filename": "dp-core/vr_datapath.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 684,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-09-17T18:55:55Z",
+      "side": 1,
+      "message": "we will process only ARP packets and currently not supporting IPv6",
+      "parentUuid": "bba162e7_8b3a8f02",
       "revId": "1868dff71a6ed8ffb9d980a34503ab3934f74667",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
@@ -56,6 +92,30 @@
       "revId": "1868dff71a6ed8ffb9d980a34503ab3934f74667",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dbc09211_069d63ab",
+        "filename": "dp-core/vr_datapath.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 701,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-09-17T18:55:55Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "dcfb92fe_2b7e025a",
+      "range": {
+        "startLine": 695,
+        "startChar": 16,
+        "endLine": 701,
+        "endChar": 17
+      },
+      "revId": "1868dff71a6ed8ffb9d980a34503ab3934f74667",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
     }
   ]
 }
