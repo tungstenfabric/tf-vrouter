@@ -22,6 +22,7 @@
     X(INFO_XSTATS, info_get_xstats, DPDK) \
     X(INFO_LCORE, info_get_lcore, DPDK) \
     X(INFO_APP, info_get_app, DPDK) \
+    X(INFO_DDP, info_get_ddp, DPDK) \
 
 /* Define all supported platforms.
  * When a new platforms added, define like below.
