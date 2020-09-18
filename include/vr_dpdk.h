@@ -323,6 +323,11 @@ extern unsigned vr_packet_sz;
     VR_INFO_REG(VR_INFO_DECLARATION)
 
 /*
+ * DDP related macros
+ */
+#define DDP_GET_PORT_ID() vr_dpdk_ddp_get_portid()
+
+/*
  * DPDK LCore IDs
  */
 enum {
@@ -807,6 +812,13 @@ int vr_dpdk_table_mem_init(unsigned int, unsigned int, unsigned long,
         unsigned int, unsigned long);
 int vr_dpdk_flow_init(void);
 int vr_dpdk_bridge_init(void);
+
+/*
+ * vr_dpdk_ddp.c
+ */
+int vr_dpdk_ddp_get_portid(void);
+int vr_dpdk_ddp_add(uint16_t port_id);
+int vr_dpdk_ddp_del(uint16_t port_id);
 
 /*
  * vr_dpdk_host.c
