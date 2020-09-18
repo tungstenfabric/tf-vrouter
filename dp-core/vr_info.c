@@ -130,9 +130,9 @@ vr_info_req_process(void *s_req)
 
                 /* Check if Output buffer has contents */
                 if(msg_req.outbuf == NULL) {
-                    vr_printf("vrinfo: Output buffer is not filled\n");
+                    vr_printf("vrinfo: Output buffer is NULL \n");
                     vr_info_last_buf = true;
-                    goto exit_get;
+                    goto generate_response;
 
                 }
                 /* If outbuf_len is not supplied from callback, calculate it */
@@ -140,6 +140,12 @@ vr_info_req_process(void *s_req)
                     buff_sz = strlen(msg_req.outbuf);
                 } else {
                     buff_sz = msg_req.outbuf_len;
+                }
+
+                if(!msg_req.outbuf_len) {
+                    vr_printf("vrinfo: Output buffer is not filled\n");
+                    vr_info_last_buf = true;
+                    goto generate_response;
                 }
 
                 /* this is first iteration, so make vdu_marker as zero */
@@ -189,7 +195,7 @@ vr_info_req_process(void *s_req)
                         sizeof(uint8_t)), VR_INFO_REQ_OBJECT);
             if(resp.vdu_proc_info == NULL) {
                 vr_info_last_buf = true;
-                goto exit_get;
+                goto generate_response;
             }
 
             /* Copy the message to "resp.vdu_proc_info" from
@@ -219,20 +225,23 @@ vr_info_req_process(void *s_req)
         resp.vdu_proc_info = vr_zalloc((resp.vdu_proc_info_size *
                     sizeof(uint8_t)), VR_INFO_REQ_OBJECT);
         if(resp.vdu_proc_info == NULL) {
-            goto exit_get;
+            goto generate_response;
         }
 
         /* Copy message buffer */
         snprintf(resp.vdu_proc_info, resp.vdu_proc_info_size, "%s", msg_req.outbuf);
         vr_message_dump_object(dumper, VR_INFO_OBJECT_ID, &resp);
+
+        if(resp.vdu_proc_info) {
+            vr_free(resp.vdu_proc_info, VR_INFO_REQ_OBJECT);
+        }
     }
 
 generate_response:
     vr_message_dump_exit(dumper, ret);
 
-/* Once last buffer element has reached, clear all message buffers.
- * Memory(malloc) is allocated by end users and infra will free the memory */
-exit_get:
+    /* Once last buffer element has reached, clear all message buffers.
+     * Memory(malloc) is allocated by end users and infra will free the memory */
     if(vr_info_last_buf) {
         if(vr_info_buff_table_p[resp.vdu_buff_table_id].buff != NULL) {
             vr_free(vr_info_buff_table_p[resp.vdu_buff_table_id].buff,
