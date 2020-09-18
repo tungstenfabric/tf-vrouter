@@ -34,6 +34,7 @@ extern int vr_rxd_sz, vr_txd_sz;
 extern unsigned int datapath_offloads;
 unsigned int vr_dpdk_master_port_id;
 extern bool vr_no_load_balance;
+extern bool vr_dpdk_no_ddp;
 
 struct rte_eth_conf ethdev_conf = {
     .link_speeds = ETH_LINK_SPEED_AUTONEG,
@@ -947,6 +948,10 @@ vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf
     if (vif_is_fabric(vif))
         vr_dpdk_bond_intf_cb_register(ethdev);
 
+    if(!vr_dpdk_no_ddp) {
+        vr_dpdk_ddp_add((uint16_t)DDP_GET_PORT_ID());
+    }
+
     ret = dpdk_ethdev_queues_setup(ethdev);
     if (ret < 0)
         return ret;
@@ -1150,12 +1155,17 @@ dpdk_mbuf_parse_and_hash_packets(struct rte_mbuf *mbuf)
                 pull_len += gre_hdr_len;
                 gre_udp_encap = gre_hdr->gre_proto;
 
-                /*
-                 * mbuf->ol_flags & PKT_RX_RSS_HASH is mistakenly set
-                 * by the NIC driver for MPLS over GRE packets. It is
-                 * removed here and will be set after we perform hashing.
-                 */
-                mbuf->ol_flags &= ~PKT_RX_RSS_HASH;
+                /* If ddp enabled, hashing not required */
+                if (!vr_dpdk_no_ddp) {
+                    mbuf->ol_flags |= PKT_RX_RSS_HASH;
+                } else {
+                    /*
+                     * mbuf->ol_flags & PKT_RX_RSS_HASH is mistakenly set
+                     * by the NIC driver for MPLS over GRE packets. It is
+                     * removed here and will be set after we perform hashing.
+                     */
+                    mbuf->ol_flags &= ~PKT_RX_RSS_HASH;
+                }
                 /* Go to parsing. */
             } else {
                 return dpdk_mbuf_rss_hash(mbuf, ipv4_hdr, NULL); /* Looks like GRE, but no MPLS. */

@@ -32,6 +32,7 @@
 #include <rte_timer.h>
 
 extern unsigned int datapath_offloads;
+extern bool vr_dpdk_no_ddp;
 
 /* Returns the least used lcore or VR_MAX_CPUS_DPDK */
 unsigned
@@ -891,7 +892,7 @@ dpdk_lcore_rxqs_vroute(struct vr_dpdk_lcore *lcore)
     uint32_t nb_pkts;
     uint32_t nb_pkts_to_route;
     uint32_t nb_pkts_to_distribute;
-    uint64_t mask_to_distribute;
+    uint64_t mask_to_distribute = 0;
     int i;
 
     /* for all hardware RX queues */

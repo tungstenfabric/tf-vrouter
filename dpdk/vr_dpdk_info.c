@@ -5,12 +5,17 @@
  */
 #include <vr_os.h>
 #include <vr_types.h>
-#include <vr_packet.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+#include <vr_packet.h>
 #include <rte_eth_bond.h>
 #include <rte_ethdev.h>
 #include <rte_port_ethdev.h>
 #include <rte_eth_bond_8023ad.h>
+#include <rte_pmd_i40e.h>
 #include <rte_malloc.h>
 #include <rte_mempool.h>
 #include "vr_message.h"
@@ -21,6 +26,7 @@
 #define SEPERATOR 70
 #define LINE 200
 #define MAXBITS 8
+#define I40E_MAX_PROFILE_NUM 16
 
 enum segments {
     RX_PACKETS,
@@ -1174,5 +1180,93 @@ dpdk_info_get_app(VR_INFO_ARGS)
         bond_file = NULL;
     }
 
+    return 0;
+}
+
+int
+dpdk_info_get_ddp(VR_INFO_ARGS)
+{
+    struct rte_pmd_i40e_profile_list *p_list;
+    struct rte_pmd_i40e_profile_info *p_info;
+    uint32_t p_num, size, i;
+    int ret;
+    uint16_t port_id = 0;
+    VR_INFO_BUF_INIT();
+
+    if (strcmp(msg_req->inbuf, "list") != 0) {
+        return -1;
+    }
+
+    size = I40E_MAX_PROFILE_NUM * sizeof(struct rte_pmd_i40e_profile_list);
+
+    p_list = (struct rte_pmd_i40e_profile_list *)vr_zalloc(size,
+			VR_INFO_REQ_OBJECT);
+    if(!p_list) {
+	RTE_LOG(ERR, VROUTER, "Memory allocation failed.\n");
+	return -1;
+    }
+
+    ret = rte_pmd_i40e_get_ddp_list(port_id, (uint8_t *)p_list, size);
+
+    if (!ret) {
+	p_num = p_list->p_count;
+	VI_PRINTF("Profile number is: %d\n\n", p_num);
+        if(p_num == 0) {
+            VI_PRINTF("DDP profile is not enabled \n\n");
+        }
+
+	for (i = 0; i < p_num; i++) {
+		p_info = &p_list->p_info[i];
+		VI_PRINTF("Profile %d:\n", i);
+		VI_PRINTF("Track id:     0x%x\n", p_info->track_id);
+		VI_PRINTF("Version:      %d.%d.%d.%d\n",
+		       p_info->version.major,
+		       p_info->version.minor,
+		       p_info->version.update,
+		       p_info->version.draft);
+		VI_PRINTF("Profile name: %s\n\n", p_info->name);
+	}
+    }
+
+    if(p_list)
+	    vr_free(p_list, VR_INFO_REQ_OBJECT);
+
+    if(ret == -ENOTSUP) {
+        VI_PRINTF("DDP works only on X710 NIC series \n\n");
+    } else if (ret < 0) {
+	VI_PRINTF("Failed to get ddp list, return value is %d \n\n", ret);
+    }
+
+    return 0;
+}
+
+int
+dpdk_conf_add_ddp(VR_INFO_ARGS)
+{
+    VR_INFO_BUF_INIT();
+    int ret;
+
+    ret = vr_dpdk_ddp_add((uint16_t)DDP_GET_PORT_ID());
+    if(ret != 0) {
+        VI_PRINTF("Programming DDP image mplsogreudp -  failed(%d) \n\n", ret);
+    } else {
+        VI_PRINTF("Programming DDP image mplsogreudp - success \n\n");
+    }
+    return 0;
+}
+
+
+int
+dpdk_conf_del_ddp(VR_INFO_ARGS)
+{
+    VR_INFO_BUF_INIT();
+    int ret;
+
+    ret = vr_dpdk_ddp_del((uint16_t)DDP_GET_PORT_ID());
+    if(ret != 0) {
+        VI_PRINTF("Removing DDP image mplsogreudp -  failed(%d) \n\n", ret);
+    } else {
+        VI_PRINTF("Removing DDP image mplsogreudp - success \n\n");
+    }
     return 0;
 }
