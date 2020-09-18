@@ -807,6 +807,7 @@ int vr_dpdk_table_mem_init(unsigned int, unsigned int, unsigned long,
         unsigned int, unsigned long);
 int vr_dpdk_flow_init(void);
 int vr_dpdk_bridge_init(void);
+int vr_dpdk_ddp_add(void);
 
 /*
  * vr_dpdk_host.c

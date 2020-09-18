@@ -14,12 +14,17 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "vr_dpdk.h"
 #include "vr_dpdk_usocket.h"
 
 #include <vr_mpls.h>
 
 #include <rte_eth_bond.h>
+#include <rte_pmd_i40e.h>
 #include <rte_errno.h>
 #include <rte_ethdev_pci.h>
 #include <rte_ethdev.h>
@@ -34,6 +39,8 @@ extern int vr_rxd_sz, vr_txd_sz;
 extern unsigned int datapath_offloads;
 unsigned int vr_dpdk_master_port_id;
 extern bool vr_no_load_balance;
+extern bool vr_dpdk_ddp_set;
+extern bool vr_dpdk_no_ddp;
 
 struct rte_eth_conf ethdev_conf = {
     .link_speeds = ETH_LINK_SPEED_AUTONEG,
@@ -915,6 +922,120 @@ vr_dpdk_bond_intf_cb_register(struct vr_dpdk_ethdev *ethdev)
     }
 }
 
+int
+vr_dpdk_ddp_add(void)
+{
+    int ddp_fd, ret = -ENOTSUP;
+    uint32_t port_id = 0;
+    uint8_t *buf;
+    struct stat st_buf;
+    FILE *ddp_bkp_fd;
+
+    char ddp_fpath[] = "/var/run/vrouter/mplsogreudp.pkg";
+    char ddp_fbkp[] = "/var/run/vrouter/mplsogreudp.bkp";
+
+    ddp_fd = open(ddp_fpath, O_RDONLY);
+    if(ddp_fd == -1) {
+        RTE_LOG(ERR, VROUTER, "Failed to open mplsogre.pkg file \n");
+        return -1;
+    }
+    if ((fstat(ddp_fd, &st_buf) != 0) || (!S_ISREG(st_buf.st_mode))) {
+        close(ddp_fd);
+        RTE_LOG(ERR, VROUTER, "File operation failed for mplsogre.pkg\n");
+        return -1;
+    }
+
+    if(st_buf.st_size < 0) {
+        close(ddp_fd);
+        RTE_LOG(ERR, VROUTER, "File operation failed for mplsogre.pkg"
+                "while reading size %ld \n", st_buf.st_size);
+        return -1;
+    }
+
+    buf = (uint8_t *)vr_zalloc(st_buf.st_size, VR_INFO_REQ_OBJECT);
+    if(!buf) {
+        close(ddp_fd);
+        RTE_LOG(ERR, VROUTER, "Memory allocation failed if size %ld\n",
+                st_buf.st_size);
+        return -1;
+    }
+
+    ret = read(ddp_fd, buf, st_buf.st_size);
+    if(ret < 0) {
+        close(ddp_fd);
+        vr_free(buf, VR_INFO_REQ_OBJECT);
+        RTE_LOG(ERR, VROUTER, "File read operation failed for mplsogre.pkg\n");
+        return -1;
+    }
+
+    ret = rte_pmd_i40e_process_ddp_package(port_id, buf, st_buf.st_size,
+            RTE_PMD_I40E_PKG_OP_WR_ADD);
+
+    if(ret == -EEXIST) {
+        RTE_LOG(ERR, VROUTER, "DDP Profile has already existed.\n");
+    } else if(ret < 0) {
+        RTE_LOG(ERR, VROUTER, "Failed to load profile.\n");
+    } else {
+        RTE_LOG(INFO, VROUTER, "DDP programming was successful\n");
+        ddp_bkp_fd = fopen(ddp_fbkp, "wb");
+        if(ddp_bkp_fd == NULL) {
+            close(ddp_fd);
+            vr_free(buf, VR_INFO_REQ_OBJECT);
+            RTE_LOG(ERR, VROUTER, "Failed to open mplsogre.bkp\n");
+            return -1;
+        }
+
+        if(fwrite(buf, 1, st_buf.st_size, ddp_bkp_fd) != st_buf.st_size) {
+            close(ddp_fd);
+            fclose(ddp_bkp_fd);
+            vr_free(buf, VR_INFO_REQ_OBJECT);
+            RTE_LOG(ERR, VROUTER, "Failed to write mplsogre.bkp\n");
+            return -1;
+        }
+        fclose(ddp_bkp_fd);
+
+        if (ddp_fd) {
+            close(ddp_fd);
+        }
+    }
+
+    if (buf)
+        vr_free(buf, VR_INFO_REQ_OBJECT);
+
+    return 0;
+}
+
+static void
+vr_dpdk_enable_ddp(struct vr_dpdk_ethdev *ethdev)
+{
+    uint8_t slave_port_id;
+    struct rte_eth_dev *dev;
+    int i;
+
+    if(!vr_dpdk_ddp_set) {
+        if (dpdk_find_port_id_by_drv_name() != VR_DPDK_INVALID_PORT_ID) {
+            if (ethdev->ethdev_nb_slaves > 0) {
+                for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
+                    slave_port_id = ethdev->ethdev_slaves[i];
+                    dev = &rte_eth_devices[slave_port_id];
+                    if(!strcmp(dev->device->driver->name, "net_i40e")) {
+                         vr_dpdk_ddp_add();
+                         vr_dpdk_ddp_set = true;
+                         return;
+                    }
+                }
+            }
+        } else {
+            dev = &rte_eth_devices[ethdev->ethdev_port_id];
+            if(!strcmp(dev->device->driver->name, "net_i40e")) {
+                    vr_dpdk_ddp_add();
+                    vr_dpdk_ddp_set = true;
+            }
+        }
+    }
+    return ;
+}
+
 /* Init ethernet device */
 int
 vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf)
@@ -946,6 +1067,9 @@ vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf
     /* Register notifications only for fabric device */
     if (vif_is_fabric(vif))
         vr_dpdk_bond_intf_cb_register(ethdev);
+
+    if(!vr_dpdk_no_ddp)
+        vr_dpdk_enable_ddp(ethdev);
 
     ret = dpdk_ethdev_queues_setup(ethdev);
     if (ret < 0)
