@@ -920,7 +920,7 @@ int
 vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf)
 {
     uint8_t port_id;
-    int ret;
+    int ret, ddp_port_id;
     struct vr_interface *vif;
 
     port_id = ethdev->ethdev_port_id;
@@ -946,6 +946,12 @@ vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf
     /* Register notifications only for fabric device */
     if (vif_is_fabric(vif))
         vr_dpdk_bond_intf_cb_register(ethdev);
+
+    if(vr_dpdk_get_ddp()) {
+        ddp_port_id = DDP_GET_PORT_ID();
+        if(ddp_port_id != -1)
+            vr_dpdk_ddp_add((uint16_t)ddp_port_id);
+    }
 
     ret = dpdk_ethdev_queues_setup(ethdev);
     if (ret < 0)
@@ -1150,12 +1156,17 @@ dpdk_mbuf_parse_and_hash_packets(struct rte_mbuf *mbuf)
                 pull_len += gre_hdr_len;
                 gre_udp_encap = gre_hdr->gre_proto;
 
-                /*
-                 * mbuf->ol_flags & PKT_RX_RSS_HASH is mistakenly set
-                 * by the NIC driver for MPLS over GRE packets. It is
-                 * removed here and will be set after we perform hashing.
-                 */
-                mbuf->ol_flags &= ~PKT_RX_RSS_HASH;
+                /* If ddp enabled, hashing not required */
+                if (vr_dpdk_get_ddp()) {
+                    mbuf->ol_flags |= PKT_RX_RSS_HASH;
+                } else {
+                    /*
+                     * mbuf->ol_flags & PKT_RX_RSS_HASH is mistakenly set
+                     * by the NIC driver for MPLS over GRE packets. It is
+                     * removed here and will be set after we perform hashing.
+                     */
+                    mbuf->ol_flags &= ~PKT_RX_RSS_HASH;
+                }
                 /* Go to parsing. */
             } else {
                 return dpdk_mbuf_rss_hash(mbuf, ipv4_hdr, NULL); /* Looks like GRE, but no MPLS. */
