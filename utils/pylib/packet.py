@@ -54,6 +54,10 @@ class ArpPacket(EtherPacket):
         Source mac address
     dst : str:
         Destination mac address
+    sip : str:
+        Source ip address
+    dip: str:
+        Destination IP address
     op : int
        Arp operation code
     hwtype : int
@@ -66,13 +70,16 @@ class ArpPacket(EtherPacket):
             self,
             src=None,
             dst=None,
+            sip=0,
+            dip=0,
             op=1,
             hwtype=0x1,
-            hwlen=7,
+            hwlen=6,
+            plen=4,
             **kwargs):
         super(ArpPacket, self).__init__(src, dst, 0x0806, **kwargs)
-        self.arp = ARP(op=op, hwtype=hwtype,
-                       hwlen=hwlen)
+        self.arp = ARP(op=op, hwtype=hwtype, psrc=sip, pdst=dip,
+                       hwlen=hwlen, plen=plen)
 
     def get_packet(self):
         if self.eth:
