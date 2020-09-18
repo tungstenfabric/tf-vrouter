@@ -322,6 +322,8 @@ extern unsigned vr_packet_sz;
 #define FOREACH_VR_INFO_DECLARATION() \
     VR_INFO_REG(VR_INFO_DECLARATION)
 
+#define VR_DPDK_DDP_FAILED 0xFF
+
 /*
  * DPDK LCore IDs
  */
@@ -807,6 +809,21 @@ int vr_dpdk_table_mem_init(unsigned int, unsigned int, unsigned long,
         unsigned int, unsigned long);
 int vr_dpdk_flow_init(void);
 int vr_dpdk_bridge_init(void);
+
+extern uint32_t vr_dpdk_master_port_id;
+
+/*
+ * vr_dpdk_ddp.c
+ */
+enum {
+    VR_DPDK_DDP_UNDEFINED = 0,
+    VR_DPDK_DDP_ADD,
+    VR_DPDK_DDP_DELETE
+};
+bool vr_dpdk_get_ddp(void);
+void vr_dpdk_set_ddp(void);
+void vr_dpdk_reset_ddp(void);
+int vr_dpdk_process_ddp_package(unsigned);
 
 /*
  * vr_dpdk_host.c

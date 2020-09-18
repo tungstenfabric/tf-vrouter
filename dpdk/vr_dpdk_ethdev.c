@@ -947,6 +947,15 @@ vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf
     if (vif_is_fabric(vif))
         vr_dpdk_bond_intf_cb_register(ethdev);
 
+    if(vr_dpdk_get_ddp()) {
+        ret = vr_dpdk_process_ddp_package(VR_DPDK_DDP_ADD);
+        if(ret != 0) {
+            /* By Default DDP is set, If firmware programming not success on
+             * any ports, then dont disable software load balancing */
+            vr_dpdk_reset_ddp();
+        }
+    }
+
     ret = dpdk_ethdev_queues_setup(ethdev);
     if (ret < 0)
         return ret;
@@ -1150,12 +1159,17 @@ dpdk_mbuf_parse_and_hash_packets(struct rte_mbuf *mbuf)
                 pull_len += gre_hdr_len;
                 gre_udp_encap = gre_hdr->gre_proto;
 
-                /*
-                 * mbuf->ol_flags & PKT_RX_RSS_HASH is mistakenly set
-                 * by the NIC driver for MPLS over GRE packets. It is
-                 * removed here and will be set after we perform hashing.
-                 */
-                mbuf->ol_flags &= ~PKT_RX_RSS_HASH;
+                /* If ddp enabled, hashing not required */
+                if (vr_dpdk_get_ddp()) {
+                    mbuf->ol_flags |= PKT_RX_RSS_HASH;
+                } else {
+                    /*
+                     * mbuf->ol_flags & PKT_RX_RSS_HASH is mistakenly set
+                     * by the NIC driver for MPLS over GRE packets. It is
+                     * removed here and will be set after we perform hashing.
+                     */
+                    mbuf->ol_flags &= ~PKT_RX_RSS_HASH;
+                }
                 /* Go to parsing. */
             } else {
                 return dpdk_mbuf_rss_hash(mbuf, ipv4_hdr, NULL); /* Looks like GRE, but no MPLS. */
