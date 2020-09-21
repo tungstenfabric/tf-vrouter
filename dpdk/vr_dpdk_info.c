@@ -39,6 +39,26 @@ enum segments {
  */
 
 int
+dpdk_conf_add_ddp(VR_INFO_ARGS)
+{
+    VR_INFO_BUF_INIT();
+
+    VI_PRINTF("DDP: %s\n", __func__);
+
+    return 0;
+}
+
+int
+dpdk_conf_delete_ddp(VR_INFO_ARGS)
+{
+    VR_INFO_BUF_INIT();
+
+    VI_PRINTF("DP: %s\n", __func__);
+
+    return 0;
+}
+
+int
 dpdk_info_get_dpdk_version(VR_INFO_ARGS)
 {
     extern const char *ContrailBuildInfo;
