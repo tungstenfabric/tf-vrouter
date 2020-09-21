@@ -93,9 +93,12 @@ vrinfo = env.Program(target = 'vrinfo', source = vrinfo_sources)
 dpdkinfo_sources = ['dpdkinfo.c']
 dpdkinfo = env.Program(target = 'dpdkinfo', source = dpdkinfo_sources)
 
+dpdkconf_sources = ['dpdkconf.c']
+dpdkconf = env.Program(target = 'dpdkconf', source = dpdkconf_sources)
+
 # to make sure that all are built when you do 'scons' @ the top level
 binaries  = [vif, rt, nh, mpls, flow, vrfstats, dropstats, vxlan,
-             vrouter, vrmemstats, vrftable, mirror, vrinfo, dpdkinfo]
+             vrouter, vrmemstats, vrftable, mirror, vrinfo, dpdkinfo, dpdkconf]
 
 qosmap_sources = ['qosmap.c']
 qosmap = env.Program(target = 'qosmap', source = qosmap_sources)
