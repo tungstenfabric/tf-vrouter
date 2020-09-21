@@ -442,7 +442,7 @@ op_retry:
                     vrf_id, dst, comp_nh[0], lbl[0]);
         } else if ((type == NH_ENCAP) || (type == NH_TUNNEL)) {
             ret = vr_send_nexthop_encap_tunnel_add(cl, 0, type, nh_id,
-                    flags, vrf_id, if_id, src, dst, sip, dip, sport, dport, l3_vxlan_mac);
+                    flags, vrf_id, if_id, src, dst, sip, dip, sport, dport, l3_vxlan_mac, family);
         } else if (type == NH_COMPOSITE) {
             ret = vr_send_nexthop_composite_add(cl, 0, nh_id, flags, vrf_id,
                     comp_nh_ind, comp_nh, lbl, family);
@@ -534,6 +534,7 @@ cmd_usage()
            "                        [--lbl <lbl> label for composit fabric ]\n"
            "                    [--tor composit tor ]\n"
            "                        [--lbl <lbl> label for composit fabric ]\n"
+           "                    [--ecmp composite ecmp nexthop]\n"
            "                [VRF Translate options]\n"
            "                    [--vxlan Vxlan VRF Translation]\n"
            "                    [--uucf Unknown Unicast Flood]\n");
@@ -591,6 +592,7 @@ enum opt_index {
     ML_OPT_IND,
     HLP_OPT_IND,
     SOCK_DIR_OPT_IND,
+    ECMP_OPT_IND,
     MAX_OPT_IND
 };
 
@@ -647,6 +649,7 @@ static struct option long_options[] = {
     [ML_OPT_IND]        = {"ml",    no_argument,        &opt[ML_OPT_IND],       1},
     [HLP_OPT_IND]       = {"help",  no_argument,        &opt[HLP_OPT_IND],      1},
     [SOCK_DIR_OPT_IND]  = {"sock-dir", required_argument, &opt[SOCK_DIR_OPT_IND], 1},
+    [ECMP_OPT_IND]      = {"ecmp", no_argument,         &opt[ECMP_OPT_IND],     1},
     [MAX_OPT_IND]       = { NULL,   0,                  0,                      0}
 };
 
@@ -904,6 +907,10 @@ validate_options(void)
 
                 if (!opt_set(LBL_OPT_IND))
                     cmd_usage();
+            }
+
+            if (opt_set(ECMP_OPT_IND)) {
+                flags |= NH_FLAG_COMPOSITE_ECMP;
             }
 
             if (memcmp(opt, zero_opt, sizeof(opt)))
