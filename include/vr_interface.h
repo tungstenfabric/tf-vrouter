@@ -480,6 +480,13 @@ struct vr_host_interface_ops {
     int (*hif_get_vlan_info)(struct vr_interface *vif,
             struct vr_interface_vlan_info *vlan_info);
     int (*hif_clear_stats)(struct vr_interface *vif);
+    int (*hif_get_host_ip_mask)(struct vr_interface *vif,
+                                unsigned int *ip,
+                                unsigned int *mask);
+    int (*hif_get_host_mac_addr)(struct vr_interface *vif,
+                                 unsigned char **mac);
+    int (*hif_rx_pass)(struct vr_interface *, struct vr_packet *);
+    void (*hif_pkt_dump)(struct vr_packet *);
 };
 
 extern int vr_interface_init(struct vrouter *);

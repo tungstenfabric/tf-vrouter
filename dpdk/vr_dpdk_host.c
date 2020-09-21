@@ -1517,6 +1517,7 @@ vr_dpdk_packet_get(struct rte_mbuf *m, struct vr_interface *vif)
     pkt->vp_type = VP_TYPE_NULL;
     pkt->vp_queue = VP_QUEUE_INVALID;
     pkt->vp_priority = VP_PRIORITY_INVALID;
+    pkt->vp_rx_pass = 0;
 
     return pkt;
 }

@@ -218,7 +218,8 @@ struct vr_packet {
     unsigned char vp_ttl;
     unsigned char vp_queue;
     unsigned char vp_priority:4,
-                  vp_notused:4;
+                  vp_rx_pass:1,
+                  vp_notused:3;
 };
 
 
@@ -1619,4 +1620,34 @@ static inline void vr_pkt_drop_log_func(unsigned short drop_reason, struct vr_pa
         vr_pkt_drop->vr_pkt_drop_log_buffer_index[cpu] = ((++buf_idx) % vr_pkt_droplog_bufsz);
     }
 }
+
+static inline void
+pkt_dump (struct vr_packet *pkt)
+{
+    int i=0;
+    unsigned char *pstart;
+#define MAX_BUF_SIZE 500
+    char buf[MAX_BUF_SIZE] = {0};
+    int buf_off=0, sz=0;
+    int plen=0;
+
+    vr_printf("pkt %p head %p data %d len %d\n", pkt, pkt->vp_head, pkt->vp_data, pkt->vp_len);
+    pstart = pkt_data(pkt);
+    plen = pkt_len(pkt);
+    if (pkt_data(pkt) == pkt_network_header(pkt)) {
+        // start from eth header
+        pstart -= 14;
+        plen += 14;
+    }
+    for (i = 0; i < plen; i++) {
+         if ((buf_off + 10) >= MAX_BUF_SIZE) {
+             break;
+         }
+         sz = sprintf(buf+buf_off, "0x%02x ", *(pstart + i));
+         if (sz < 0) break;
+         buf_off += sz;
+    }
+    vr_printf("pkt %p: %s\n", pkt, buf);
+}
+
 #endif /* __VR_PACKET_H__ */

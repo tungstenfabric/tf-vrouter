@@ -2353,6 +2353,9 @@ struct vr_host_interface_ops dpdk_interface_ops = {
     .hif_get_bond_info  =    dpdk_if_get_bond_info,
     .hif_get_vlan_info  =    dpdk_if_get_vlan_info,
     .hif_clear_stats    =    dpdk_if_clear_stats,
+    .hif_get_host_ip_mask =  NULL,
+    .hif_get_host_mac_addr = NULL,
+    .hif_rx_pass        =    NULL,
 };
 
 void

@@ -237,10 +237,12 @@ vr_handle_arp_request(struct vr_arp *sarp, struct vr_packet *pkt,
 
     case MR_TRAP_X:
         pkt_c = vr_pclone(pkt);
-        if (pkt_c)
-            vif_xconnect(pkt->vp_if, pkt_c, fmd);
-
-        vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
+        if (pkt_c) {
+            vr_trap(pkt_c, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
+            vif_xconnect(pkt->vp_if, pkt, fmd);
+        } else {
+            vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
+        }
         break;
 
     case MR_MIRROR:
@@ -348,11 +350,12 @@ vr_handle_arp_reply(struct vr_arp *sarp, struct vr_packet *pkt,
         /* If fabric: Agent and kernel are interested in it */
         cloned_pkt = pkt_cow(pkt, AGENT_PKT_HEAD_SPACE);
         if (cloned_pkt) {
-            vr_preset(cloned_pkt);
-            vif_xconnect(vif, cloned_pkt, fmd);
+            vr_trap(cloned_pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
+            vr_preset(pkt);
+            vif_xconnect(vif, pkt, fmd);
+        } else {
+            vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
         }
-
-        vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
 
         return handled;
     }
