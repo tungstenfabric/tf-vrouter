@@ -1,0 +1,265 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2ce073b1_f5736bb7",
+        "filename": "dpdk/vr_dpdk_ethdev.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 926,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T11:45:08Z",
+      "side": 1,
+      "message": "Let us move this code to a new file like vr_dpdk_ddp.c.\nAll DDP related code can be put into this new file.",
+      "revId": "354e4fd5b2f7dbdd3ff3421404f0f9c906da8c74",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cec90bbe_5d340ae9",
+        "filename": "dpdk/vr_dpdk_ethdev.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 939,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T11:45:08Z",
+      "side": 1,
+      "message": "mplsogreudp.pkg\n\nSame in other places as well",
+      "revId": "354e4fd5b2f7dbdd3ff3421404f0f9c906da8c74",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "be42a2eb_e62631a9",
+        "filename": "dpdk/vr_dpdk_ethdev.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 958,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T11:45:08Z",
+      "side": 1,
+      "message": "Typo \"if\"",
+      "revId": "354e4fd5b2f7dbdd3ff3421404f0f9c906da8c74",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b6956e16_25cba4fc",
+        "filename": "dpdk/vr_dpdk_ethdev.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 980,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T11:45:08Z",
+      "side": 1,
+      "message": "What is the purpose of creating a backup file?",
+      "revId": "354e4fd5b2f7dbdd3ff3421404f0f9c906da8c74",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d8cf130a_56bd747e",
+        "filename": "dpdk/vr_dpdk_ethdev.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1023,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T11:45:08Z",
+      "side": 1,
+      "message": "If vr_dpdk_ddp_add() fails, then also vr_dpdk_ddp_set will be set to true. Can you check for the return value here before setting the bool to true?",
+      "revId": "354e4fd5b2f7dbdd3ff3421404f0f9c906da8c74",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ee7f1b22_1255ff1c",
+        "filename": "dpdk/vr_dpdk_ethdev.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1032,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T11:45:08Z",
+      "side": 1,
+      "message": "As as previous comment",
+      "revId": "354e4fd5b2f7dbdd3ff3421404f0f9c906da8c74",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "266983d6_4a1850ad",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1217,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T11:45:08Z",
+      "side": 1,
+      "message": "Can you print the file and line no as well? or will it come by default?",
+      "revId": "354e4fd5b2f7dbdd3ff3421404f0f9c906da8c74",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "31b1bfc9_6c36626a",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1221,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T11:45:08Z",
+      "side": 1,
+      "message": "port_id is always 0 here. Is it correct?",
+      "revId": "354e4fd5b2f7dbdd3ff3421404f0f9c906da8c74",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3c393419_f5705560",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1225,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T11:45:08Z",
+      "side": 1,
+      "message": "Can you also print that Intel DDP is enabled?",
+      "revId": "354e4fd5b2f7dbdd3ff3421404f0f9c906da8c74",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0cdb36a7_255845fc",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1228,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T11:45:08Z",
+      "side": 1,
+      "message": "Fix the alignment",
+      "revId": "354e4fd5b2f7dbdd3ff3421404f0f9c906da8c74",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "695c04d5_e3d67b21",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1244,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T11:45:08Z",
+      "side": 1,
+      "message": "We should give include this error msg \"DDP works only on x710 NIC series\\n\\n\" only if we know that this is a Fortville NIC. Are we checking it somewhere? If not we should check it first.\nWe need to handle the following cases:-\n1. NIC is fortville, DDP enabled, but not able to get the profile info - throw error msg.\n2. NIC is fortville but DDP is not enabled - Print that DDP is not enabled.\n3. NIC is not fortville, silently return.",
+      "revId": "354e4fd5b2f7dbdd3ff3421404f0f9c906da8c74",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c4b81fbe_652a8a4a",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1312,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T11:45:08Z",
+      "side": 1,
+      "message": "Can you move this actual deletion logic as an API to the new file vr_dpdk_ddp.c?",
+      "range": {
+        "startLine": 1276,
+        "startChar": 4,
+        "endLine": 1312,
+        "endChar": 0
+      },
+      "revId": "354e4fd5b2f7dbdd3ff3421404f0f9c906da8c74",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1e0a442e_59c075b7",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1313,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T11:45:08Z",
+      "side": 1,
+      "message": "What does it mean if we get this error for a Delete operation?",
+      "revId": "354e4fd5b2f7dbdd3ff3421404f0f9c906da8c74",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fab458f3_c708e387",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1316,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T11:45:08Z",
+      "side": 1,
+      "message": "The error msg should be failed to delete profile",
+      "revId": "354e4fd5b2f7dbdd3ff3421404f0f9c906da8c74",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0bcfd030_8b620702",
+        "filename": "dpdk/vr_dpdk_lcore.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 923,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T11:45:08Z",
+      "side": 1,
+      "message": "I believe this check should be done in dpdk_mbuf_parse_and_hash_packets() where we should avoid doing hash computation for MPLSoGRE pkts. Doing it here defeats the purpose, since we would be doing the hash even though it is not required with DDP.",
+      "revId": "354e4fd5b2f7dbdd3ff3421404f0f9c906da8c74",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
