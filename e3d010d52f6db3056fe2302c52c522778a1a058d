@@ -1,0 +1,129 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "65470488_99e8c46a",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T12:00:15Z",
+      "side": 1,
+      "message": "This may not be required now. Can you update the diff based on Haji\u0027s API. You can put a dependency on Haji\u0027s review.",
+      "revId": "e3d010d52f6db3056fe2302c52c522778a1a058d",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "be4953d2_3bd8f6ee",
+        "filename": "utils/dpdkconf.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T12:00:15Z",
+      "side": 1,
+      "message": "This CLI is not just intended for DDP support. In future we may use it for other purposes.\nSo can you just say CLI to do DPDK configuration settings?",
+      "revId": "e3d010d52f6db3056fe2302c52c522778a1a058d",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3cb413b9_fd2e1e1f",
+        "filename": "utils/dpdkconf.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T12:00:15Z",
+      "side": 1,
+      "message": "Can you add sock-dir as well?",
+      "revId": "e3d010d52f6db3056fe2302c52c522778a1a058d",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "46f61026_07bee241",
+        "filename": "utils/dpdkconf.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T12:00:15Z",
+      "side": 1,
+      "message": "Please remove Trailing whitespaces",
+      "range": {
+        "startLine": 92,
+        "startChar": 0,
+        "endLine": 94,
+        "endChar": 2
+      },
+      "revId": "e3d010d52f6db3056fe2302c52c522778a1a058d",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "279bfea2_1f9f0e4b",
+        "filename": "utils/dpdkconf.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T12:00:15Z",
+      "side": 1,
+      "message": "Fix alignment",
+      "revId": "e3d010d52f6db3056fe2302c52c522778a1a058d",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6ba8b62b_3bec2868",
+        "filename": "utils/dpdkconf.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T12:00:15Z",
+      "side": 1,
+      "message": "Include \u0027s\u0027",
+      "revId": "e3d010d52f6db3056fe2302c52c522778a1a058d",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e1579d94_551095b6",
+        "filename": "utils/dpdkconf.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-09-22T12:00:15Z",
+      "side": 1,
+      "message": "Remove whitespaces",
+      "revId": "e3d010d52f6db3056fe2302c52c522778a1a058d",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
