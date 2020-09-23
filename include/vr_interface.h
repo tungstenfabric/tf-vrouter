@@ -19,6 +19,12 @@
  */
 #define VR_MAX_INTERFACES           (256 + 4096)
 
+/*
+ * Maximum number of physical interfaces that can be xconnected to
+ * vhost interface
+ */
+#define VR_MAX_PHY_INF 3
+
 /* 
  * Default size for the interface bridge table.
  */

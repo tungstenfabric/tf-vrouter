@@ -1281,7 +1281,7 @@ vr_send_interface_delete(struct nl_client *cl, unsigned int router_id,
 
 int
 vr_send_interface_add(struct nl_client *cl, int router_id, char *vif_name,
-        int os_index, int vif_index, int vif_xconnect_index, int vif_type,
+        int os_index, int vif_index, int *vif_xconnect_index, int vif_type,
         unsigned int vrf, unsigned int flags, int8_t *vif_mac, int8_t vif_transport,
         const char *guid)
 {
@@ -1311,6 +1311,7 @@ vr_send_interface_add(struct nl_client *cl, int router_id, char *vif_name,
     req.vifr_transport = vif_transport;
 
     if (vif_type == VIF_TYPE_HOST) {
+        req.vifr_cross_connect_idx_size = sizeof(int) * VR_MAX_PHY_INF;
         req.vifr_cross_connect_idx = vif_xconnect_index;
     }
 
