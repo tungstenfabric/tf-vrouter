@@ -16,6 +16,24 @@
       "revId": "5aed1841da33de9c433ef1c519cece024bc577b2",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "61660479_70751866",
+        "filename": "utils/vr_util.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2522,
+      "author": {
+        "id": 998
+      },
+      "writtenOn": "2020-09-23T12:35:23Z",
+      "side": 1,
+      "message": "changed to vr_send_ddp_req",
+      "parentUuid": "dd9b875c_db6d75e0",
+      "revId": "5aed1841da33de9c433ef1c519cece024bc577b2",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
     }
   ]
 }
