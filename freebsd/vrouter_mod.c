@@ -770,7 +770,7 @@ vrouter_freebsd_exit(void)
 	vrouter_exit(false);
 	vhost_exit();
 	vr_mem_exit();
-	contrail_socket_destroy();
+	tf_socket_destroy();
 }
 
 static int
@@ -787,7 +787,7 @@ vrouter_freebsd_init(void)
 		goto out0;
 	}
 
-	ret = contrail_socket_init();
+	ret = tf_socket_init();
 	if (ret) {
 		vr_log(VR_ERR, "contrail socket init failed:%d\n", ret);
 		goto out0;
@@ -826,7 +826,7 @@ out3:
 out2:
 	vhost_exit();
 out1:
-	contrail_socket_destroy();
+	tf_socket_destroy();
 out0:
 	return (ret);
 

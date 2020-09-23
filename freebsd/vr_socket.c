@@ -45,21 +45,21 @@
 #include "vr_freebsd.h"
 
 static void
-contrail_abort(struct socket *so)
+tf_abort(struct socket *so)
 {
 
 	soisdisconnected(so);
 }
 
 static void
-contrail_close(struct socket *so)
+tf_close(struct socket *so)
 {
 
 	soisdisconnected(so);
 }
 
 static int
-contrail_attach(struct socket *so, int proto, struct thread *td)
+tf_attach(struct socket *so, int proto, struct thread *td)
 {
 	int ret;
 
@@ -77,28 +77,28 @@ contrail_attach(struct socket *so, int proto, struct thread *td)
 }
 
 static int
-contrail_connect(struct socket *so, struct sockaddr *nam, struct thread *td)
+tf_connect(struct socket *so, struct sockaddr *nam, struct thread *td)
 {
 
 	return (EINVAL);
 }
 
 static void
-contrail_detach(struct socket *so)
+tf_detach(struct socket *so)
 {
 
 	return;
 }
 
 static int
-contrail_disconnect(struct socket *so)
+tf_disconnect(struct socket *so)
 {
 
 	return (EINVAL);
 }
 
 static int
-contrail_send(struct socket *so, int flags, struct mbuf *m,
+tf_send(struct socket *so, int flags, struct mbuf *m,
     struct sockaddr *nam, struct mbuf *control, struct thread *td)
 {
 
@@ -106,30 +106,30 @@ contrail_send(struct socket *so, int flags, struct mbuf *m,
 }
 
 static int
-contrail_shutdown(struct socket *so)
+tf_shutdown(struct socket *so)
 {
 
 	socantsendmore(so);
 	return (0);
 }
 
-static struct domain contrail_domain;
+static struct domain tf_domain;
 
-static struct pr_usrreqs contrail_usrreqs = {
-	.pru_abort =		contrail_abort,
-	.pru_attach =		contrail_attach,
-	.pru_connect =		contrail_connect,
-	.pru_detach =		contrail_detach,
-	.pru_disconnect =	contrail_disconnect,
-	.pru_send =		contrail_send,
+static struct pr_usrreqs tf_usrreqs = {
+	.pru_abort =		tf_abort,
+	.pru_attach =		tf_attach,
+	.pru_connect =		tf_connect,
+	.pru_detach =		tf_detach,
+	.pru_disconnect =	tf_disconnect,
+	.pru_send =		tf_send,
 	.pru_soreceive =	soreceive_dgram,
 	.pru_sosend =		sosend_dgram,
-	.pru_shutdown =		contrail_shutdown,
-	.pru_close =		contrail_close,
+	.pru_shutdown =		tf_shutdown,
+	.pru_close =		tf_close,
 };
 
 static int
-contrail_output(struct mbuf *m, struct socket *so)
+tf_output(struct mbuf *m, struct socket *so)
 {
 	char *buf;
 	int len;
@@ -170,41 +170,41 @@ contrail_output(struct mbuf *m, struct socket *so)
 	return (ret);
 }
 
-static struct protosw contrailsw[2] = {
+static struct protosw tfsw[2] = {
 {
 	.pr_type =		SOCK_DGRAM,
-	.pr_domain =		&contrail_domain,
+	.pr_domain =		&tf_domain,
 	.pr_flags =		PR_ATOMIC,
-	.pr_output =		contrail_output,
-	.pr_usrreqs =		&contrail_usrreqs
+	.pr_output =		tf_output,
+	.pr_usrreqs =		&tf_usrreqs
 },
 {
 	.pr_type =		SOCK_RAW,
-	.pr_domain =		&contrail_domain,
+	.pr_domain =		&tf_domain,
 	.pr_flags =		PR_ATOMIC,
-	.pr_output =		contrail_output,
-	.pr_usrreqs =		&contrail_usrreqs
+	.pr_output =		tf_output,
+	.pr_usrreqs =		&tf_usrreqs
 },
 };
 
-static struct domain contrail_domain = {
+static struct domain tf_domain = {
 	.dom_family =		AF_VENDOR00,
 	.dom_name =		"contrail",
-	.dom_protosw =		contrailsw,
+	.dom_protosw =		tfsw,
 	.dom_protoswNPROTOSW =
-	    &contrailsw[sizeof(contrailsw)/sizeof(contrailsw[0])],
+	    &tfsw[sizeof(tfsw)/sizeof(tfsw[0])],
 };
 
 int
-contrail_socket_init(void)
+tf_socket_init(void)
 {
 
-	domain_add((void *)&contrail_domain);
+	domain_add((void *)&tf_domain);
 	return (0);
 }
 
 void
-contrail_socket_destroy(void)
+tf_socket_destroy(void)
 {
 	struct domain *dp, *prev = NULL;
 

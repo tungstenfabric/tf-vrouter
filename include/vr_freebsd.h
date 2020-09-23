@@ -78,8 +78,8 @@ struct vr_packet * freebsd_get_packet(struct mbuf *m,
 int freebsd_to_vr(struct vr_interface *vif, struct mbuf* m);
 
 /* Contrail socket initialization/clean */
-int contrail_socket_init(void);
-void contrail_socket_destroy(void);
+int tf_socket_init(void);
+void tf_socket_destroy(void);
 
 /* Sandesh protocol and messages */
 int vr_transport_init(void);
