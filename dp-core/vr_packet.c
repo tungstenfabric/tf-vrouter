@@ -548,14 +548,23 @@ __vr_adjust_tcp_mss(struct vr_tcp *tcph, uint16_t len_overhead, uint16_t eth_mtu
 bool
 vr_adjust_tcp_mss(struct vr_tcp *tcph, uint16_t len_overhead, uint16_t *old_mss, uint16_t *new_mss)
 {
-    uint16_t eth_mtu;
+    uint16_t eth_mtu = 65535;
     struct vrouter *router = vrouter_get(0);
+    int i;
 
-    if ((router == NULL) || (router->vr_eth_if == NULL)) {
+    if (router == NULL) {
         return false;
     }
 
-    eth_mtu = vif_get_mtu(router->vr_eth_if);
+    for (i = 0; i < VR_MAX_PHY_INF; i++) {
+        if (router->vr_eth_if[i]) {
+            uint16_t mtu = vif_get_mtu(router->vr_eth_if[i]);
+            if (mtu < eth_mtu)
+                eth_mtu = mtu;
+        }
+    }
+    if (eth_mtu == 65535)
+        return false;
 
     return __vr_adjust_tcp_mss(tcph, len_overhead, eth_mtu, old_mss, new_mss);
 }

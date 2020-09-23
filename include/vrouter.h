@@ -418,7 +418,7 @@ struct vrouter {
 
     struct vr_interface *vr_agent_if;
     struct vr_interface *vr_host_if;
-    struct vr_interface *vr_eth_if;
+    struct vr_interface *vr_eth_if[VR_MAX_PHY_INF];
     struct vr_pkt_drop_st *vr_pkt_drop;
 };
 

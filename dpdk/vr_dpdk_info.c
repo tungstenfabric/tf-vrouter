@@ -947,8 +947,8 @@ dpdk_info_get_xstats(VR_INFO_ARGS)
     } else {
         /* if bond is not configured */
         if (strcmp(msg_req->inbuf, "") == 0 || is_all) {
-            if (router->vr_eth_if) {
-                ethdev = (struct vr_dpdk_ethdev* ) router->vr_eth_if->vif_os;
+            if (router->vr_eth_if[0]) {
+                ethdev = (struct vr_dpdk_ethdev* ) router->vr_eth_if[0]->vif_os;
             }
             if (ethdev) {
                 port_id = ethdev->ethdev_port_id;
