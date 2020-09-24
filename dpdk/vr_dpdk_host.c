@@ -1457,8 +1457,8 @@ vhost_remove_xconnect(void)
         vif = __vrouter_get_interface(router, i);
         if (vif && (vif_is_vhost(vif))) {
             vif_remove_xconnect(vif);
-            if (vif->vif_bridge != NULL)
-                vif_remove_xconnect(vif->vif_bridge);
+            if (vif->vif_bridge[0] != NULL)
+                vif_remove_xconnect(vif->vif_bridge[0]);
         }
     }
 }

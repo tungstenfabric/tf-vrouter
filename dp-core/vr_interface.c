@@ -270,7 +270,8 @@ vif_xconnect(struct vr_interface *vif, struct vr_packet *pkt,
     if (!vif)
         goto free_pkt;
 
-    bridge = vif->vif_bridge;
+    // Temporary change. Will have to change this according to xconnect changes
+    bridge = vif->vif_bridge[0];
     if (bridge) {
         vr_preset(pkt);
         return bridge->vif_tx(bridge, pkt, fmd);
@@ -848,7 +849,7 @@ static int
 vhost_drv_add(struct vr_interface *vif,
         vr_interface_req *vifr __attribute__unused__)
 {
-    int ret = 0;
+    int ret = 0, i;
 
     if (!vif->vif_mtu)
         vif->vif_mtu = 1514;
@@ -865,11 +866,13 @@ vhost_drv_add(struct vr_interface *vif,
      * add tap to the corresponding physical interface, now
      * that vhost is functional
      */
-    if (vif->vif_bridge) {
-        ret = hif_ops->hif_add_tap(vif->vif_bridge);
-        if (ret)
-            return ret;
+    for (i = 0; i < VR_MAX_PHY_INF; i++) {
+        if (vif->vif_bridge[i]) {
+            ret = hif_ops->hif_add_tap(vif->vif_bridge[i]);
+        }
     }
+    if (ret)
+        return ret;
 
     return 0;
 }
@@ -1562,7 +1565,7 @@ eth_drv_add(struct vr_interface *vif,
       * RX of the decrypted packet is handled.
       */
     if ((!(vif->vif_flags & VIF_FLAG_VHOST_PHYS)) ||
-            (vif->vif_bridge) || (hif_ops->hif_get_encap(vif) == VIF_ENCAP_TYPE_L3_DECRYPT)) {
+            (vif->vif_bridge[0]) || (hif_ops->hif_get_encap(vif) == VIF_ENCAP_TYPE_L3_DECRYPT)) {
         ret = hif_ops->hif_add_tap(vif);
         if (ret)
             hif_ops->hif_del(vif);
@@ -1801,17 +1804,24 @@ vrouter_del_interface(struct vr_interface *vif)
 
     case VIF_TYPE_HOST:
         router->vr_host_if = NULL;
-        if (vif->vif_bridge) {
-            vif->vif_bridge->vif_bridge = NULL;
-            vif->vif_bridge = NULL;
+        for (i = 0; i < VR_MAX_PHY_INF; i++) {
+            if (vif->vif_bridge[i]) {
+                vif->vif_bridge[i]->vif_bridge[0] = NULL;
+                vif->vif_bridge[i] = NULL;
+            }
         }
 
         break;
 
     case VIF_TYPE_PHYSICAL:
-        if (vif->vif_bridge) {
-            vif->vif_bridge->vif_bridge = NULL;
-            vif->vif_bridge = NULL;
+        if (vif->vif_bridge[0]) {
+            for (i = 0; i < VR_MAX_PHY_INF; i++) {
+                if (vif->vif_bridge[0]->vif_bridge[i] == vif) {
+                    vif->vif_bridge[0]->vif_bridge[i] = NULL;
+                    break;
+                }
+            }
+            vif->vif_bridge[0] = NULL;
         }
 
         for (i = 0; i < VR_MAX_PHY_INF; i++) {
@@ -1839,6 +1849,7 @@ vrouter_del_interface(struct vr_interface *vif)
 static void
 vrouter_setup_vif(struct vr_interface *vif)
 {
+    int i;
     switch (vif->vif_type) {
     case VIF_TYPE_AGENT:
         agent_alive = true;
@@ -1848,12 +1859,16 @@ vrouter_setup_vif(struct vr_interface *vif)
     case VIF_TYPE_HOST:
         if (!agent_alive) {
             vif_set_xconnect(vif);
-            if (vif->vif_bridge)
-                vif_set_xconnect(vif->vif_bridge);
+            for (i = 0; i < VR_MAX_PHY_INF; i++) {
+                if (vif->vif_bridge[i])
+                    vif_set_xconnect(vif->vif_bridge[i]);
+            }
         } else {
             vif_remove_xconnect(vif);
-            if (vif->vif_bridge)
-                vif_remove_xconnect(vif->vif_bridge);
+            for (i = 0; i < VR_MAX_PHY_INF; i++) {
+                if (vif->vif_bridge[i])
+                    vif_remove_xconnect(vif->vif_bridge[i]);
+            }
         }
 
         break;
@@ -1931,8 +1946,8 @@ vrouter_add_interface(struct vr_interface *vif, vr_interface_req *vifr)
         for (i = 0; i < VR_MAX_PHY_INF; i++) {
             if (eth_vif[i]) {
                 router->vr_eth_if[i] = eth_vif[i];
-                vif->vif_bridge = eth_vif[i];
-                eth_vif[i]->vif_bridge = vif;
+                vif->vif_bridge[i] = eth_vif[i];
+                eth_vif[i]->vif_bridge[0] = vif;
             }
         }
         break;

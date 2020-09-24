@@ -23,11 +23,11 @@ struct vhost_priv {
     struct ifnet *vp_ifp;
     struct mtx vp_mtx;
 #endif
-    struct net_device *vp_phys_dev;
+    struct net_device *vp_phys_dev[VR_MAX_PHY_INF];
     struct vrouter *vp_router;
     struct vr_interface *vp_vifp;
     int vp_db_index;
-    char vp_phys_name[VR_INTERFACE_NAME_LEN];
+    char vp_phys_name[VR_MAX_PHY_INF][VR_INTERFACE_NAME_LEN];
 };
 
 extern void vhost_detach_phys(struct net_device *);

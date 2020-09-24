@@ -764,8 +764,8 @@ dpdk_fabric_if_add(struct vr_interface *vif)
              mtu += sizeof(uint32_t);
          }
          vif->vif_mtu = mtu;
-         if (vif->vif_bridge)
-             vif->vif_bridge->vif_mtu = mtu;
+         if (vif->vif_bridge[0])
+             vif->vif_bridge[0]->vif_mtu = mtu;
     }
 
     ethdev = &vr_dpdk.ethdevs[port_id];
@@ -900,11 +900,11 @@ dpdk_vhost_if_add(struct vr_interface *vif)
      * it looks for an interface with os_idx == cross_connect_idx
      * and sets vif->vif_bridge if there is such an interface.
      */
-    ethdev = (struct vr_dpdk_ethdev *)(vif->vif_bridge->vif_os);
+    ethdev = (struct vr_dpdk_ethdev *)(vif->vif_bridge[0]->vif_os);
     if (ethdev == NULL) {
         RTE_LOG(ERR, VROUTER, "Error adding vif %u device %s:"
             " bridge vif %u ethdev is not initialized\n",
-                vif->vif_idx, vif->vif_name, vif->vif_bridge->vif_idx);
+                vif->vif_idx, vif->vif_name, vif->vif_bridge[0]->vif_idx);
         return -ENOENT;
     }
     port_id = ethdev->ethdev_port_id;

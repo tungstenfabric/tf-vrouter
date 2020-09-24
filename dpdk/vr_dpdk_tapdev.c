@@ -641,8 +641,8 @@ static void vr_dpdk_handle_vhost0_notification(uint32_t mtu, uint32_t if_up)
                    mtu += sizeof(uint32_t);
                }
                vif->vif_mtu = mtu;
-               if (vif->vif_bridge)
-                   vif->vif_bridge->vif_mtu = mtu;
+               if (vif->vif_bridge[0])
+                   vif->vif_bridge[0]->vif_mtu = mtu;
             }
         }
 

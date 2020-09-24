@@ -392,7 +392,7 @@ struct vr_interface {
 #endif
     /* Big and less frequently used fields. */
     struct vr_interface *vif_parent;
-    struct vr_interface *vif_bridge;
+    struct vr_interface *vif_bridge[VR_MAX_PHY_INF];
     unsigned int vif_users;
     unsigned int vif_os_idx;
 
