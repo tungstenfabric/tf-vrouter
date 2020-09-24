@@ -1001,16 +1001,16 @@ nh_composite_ecmp(struct vr_packet *pkt, struct vr_nexthop *nh,
     struct vr_nexthop *member_nh = NULL;
     struct vr_vrf_stats *stats = NULL;
 
-    if (vr_inet_vrf_stats) {
-        stats = vr_inet_vrf_stats(fmd->fmd_dvrf, pkt->vp_cpu);
-        if (stats)
-            stats->vrf_ecmp_composites++;
-    }
-
     if (!fmd) {
         drop_reason = VP_DROP_NO_FMD;
         PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
         goto drop;
+    }
+
+    if (vr_inet_vrf_stats) {
+        stats = vr_inet_vrf_stats(fmd->fmd_dvrf, pkt->vp_cpu);
+        if (stats)
+            stats->vrf_ecmp_composites++;
     }
 
     if ((fmd->fmd_ecmp_nh_index >= 0) &&
@@ -1335,6 +1335,12 @@ nh_composite_mcast(struct vr_packet *pkt, struct vr_nexthop *nh,
     // to inner ethernet header (in case of VxLan tunneled packet).
     bool pull_header = true;
 
+    if (!fmd) {
+        drop_reason = VP_DROP_NO_FMD;
+        PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
+        goto drop;
+    }
+
     if (vr_inet_vrf_stats) {
         stats = vr_inet_vrf_stats(fmd->fmd_dvrf, pkt->vp_cpu);
         if (stats)
@@ -1343,12 +1349,6 @@ nh_composite_mcast(struct vr_packet *pkt, struct vr_nexthop *nh,
 
     pkt_vrf = fmd->fmd_dvrf;
     drop_reason = VP_DROP_CLONED_ORIGINAL;
-
-    if (!fmd) {
-        drop_reason = VP_DROP_NO_FMD;
-        PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
-        goto drop;
-    }
 
     /*
      * nh_validate_src identifies the format of the packet and source of
@@ -1610,6 +1610,12 @@ nh_composite_encap(struct vr_packet *pkt, struct vr_nexthop *nh,
     unsigned short drop_reason;
     struct vr_packet *new_pkt;
 
+    if (!fmd) {
+        drop_reason = VP_DROP_NO_FMD;
+        PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
+        goto drop;
+    }
+
     drop_reason = VP_DROP_CLONED_ORIGINAL;
     if (vr_inet_vrf_stats) {
         stats = vr_inet_vrf_stats(fmd->fmd_dvrf, pkt->vp_cpu);
@@ -1619,12 +1625,6 @@ nh_composite_encap(struct vr_packet *pkt, struct vr_nexthop *nh,
 
     if (!nh->nh_component_cnt) {
         drop_reason = VP_DROP_DISCARD;
-        PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
-        goto drop;
-    }
-
-    if (!fmd) {
-        drop_reason = VP_DROP_NO_FMD;
         PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
         goto drop;
     }
@@ -1666,6 +1666,12 @@ nh_composite_tor(struct vr_packet *pkt, struct vr_nexthop *nh,
     unsigned short drop_reason;
     struct vr_packet *new_pkt;
 
+    if (!fmd) {
+        drop_reason = VP_DROP_NO_FMD;
+        PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
+        goto drop;
+    }
+
     drop_reason = VP_DROP_CLONED_ORIGINAL;
     if (vr_inet_vrf_stats) {
         stats = vr_inet_vrf_stats(fmd->fmd_dvrf, pkt->vp_cpu);
@@ -1675,12 +1681,6 @@ nh_composite_tor(struct vr_packet *pkt, struct vr_nexthop *nh,
 
     if (!nh->nh_component_cnt) {
         drop_reason = VP_DROP_DISCARD;
-        PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
-        goto drop;
-    }
-
-    if (!fmd) {
-        drop_reason = VP_DROP_NO_FMD;
         PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
         goto drop;
     }
@@ -1736,6 +1736,12 @@ nh_composite_evpn(struct vr_packet *pkt, struct vr_nexthop *nh,
     struct vr_packet *new_pkt;
     uint8_t eth_mac[VR_ETHER_ALEN];
 
+    if (!fmd) {
+        drop_reason = VP_DROP_NO_FMD;
+        PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
+        goto drop;
+    }
+
     drop_reason = VP_DROP_CLONED_ORIGINAL;
     if (vr_inet_vrf_stats) {
         stats = vr_inet_vrf_stats(fmd->fmd_dvrf, pkt->vp_cpu);
@@ -1745,12 +1751,6 @@ nh_composite_evpn(struct vr_packet *pkt, struct vr_nexthop *nh,
 
     if (!nh->nh_component_cnt) {
         drop_reason = VP_DROP_DISCARD;
-        PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
-        goto drop;
-    }
-
-    if (!fmd) {
-        drop_reason = VP_DROP_NO_FMD;
         PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
         goto drop;
     }
@@ -1825,6 +1825,12 @@ nh_composite_fabric(struct vr_packet *pkt, struct vr_nexthop *nh,
     unsigned short drop_reason, pkt_vrf;
     struct vr_packet *new_pkt;
 
+    if (!fmd) {
+        drop_reason = VP_DROP_NO_FMD;
+        PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
+        goto drop;
+    }
+
     drop_reason = VP_DROP_CLONED_ORIGINAL;
     if (vr_inet_vrf_stats) {
         stats = vr_inet_vrf_stats(fmd->fmd_dvrf, pkt->vp_cpu);
@@ -1834,12 +1840,6 @@ nh_composite_fabric(struct vr_packet *pkt, struct vr_nexthop *nh,
 
     if (!nh->nh_component_cnt) {
         drop_reason = VP_DROP_DISCARD;
-        PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
-        goto drop;
-    }
-
-    if (!fmd) {
-        drop_reason = VP_DROP_NO_FMD;
         PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
         goto drop;
     }
