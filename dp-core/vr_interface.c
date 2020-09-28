@@ -2394,6 +2394,12 @@ vr_interface_add(vr_interface_req *req, bool need_response)
     *ip6 = req->vifr_ip6_u;
     *(ip6 + 1) = req->vifr_ip6_l;
 
+    /* Enable IPv6 underlay if vhost has an IPv6 address */
+    if (vif_is_vhost(vif) && ((*ip6 != 0) || ((*(ip6+1)) != 0))) {
+        vr_printf("Enabling IPv6 underlay in vRouter\n");
+        vr_set_ipv6_underlay_enabled();
+    }
+
     if (req->vifr_name) {
         strncpy(vif->vif_name, req->vifr_name, sizeof(vif->vif_name) - 1);
     }
