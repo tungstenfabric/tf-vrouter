@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "fe777761_518d89fe",
+        "filename": "dpdk/vr_dpdk_ddp.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 152,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-09-28T10:09:31Z",
+      "side": 1,
+      "message": "In Deletion case, we need to load the old firmware(backup file) file.",
+      "parentUuid": "89102ae2_7cf01e91",
+      "revId": "0dd3f02226384a8497999402fb9e3177489286d2",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "0b797e7e_09051cdd",
         "filename": "dpdk/vr_dpdk_info.c",
         "patchSetId": 3
@@ -47,6 +65,24 @@
       "writtenOn": "2020-09-28T09:24:48Z",
       "side": 1,
       "message": "What about the case where NIC is fortville and DDP is not enabled?\nIn that case you will still print this error. \nCan you print a more meaningful error for that case i.e DDP is not enabled?",
+      "revId": "0dd3f02226384a8497999402fb9e3177489286d2",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "05394097_baa81654",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 1237,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-09-28T10:09:31Z",
+      "side": 1,
+      "message": "When DDP not enabled, its will get printed in line no:1215",
+      "parentUuid": "a76af5e6_2b6ef441",
       "revId": "0dd3f02226384a8497999402fb9e3177489286d2",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
