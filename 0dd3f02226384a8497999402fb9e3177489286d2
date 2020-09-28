@@ -37,6 +37,29 @@
     },
     {
       "key": {
+        "uuid": "eb106f10_3cda854f",
+        "filename": "dpdk/vr_dpdk_ddp.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 205,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-09-28T10:49:21Z",
+      "side": 1,
+      "message": "may not be good to modify this variable in this function. you can check the return value in the caller and modify it. same for ddp_add(). Also, better to use a set/get method instead of extern since it will be more readable",
+      "range": {
+        "startLine": 205,
+        "startChar": 8,
+        "endLine": 205,
+        "endChar": 26
+      },
+      "revId": "0dd3f02226384a8497999402fb9e3177489286d2",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "0b797e7e_09051cdd",
         "filename": "dpdk/vr_dpdk_info.c",
         "patchSetId": 3
@@ -83,6 +106,29 @@
       "side": 1,
       "message": "When DDP not enabled, its will get printed in line no:1215",
       "parentUuid": "a76af5e6_2b6ef441",
+      "revId": "0dd3f02226384a8497999402fb9e3177489286d2",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "62cd6f6c_c6542f1e",
+        "filename": "dpdk/vr_dpdk_info.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 1244,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-09-28T10:49:21Z",
+      "side": 1,
+      "message": "should vr_dpdk_info.c have add/del functions? Should it be in vr_dpdk_conf.c?",
+      "range": {
+        "startLine": 1244,
+        "startChar": 0,
+        "endLine": 1244,
+        "endChar": 17
+      },
       "revId": "0dd3f02226384a8497999402fb9e3177489286d2",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
