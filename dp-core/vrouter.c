@@ -32,6 +32,7 @@ struct host_os *vrouter_host;
 struct vr_offload_ops *offload_ops;
 void (*vr_init_cpuid)(struct vr_cpu_type_t *vr_cpu_type) = NULL;
 struct vr_cpu_type_t vr_cpu_type = {0};
+static bool vr_ipv6_underlay_enabled = false;
 
 extern struct host_os *vrouter_get_host(void);
 extern int vr_stats_init(struct vrouter *);
@@ -709,4 +710,16 @@ vr_hugepage_config_process(void *s_req)
                 false);
 
     return;
+}
+
+bool
+vr_is_ipv6_underlay_enabled(void)
+{
+    return vr_ipv6_underlay_enabled;
+}
+
+void
+vr_set_ipv6_underlay_enabled(void)
+{
+    vr_ipv6_underlay_enabled = true;
 }

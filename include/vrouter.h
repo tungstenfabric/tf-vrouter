@@ -438,6 +438,9 @@ extern void vrouter_exit(bool);
 extern int vr_module_error(int, const char *, int, int);
 extern int vhost_init(void);
 
+extern bool vr_is_ipv6_underlay_enabled(void);
+extern void vr_set_ipv6_underlay_enabled(void);
+
 #ifdef __cplusplus
 }
 #endif
