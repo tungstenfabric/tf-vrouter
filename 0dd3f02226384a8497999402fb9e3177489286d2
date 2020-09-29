@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "565871d4_c7e5f02e",
+        "filename": "dpdk/vr_dpdk_ddp.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 152,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-09-29T04:58:33Z",
+      "side": 1,
+      "message": "We need backup file to store the original configuration.\nFrom Intel page:\nThe \u0027ddp add 0 /home/pkg/gtp.pkgo,/home/pkg/gtp.bak\u0027 command first loads the gtp.pkgo file to the memory buffer, then passes it to rte_pmd_i40e_process_ddp_package() with the RTE_PMD_I40E_PKG_OP_WR_ADD operation, and then saves the original configuration, returned in the same buffer, to the gtp.bak file.",
+      "parentUuid": "fe777761_518d89fe",
+      "revId": "0dd3f02226384a8497999402fb9e3177489286d2",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "eb106f10_3cda854f",
         "filename": "dpdk/vr_dpdk_ddp.c",
         "patchSetId": 3
