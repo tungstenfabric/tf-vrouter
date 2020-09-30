@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "aebed63d_09598f93",
+        "filename": "dpdk/vr_dpdk_ddp.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-09-30T03:24:09Z",
+      "side": 1,
+      "message": "Earlier this was in /var/run/vrouter/\nAny reason why this is changed?\nGenerally /usr/bin contains executable files only",
+      "range": {
+        "startLine": 44,
+        "startChar": 24,
+        "endLine": 44,
+        "endChar": 48
+      },
+      "revId": "1997ef2a896dcad171f699025cbca7754655df09",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "37280f29_270dfec5",
+        "filename": "dpdk/vr_dpdk_ddp.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-09-30T03:24:09Z",
+      "side": 1,
+      "message": "same as above",
+      "range": {
+        "startLine": 141,
+        "startChar": 24,
+        "endLine": 141,
+        "endChar": 48
+      },
+      "revId": "1997ef2a896dcad171f699025cbca7754655df09",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8da6a76b_e105a295",
+        "filename": "dpdk/vr_dpdk_ethdev.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 951,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2020-09-30T03:24:09Z",
+      "side": 1,
+      "message": "Shouldn\u0027t we get the return value and set/reset ddp flag here?",
+      "range": {
+        "startLine": 951,
+        "startChar": 8,
+        "endLine": 951,
+        "endChar": 35
+      },
+      "revId": "1997ef2a896dcad171f699025cbca7754655df09",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
