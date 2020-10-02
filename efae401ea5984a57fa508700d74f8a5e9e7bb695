@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8e46c041_39aebb67",
+        "filename": "dpdk/vr_dpdk_conf.c",
+        "patchSetId": 10
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-10-02T13:28:44Z",
+      "side": 1,
+      "message": "Instead of overriding VR_DPDK_DDP_FAILED, can you define a new error code for it.\nFor eg: VR_DPDK_DDP_NOT_SUPPORTED\n\nAlso can you have all the error codes as -ve value?",
+      "revId": "efae401ea5984a57fa508700d74f8a5e9e7bb695",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5f4f89c8_07517a9c",
+        "filename": "dpdk/vr_dpdk_ddp.c",
+        "patchSetId": 10
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-10-02T13:28:44Z",
+      "side": 1,
+      "message": "This is defined in 2 places. Maybe you can delete from here.",
+      "revId": "efae401ea5984a57fa508700d74f8a5e9e7bb695",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
