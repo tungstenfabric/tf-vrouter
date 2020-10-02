@@ -39,7 +39,7 @@ static int dump_marker = -1;
 static int buff_table_id, buffsz;
 
 static int help_set, ver_set, bond_set, lacp_set, mempool_set, stats_set,
-             xstats_set, lcore_set, app_set, sock_dir_set;
+             xstats_set, lcore_set, app_set, ddp_set, sock_dir_set;
 static unsigned int core = (unsigned)-1;
 static unsigned int stats_index = 0;
 /* For few  CLI, Inbuf has to send to vrouter for processing(i.e kind of filter
@@ -59,6 +59,7 @@ enum opt_index {
     BUFFSZ_OPT_INDEX,
     LCORE_OPT_INDEX,
     APP_OPT_INDEX,
+    DDP_OPT_INDEX,
     SOCK_DIR_OPT_INDEX,
     MAX_OPT_INDEX,
 };
@@ -73,6 +74,7 @@ static struct option long_options[] = {
     [XSTATS_OPT_INDEX]    =   {"xstats",  optional_argument,        &xstats_set,      1},
     [LCORE_OPT_INDEX]    =   {"lcore",    no_argument,        &lcore_set,      1},
     [APP_OPT_INDEX]    =   {"app",    no_argument,        &app_set,      1},
+    [DDP_OPT_INDEX]    =   {"ddp",    required_argument,        &ddp_set,      1},
     [BUFFSZ_OPT_INDEX]  =   {"buffsz",  required_argument,  &buffsz,        1},
     [SOCK_DIR_OPT_INDEX]  = {"sock-dir", required_argument, &sock_dir_set,  1},
     [MAX_OPT_INDEX]     =   {NULL,    0,                  0,              0},
@@ -98,6 +100,8 @@ Usage()
                                                         Show Lcore information\n");
     printf("                 --app|-a\
                                                           Show App information\n");
+    printf("                 --ddp|-d      <list>\
+						   Show DDP information for X710 NIC\n");
     printf("       Optional: --buffsz      <value>\
                                              Send output buffer size (less than 1000Mb)\n");
     exit(-EINVAL);
@@ -107,7 +111,7 @@ static void
 validate_options(void)
 {
     if(!(ver_set || bond_set || lacp_set || mempool_set ||
-        stats_set || xstats_set || lcore_set || app_set))
+        stats_set || xstats_set || lcore_set || app_set|| ddp_set))
         Usage();
 
     return;
@@ -208,6 +212,16 @@ parse_long_opts(int opt_index, char *opt_arg)
         msginfo = INFO_APP;
         break;
 
+    case DDP_OPT_INDEX:
+        msginfo = INFO_DDP;
+        if (!strcmp(opt_arg, "list")){
+            vr_info_inbuf = opt_arg;
+        } else {
+            Usage();
+        }
+        vr_info_inbuf = opt_arg;
+        break;
+
     case SOCK_DIR_OPT_INDEX:
         vr_socket_dir = opt_arg;
         break;
@@ -265,7 +279,7 @@ main(int argc, char *argv[])
 
     parse_ini_file();
 
-    while (((opt = getopt_long(argc, argv, "-:hvbl:m:sn:cax::",
+    while (((opt = getopt_long(argc, argv, "-:hvbl:m:sn:caxd::",
                         long_options, &option_index)) >= 0)) {
         switch (opt) {
         case 'v':
@@ -316,6 +330,12 @@ main(int argc, char *argv[])
             app_set = 1;
             msginfo = INFO_APP;
             break;
+
+	case 'd':
+	    ddp_set = 1;
+	    msginfo = INFO_DDP;
+            parse_long_opts(DDP_OPT_INDEX, optarg);
+	    break;
 
         case 0:
             parse_long_opts(option_index, optarg);
