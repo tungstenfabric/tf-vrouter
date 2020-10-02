@@ -42,6 +42,30 @@
     },
     {
       "key": {
+        "uuid": "edcd0df6_4e8afb59",
+        "filename": "dpdk/vr_dpdk_ddp.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-10-02T14:21:52Z",
+      "side": 1,
+      "message": "/var/run/vrouter files visible in both contrail-tools and DPDK container, so changed.",
+      "parentUuid": "aebed63d_09598f93",
+      "range": {
+        "startLine": 44,
+        "startChar": 24,
+        "endLine": 44,
+        "endChar": 48
+      },
+      "revId": "1997ef2a896dcad171f699025cbca7754655df09",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "37280f29_270dfec5",
         "filename": "dpdk/vr_dpdk_ddp.c",
         "patchSetId": 6

@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "ad44f0c7_9b60cc83",
+        "filename": "dpdk/vr_dpdk_conf.c",
+        "patchSetId": 10
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-10-02T14:21:52Z",
+      "side": 1,
+      "message": "Updated",
+      "parentUuid": "8e46c041_39aebb67",
+      "revId": "efae401ea5984a57fa508700d74f8a5e9e7bb695",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "5f4f89c8_07517a9c",
         "filename": "dpdk/vr_dpdk_ddp.c",
         "patchSetId": 10
@@ -33,6 +51,24 @@
       "revId": "efae401ea5984a57fa508700d74f8a5e9e7bb695",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1902fef2_038534b6",
+        "filename": "dpdk/vr_dpdk_ddp.c",
+        "patchSetId": 10
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-10-02T14:21:52Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "5f4f89c8_07517a9c",
+      "revId": "efae401ea5984a57fa508700d74f8a5e9e7bb695",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
     }
   ]
 }
