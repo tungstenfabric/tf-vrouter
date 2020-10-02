@@ -32,6 +32,7 @@ DROPSTATS = dropstats
 VXLAN = vxlan
 DPDKINFO = dpdkinfo
 VRINFO = vrinfo
+DPDKCONF = dpdkconf
 
 SANDESH_OBJS = $(SRC_ROOT)/sandesh/gen-c/vr_types.o
 
@@ -41,7 +42,7 @@ SANDESH_OBJS = $(SRC_ROOT)/sandesh/gen-c/vr_types.o
 %.o: %.c
 	$(CC) -c $(CFLAGS) -o $@ $^
 
-all: $(VIF) $(NH) $(RT) $(MPLS) $(FLOW) $(MIRROR) $(VRFTABLE) $(VRFSTATS) $(DROPSTATS) $(VXLAN) $(DPDKINFO)
+all: $(VIF) $(NH) $(RT) $(MPLS) $(FLOW) $(MIRROR) $(VRFTABLE) $(VRFSTATS) $(DROPSTATS) $(VXLAN) $(DPDKINFO) $(DPDKCONF)
 
 $(SANDESH_OBJS:%.o=%.c):
 	$(MAKE) -C $(SRC_ROOT)/sandesh
@@ -81,6 +82,9 @@ $(VRINFO): $(VRINFO).c $(SANDESH_OBJS) $(LIB_NAME)
 
 $(DPDKINFO): $(DPDKINFO).c $(SANDESH_OBJS) $(LIB_NAME)
 	$(CC) $< $(SANDESH_OBJS) $(CFLAGS) $(BIN_FLAGS) -o $@
+
+$(DPDKCONF): $(DPDKCONF).c $(SANDESH_OBJS) $(LIB_NAME)
+   $(CC) $< $(SANDESH_OBJS) $(CFLAGS) $(BIN_FLAGS) -o $@
 
 $(LIB_NAME): $(LIBOBJS)
 	$(AR) rcs $@ $^
