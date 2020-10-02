@@ -2517,3 +2517,16 @@ vr_send_qos_map_add(struct nl_client *cl, unsigned int router_id,
 
     return vr_sendmsg(cl, &req, "vr_qos_map_req");
 }
+
+int
+vr_send_ddp_req(struct nl_client *cl, vr_info_msg_en msginfo)
+{
+    vr_info_req req;
+
+    memset(&req, 0, sizeof(req));
+
+    req.h_op        = SANDESH_OP_DUMP;
+    req.vdu_msginfo = msginfo;
+
+    return vr_sendmsg(cl, &req, "vr_info_req");
+}
