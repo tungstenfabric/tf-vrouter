@@ -2305,15 +2305,15 @@ dpdk_dev_stats_update(struct vr_interface *vif, unsigned lcore_id)
         }
     }
 
+    /* For DPDK, forwarding core starts from core 10.
+     * Starting from core 10 respective queue and core store RX and TX packets.
+     * so, no need of storing global counter in lcore 0.
+     * for locore 0 stoing only vis_dev_inombufs and
+     * ignoring other counters.
+     */
     if (lcore_id == 0) {
         /* use lcore 0 to store global device counters */
-        stats->vis_dev_ibytes = eth_stats.ibytes;
-        stats->vis_dev_ipackets = eth_stats.ipackets;
-        stats->vis_dev_ierrors = eth_stats.ierrors;
         stats->vis_dev_inombufs = eth_stats.rx_nombuf;
-        stats->vis_dev_obytes = eth_stats.obytes;
-        stats->vis_dev_opackets = eth_stats.opackets;
-        stats->vis_dev_oerrors = eth_stats.oerrors;
     }
 }
 
