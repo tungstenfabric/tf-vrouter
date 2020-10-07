@@ -517,5 +517,9 @@ vif_req_table[92].field_name = "vifr_vlan_name"
 vif_req_table[92].ProtoField = ProtoField.bytes
 vif_req_table[92].base = base.SPACE
 
+vif_req_table[93] = {}
+vif_req_table[93].field_name = "vifr_loopback_ip"
+vif_req_table[93].ProtoField = ProtoField.uint32
+vif_req_table[93].base = base.DEC
 
 
