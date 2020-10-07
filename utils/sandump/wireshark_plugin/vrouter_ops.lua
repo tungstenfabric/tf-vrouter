@@ -223,15 +223,24 @@ vrouter_ops_table[42].base = base.DEC
 vrouter_ops_table[43] = {}
 vrouter_ops_table[43].field_name = "vo_pkt_droplog_buf_en"
 vrouter_ops_table[43].ProtoField = ProtoField.int8
+vrouter_ops_table[43].base = base.DEC
 
 vrouter_ops_table[44] = {}
 vrouter_ops_table[44].field_name = "vo_pkt_droplog_en"
 vrouter_ops_table[44].ProtoField = ProtoField.int8
+vrouter_ops_table[44].base = base.DEC
 
 vrouter_ops_table[45] = {}
 vrouter_ops_table[45].field_name = "vo_pkt_droplog_min_en"
 vrouter_ops_table[45].ProtoField = ProtoField.int8
+vrouter_ops_table[45].base = base.DEC
 
 vrouter_ops_table[46] = {}
 vrouter_ops_table[46].field_name = "vo_uncond_close_flow_on_tcp_rst"
 vrouter_ops_table[46].ProtoField = ProtoField.int8
+vrouter_ops_table[46].base = base.DEC
+
+vrouter_ops_table[47] = {}
+vrouter_ops_table[47].field_name = "vo_genetlink_group_id"
+vrouter_ops_table[47].ProtoField = ProtoField.int16
+vrouter_ops_table[47].base = base.DEC
