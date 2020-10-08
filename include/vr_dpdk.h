@@ -87,7 +87,7 @@ extern unsigned vr_packet_sz;
                                         || vif->vif_type == VIF_TYPE_VIRTUAL)
  */
 
-#define VR_MAX_CPUS_DPDK            64
+#define VR_MAX_CPUS_DPDK            256
 /* Default lcore mask. Used only when sched_getaffinity() is failed */
 #define VR_DPDK_DEF_LCORE_MASK      0xf
 /* Default memory size to allocate at startup (in MBs) */
