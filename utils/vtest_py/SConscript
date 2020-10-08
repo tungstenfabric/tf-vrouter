@@ -137,8 +137,13 @@ build_vrouter = env.Command("build_vrouter", [], \
 gen_py_sandesh = env.Command("gen_py_sandesh", [], \
                              "scons sandesh/library/python:pysandesh")
 
+check_wireshark_plugins = env.Command("compare_with_vr_sandesh", [], \
+            "sh "+src_root+"/vrouter/utils/sandump/compare_with_vr_sandesh.sh")
+
 env.Requires(gen_py_sandesh, build_vrouter)
-env.Requires(vtest_py_ut, gen_py_sandesh)
+env.Requires(check_wireshark_plugins, gen_py_sandesh)
+env.Requires(vtest_py_ut, check_wireshark_plugins)
+
 env.Alias('vrouter-py-ut:test', vtest_py_ut)
 
 #Command for running vrouter coverage script
