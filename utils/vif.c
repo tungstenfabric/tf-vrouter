@@ -52,6 +52,7 @@
 #include "nl_util.h"
 #include "ini_parser.h"
 
+#define VR_DPDK_VLAN_FWD_DEF_NAME   "vfw0"
 
 #define LISTING_NUM_OF_LINE  3
 #define MAX_OUTPUT_IF 32
@@ -472,8 +473,12 @@ vr_interface_vlan_info(vr_interface_req *req)
 
     if(req->vifr_vlan_tag != VLAN_ID_INVALID && req->vifr_vlan_name != NULL ) {
         vr_interface_print_head_space();
-        printf("Vlan Id: %d  VLAN fwd Interface: %s\n",
-                req->vifr_vlan_tag, req->vifr_vlan_name);
+        printf("Vlan Id: %d", req->vifr_vlan_tag);
+        if (strncmp(req->vifr_vlan_name, VR_DPDK_VLAN_FWD_DEF_NAME,
+                    strlen(VR_DPDK_VLAN_FWD_DEF_NAME))) {
+            printf("  VLAN fwd Interface: %s", req->vifr_vlan_name);
+        }
+        printf("\n");
     }
 }
 
