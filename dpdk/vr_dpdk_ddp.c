@@ -43,8 +43,8 @@ vr_dpdk_ddp_add(uint16_t port_id)
     uint8_t *buf;
     struct stat st_buf;
     FILE *ddp_bkp_fd;
-    char ddp_fpath[] = "/var/lib/contrail/ddp/mplsogreudp.pkg";
-    char ddp_fbkp[] = "/var/lib/contrail/ddp/mplsogreudp.bkp";
+    char ddp_fpath[] = "/opt/contrail/ddp/mplsogreudp.pkg";
+    char ddp_fbkp[] = "/opt/contrail/ddp/mplsogreudp.bkp";
 
     if(!rte_eth_dev_is_valid_port(port_id)) {
         RTE_LOG(ERR, VROUTER, "%s : DDP port_id is invalid \n", __func__);
@@ -139,7 +139,7 @@ vr_dpdk_ddp_del(uint16_t port_id)
     uint8_t *buf;
     struct stat st_buf;
 
-    char ddp_fpath[] = "/var/lib/contrail/ddp/mplsogreudp.bkp";
+    char ddp_fpath[] = "/opt/contrail/ddp/mplsogreudp.bkp";
 
     if(!rte_eth_dev_is_valid_port(port_id)) {
         RTE_LOG(ERR, VROUTER, "%s: DDP port_id is invalid \n", __func__);
