@@ -16,6 +16,8 @@
 /* By default, DDP disabled for X710 series NIC's, pass --ddp command line 
  * argument to enable it */
 static bool vr_dpdk_enable_ddp = false;
+const char ddp_fpath[] = "/opt/contrail/ddp/mplsogreudp.pkg";
+const char ddp_fbkp[] = "/opt/contrail/ddp/mplsogreudp.bkp";
 
 
 bool
@@ -43,8 +45,6 @@ vr_dpdk_ddp_add(uint16_t port_id)
     uint8_t *buf;
     struct stat st_buf;
     FILE *ddp_bkp_fd;
-    char ddp_fpath[] = "/var/lib/contrail/ddp/mplsogreudp.pkg";
-    char ddp_fbkp[] = "/var/lib/contrail/ddp/mplsogreudp.bkp";
 
     if(!rte_eth_dev_is_valid_port(port_id)) {
         RTE_LOG(ERR, VROUTER, "%s : DDP port_id is invalid \n", __func__);
@@ -139,31 +139,29 @@ vr_dpdk_ddp_del(uint16_t port_id)
     uint8_t *buf;
     struct stat st_buf;
 
-    char ddp_fpath[] = "/var/lib/contrail/ddp/mplsogreudp.bkp";
-
     if(!rte_eth_dev_is_valid_port(port_id)) {
         RTE_LOG(ERR, VROUTER, "%s: DDP port_id is invalid \n", __func__);
         return VR_DPDK_DDP_FAILED;
     }
 
-    ddp_fd = open(ddp_fpath, O_RDONLY);
+    ddp_fd = open(ddp_fbkp, O_RDONLY);
     if(ddp_fd == -1) {
         RTE_LOG(ERR, VROUTER, "%s: Failed to open %s file\n", __func__,
-                    ddp_fpath);
+                    ddp_fbkp);
         return VR_DPDK_DDP_FAILED;
     }
 
     if ((fstat(ddp_fd, &st_buf) != 0) || (!S_ISREG(st_buf.st_mode))) {
         close(ddp_fd);
         RTE_LOG(ERR, VROUTER, "%s: File operation failed for %s\n",
-                    __func__, ddp_fpath);
+                    __func__, ddp_fbkp);
         return VR_DPDK_DDP_FAILED;
     }
 
     if(st_buf.st_size < 0) {
         close(ddp_fd);
         RTE_LOG(ERR, VROUTER, "%s: File operation failed for %s while reading"
-                    "size %ld \n", __func__, ddp_fpath, st_buf.st_size);
+                    "size %ld \n", __func__, ddp_fbkp, st_buf.st_size);
         return VR_DPDK_DDP_FAILED;
     }
 
@@ -180,7 +178,7 @@ vr_dpdk_ddp_del(uint16_t port_id)
         close(ddp_fd);
         vr_free(buf, VR_INFO_REQ_OBJECT);
         RTE_LOG(ERR, VROUTER, "%s: File read operation failed for %s\n",
-                    __func__, ddp_fpath);
+                    __func__, ddp_fbkp);
         return VR_DPDK_DDP_FAILED;
     }
 
