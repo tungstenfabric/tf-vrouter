@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "80147165_f19fa105",
+        "filename": "dpdk/vr_dpdk_ddp.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-10-13T12:24:19Z",
+      "side": 1,
+      "message": "Can you move these outside of the function and to the top of the file as a const string? So that we don\u0027t have to change it in multiple places?",
+      "range": {
+        "startLine": 46,
+        "startChar": 4,
+        "endLine": 48,
+        "endChar": 0
+      },
+      "revId": "7540462fbe07a435fb344e5ad6183d8e1cdf1007",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
