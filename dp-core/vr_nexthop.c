@@ -1939,7 +1939,7 @@ nh_composite_fabric(struct vr_packet *pkt, struct vr_nexthop *nh,
                 vr_fmd_set_label(fmd, label, VR_LABEL_TYPE_UNKNOWN);
                 fmd->fmd_dvrf = dir_nh->nh_dev->vif_vrf;
                 if (nh_vxlan_tunnel_helper(nh->nh_router, &new_pkt,
-                                        fmd, sip, sip) == false) {
+                                        fmd, sip, dip) == false) {
                     PKT_LOG(VP_DROP_PUSH, pkt, 0, VR_NEXTHOP_C, __LINE__);
                     vr_pfree(new_pkt, VP_DROP_PUSH);
                     break;
