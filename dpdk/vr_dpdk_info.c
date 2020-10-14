@@ -984,27 +984,17 @@ err:
 int
 dpdk_info_get_lcore(VR_INFO_ARGS)
 {
-
-    struct vrouter *router = vrouter_get(0);
-    struct vr_interface *vif;
     struct vr_dpdk_queue *rx_queue;
     struct vr_dpdk_lcore *lcore;
     unsigned char *name;
-    int i, intf = 0;
+    int i;
 
     VR_INFO_BUF_INIT();
 
-    VI_PRINTF("No. of forwarding lcores: %d \n", vr_dpdk.nb_fwd_lcores);
-    for (i = 0; i < router->vr_max_interfaces; i++) {
-        vif = router->vr_interfaces[i];
-        if (vif) {
-            intf++;
-        }
-    }
-    VI_PRINTF("No. of interfaces: %d \n", intf);
+    VI_PRINTF("No. of forwarding lcores: %d \n\n", vr_dpdk.nb_fwd_lcores);
 
     for (i = 0; i < vr_dpdk.nb_fwd_lcores; i++) {
-        VI_PRINTF("Lcore %d: \n", i);
+        VI_PRINTF("Lcore %d: \n",  (VR_DPDK_FWD_LCORE_ID + i));
         lcore = vr_dpdk.lcores[VR_DPDK_FWD_LCORE_ID + i];
         SLIST_FOREACH(rx_queue, &lcore->lcore_rx_head, q_next) {
             name = rx_queue->q_vif->vif_name;
