@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ed8f382f_3009d87d",
+        "filename": "utils/vif.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-10-14T10:19:21Z",
+      "side": 1,
+      "message": "This is already defined in vr_dpdk.h. Can\u0027t you the same instead of defining it again here?",
+      "revId": "8b16b6880e64d777addb8c759923f1842ecc0052",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
