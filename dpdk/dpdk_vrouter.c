@@ -727,6 +727,8 @@ dpdk_argv_update(void)
 		vr_dpdk_ctrl_thread_mask);
     RTE_LOG(INFO, VROUTER, "Unconditional Close Flow on TCP RST:       %" PRIu32 "\n",
 		vr_uncond_close_flow_on_tcp_rst);
+    RTE_LOG(INFO, VROUTER, "S/W Load-balancing:          %s\n",
+        vr_no_load_balance ? "Disable" : "Enable");
     RTE_LOG(INFO, VROUTER, "EAL arguments:\n");
     for (i = 1; i < RTE_DIM(dpdk_argv) - 1; i += 2) {
         if (dpdk_argv[i] == NULL)
@@ -1115,7 +1117,7 @@ Usage(void)
         "    --"VR_DPDK_RX_RING_SZ_OPT" NUM Configure vr_dpdk_rx_ring_sz value\n"
         "    --"VR_DPDK_TX_RING_SZ_OPT" NUM Configure vr_dpd_tx_ring_sz value\n"
         "    --"VR_DPDK_YIELD_OPT" NUM      Configurable parameter to disable yield\n"
-        "    --"VR_NO_LOAD_BALANCE_OPT" NUM Parameter to disable s/w load-balancing\n"
+        "    --"VR_NO_LOAD_BALANCE_OPT"    Disable s/w load-balancing\n"
         "    --"VR_DPDK_DDP_OPT"        Enable DDP feature\n"
         "    --"VR_SERVICE_CORE_MASK_OPT" NUM LIST OR HEXADECIMAL BITMASK "
 	                                 "Configurable parameter for service "
@@ -1403,6 +1405,34 @@ static cookie_io_functions_t timestamp_log_func = {
     .write = timestamp_log_write,
 };
 
+/* API to check CLIs with no_argument flag.
+ * Currently CLI with no_argument flag accepts argument,
+ * so if user passes an argument it will dispaly an error message
+ */
+static bool
+parse_no_arg_cli(int opt_flow_index, int optind, char *argv[])
+{
+    if (opt_flow_index == NO_DAEMON_OPT_INDEX ||
+        opt_flow_index == NO_HUGE_OPT_INDEX ||
+        opt_flow_index == NO_GRO_OPT_INDEX ||
+        opt_flow_index == NO_GSO_OPT_INDEX ||
+        opt_flow_index == NO_RX_MRG_BUF_INDEX ||
+        opt_flow_index == HELP_OPT_INDEX ||
+        opt_flow_index == OFFLOADS_OPT_INDEX ||
+        opt_flow_index == MEMORY_ALLOC_CHECKS_OPT_INDEX ||
+        opt_flow_index == VERSION_OPT_INDEX ||
+        opt_flow_index == VTEST_VLAN_OPT_INDEX ||
+        opt_flow_index == VR_DPDK_DDP_OPT_INDEX ||
+        opt_flow_index == VR_NO_LOAD_BALANCE_OPT_INDEX) {
+            if(argv[optind] && argv[optind][0] != '-') {
+                printf("No arguments required \n");
+                Usage();
+                return false;
+            }
+        }
+    return true;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1435,7 +1465,9 @@ main(int argc, char *argv[])
             >= 0) {
         switch (opt) {
         case 0:
-            parse_long_opts(option_index, optarg);
+            if (parse_no_arg_cli(option_index, optind, argv)) {
+                parse_long_opts(option_index, optarg);
+            }
             break;
 
         case '?':
