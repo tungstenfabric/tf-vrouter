@@ -219,7 +219,6 @@ parse_long_opts(int opt_index, char *opt_arg)
         } else {
             Usage();
         }
-        vr_info_inbuf = opt_arg;
         break;
 
     case SOCK_DIR_OPT_INDEX:
@@ -279,7 +278,7 @@ main(int argc, char *argv[])
 
     parse_ini_file();
 
-    while (((opt = getopt_long(argc, argv, "-:hvbl:m:sn:caxd::",
+    while (((opt = getopt_long(argc, argv, "-:hvbl:m:sn:d:cax::",
                         long_options, &option_index)) >= 0)) {
         switch (opt) {
         case 'v':
