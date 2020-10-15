@@ -666,7 +666,7 @@ static int
 mtrie_dump_entry(struct vr_message_dumper *dumper, struct ip_bucket_entry *orig_ent,
         int8_t *prefix, int level)
 {
-    int i = 0, j, ret;
+    int i = 0, j, ret, bi_pfx_len;
     uint32_t rt_prefix[4];
     struct ip_bucket *bkt;
     struct ip_bucket_entry *ent;
@@ -700,12 +700,17 @@ mtrie_dump_entry(struct vr_message_dumper *dumper, struct ip_bucket_entry *orig_
     } else if (orig_ent->entry_nh_p) {
         if (!dumper->dump_been_to_marker) {
             dumper->dump_been_to_marker = 1;
-            return 0;
+            if(!(((level == 0) || (level == 1)) && (i == 0)))
+                return 0;
         }
         memset(rt_prefix, 0, sizeof(rt_prefix));
         dump_resp.rtr_prefix = (uint8_t*)&rt_prefix;
+        if((level == 0) && (i == 0))
+            bi_pfx_len = 0;
+        else
+            bi_pfx_len = ip_bkt_info[level - 1].bi_pfx_len;
         mtrie_dumper_make_response(dumper, &dump_resp, orig_ent, prefix,
-                ip_bkt_info[level - 1].bi_pfx_len);
+                bi_pfx_len);
 
         ret = mtrie_dumper_route_encode(dumper, &dump_resp);
         if (dump_resp.rtr_mac_size) {
