@@ -16,6 +16,24 @@
       "revId": "8b16b6880e64d777addb8c759923f1842ecc0052",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "820f586d_c0e65dff",
+        "filename": "utils/vif.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 998
+      },
+      "writtenOn": "2020-10-15T06:28:07Z",
+      "side": 1,
+      "message": "Hi Anand,\n\ni am getting memcpy related build issue if i try to include vr_dpdk.h.\nbuild/debug/vrouter/dpdk/x86_64-native-linuxapp-gcc/include/rte_memcpy.h:793:2:error: incompatible type for argument 2 of ‘_mm_storeu_si128’\n  MOVEUNALIGNED_LEFT47(dst, src, n, srcofs);\n\nbecause of that added a macro here",
+      "parentUuid": "ed8f382f_3009d87d",
+      "revId": "8b16b6880e64d777addb8c759923f1842ecc0052",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
     }
   ]
 }
