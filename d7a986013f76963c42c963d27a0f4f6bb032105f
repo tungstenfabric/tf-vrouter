@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7cd21dfd_6658264f",
+        "filename": "dp-core/vr_ip_mtrie.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 704,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-10-15T11:31:06Z",
+      "side": 1,
+      "message": "Can you add some comments on why we are doing this?",
+      "range": {
+        "startLine": 703,
+        "startChar": 0,
+        "endLine": 704,
+        "endChar": 25
+      },
+      "revId": "d7a986013f76963c42c963d27a0f4f6bb032105f",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
