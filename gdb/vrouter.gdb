@@ -13,3 +13,4 @@ source ~/vrouter_gdb/vr_rtable.gdb
 source ~/vrouter_gdb/vr_bridge.gdb
 source ~/vrouter_gdb/vr_dpdk.gdb
 source ~/vrouter_gdb/vr_fragment.gdb
+source ~/vrouter_gdb/vr_virtio_rings.gdb
