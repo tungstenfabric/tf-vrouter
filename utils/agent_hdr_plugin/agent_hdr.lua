@@ -1,3 +1,5 @@
+-- Dissects the agent header for pkts captured on pkt0 interface (DPDK and kernel mode)
+
 agenthdr = DissectorTable.new("Agentheader")
 agent_hdr_proto = Proto("ag_hdr", "Agent Header")
 

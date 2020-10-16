@@ -1,4 +1,4 @@
---package.prepend_path("/Applications/Wireshark.app/Contents/PlugIns/wireshark/wireshark_plugin")
+--package.prepend_path("/Applications/Wireshark.app/Contents/PlugIns/wireshark/sandump_wireshark_plugin")
 require("vr_nexthop");
 require("vr_response");
 require("vr_interface");

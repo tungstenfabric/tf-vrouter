@@ -1,11 +1,11 @@
 #!/bin/bash
 #Does a comparison with vr.sandesh file and checks if-
-#1.Respective Sandesh object's lua script is present in wireshark_plugin dir
+#1.Respective Sandesh object's lua script is present in sandump_wireshark_plugin dir
 #2.Respective Sandesh object is defined in global_table in common.lua by the user
 #3.Fields which are not mentioned in existing lua scripts of Sandesh objs
 #This script can be run using "scons --add-opts=checkWiresharkPlugins vrouter" from top level dir in sandbox
 
-PLUGIN_PATH="./vrouter/utils/sandump/wireshark_plugin/"
+PLUGIN_PATH="./vrouter/utils/sandump/sandump_wireshark_plugin/"
 VR_SANDESH_PATH="./vrouter/sandesh/vr.sandesh"
 
 was_errors=0

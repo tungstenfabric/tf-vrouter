@@ -1,4 +1,4 @@
---package.prepend_path("/Applications/Wireshark.app/Contents/PlugIns/wireshark/wireshark_plugin")
+--package.prepend_path("/Applications/Wireshark.app/Contents/PlugIns/wireshark/sandump_wireshark_plugin")
 require("common");
 
 -- returns whether to hide a branch or not
