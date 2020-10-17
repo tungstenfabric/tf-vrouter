@@ -829,8 +829,10 @@ bool __vr_adjust_tcp_mss(struct vr_tcp *tcph, uint16_t len_overhead, uint16_t et
 #define VR_ICMP6_TYPE_ECHO_REQ     128
 #define VR_ICMP6_TYPE_ECHO_REPLY   129
 #define VR_ICMP6_TYPE_ROUTER_SOL   133
+#define VR_ICMP6_TYPE_ROUTER_AD    134
 #define VR_ICMP6_TYPE_NEIGH_SOL    135
 #define VR_ICMP6_TYPE_NEIGH_AD     136
+#define VR_ICMP6_TYPE_REDIRECT     137
 
 #define VR_ICMP6_NEIGH_AD_FLAG_ROUTER   0x8000
 #define VR_ICMP6_NEIGH_AD_FLAG_SOLCITED 0x4000
@@ -852,6 +854,12 @@ struct vr_icmp {
     uint16_t icmp_eseq;
     uint8_t  icmp_data[0]; /* compatibility with ICMPv6 */
 } __attribute__packed__close__;
+
+static inline bool
+vr_unsolicited_nda(struct vr_icmp *icmp)
+{
+    return !(ntohs(icmp->icmp_eid) & VR_ICMP6_NEIGH_AD_FLAG_SOLCITED);
+}
 
 static inline bool
 vr_icmp_echo(struct vr_icmp *icmph)

@@ -735,6 +735,7 @@ vr_fabric_input(struct vr_interface *vif, struct vr_packet *pkt,
     int handled = 0;
     unsigned short pull_len;
     unsigned char *data, eth_dmac[VR_ETHER_ALEN];
+    struct vr_ip6 *ip6;
 
     if (vr_offload_prepare)
         vr_offload_prepare(pkt, fmd);
@@ -746,8 +747,8 @@ vr_fabric_input(struct vr_interface *vif, struct vr_packet *pkt,
         return 0;
     }
 
-    if (pkt->vp_type == VP_TYPE_IP6)
-        return vif_xconnect(vif, pkt, fmd);
+    // if ((pkt->vp_type == VP_TYPE_IP6) && !vr_is_ipv6_underlay_enabled())
+        // return vif_xconnect(vif, pkt, fmd);
 
     /*
      * On Fabric only ARP packets are specially handled. Rest all BUM
@@ -762,11 +763,18 @@ vr_fabric_input(struct vr_interface *vif, struct vr_packet *pkt,
     pull_len = pkt_get_network_header_off(pkt) - pkt_head_space(pkt);
     pkt_pull(pkt, pull_len);
 
-    if (pkt->vp_type == VP_TYPE_IP || pkt->vp_type == VP_TYPE_IP6) {
+    if (pkt->vp_type == VP_TYPE_IP) {
         handled = vr_l3_input(pkt, fmd);
     } else if (pkt->vp_type == VP_TYPE_ARP) {
         VR_MAC_COPY(eth_dmac, data);
         handled = vr_arp_input(pkt, fmd, eth_dmac);
+    } else if (pkt->vp_type == VP_TYPE_IP6) {
+        ip6 = (struct vr_ip6 *) pkt_data(pkt);
+        if (ip6->ip6_nxt == VR_IP_PROTO_ICMP6) {
+            handled = vr_ipv6_nd_input(pkt, fmd);
+        } else {
+            handled = vr_l3_input(pkt, fmd);
+        }
     }
 
     if (!handled) {

@@ -695,6 +695,7 @@ vhost_mac_request(struct vr_interface *vif, struct vr_packet *pkt,
         struct vr_forwarding_md *fmd, unsigned char *dmac)
 {
     struct vr_arp *sarp;
+    struct vr_icmp *icmp6;
     mac_response_t mr = MR_XCONNECT;
 
     /*
@@ -723,10 +724,24 @@ vhost_mac_request(struct vr_interface *vif, struct vr_packet *pkt,
 
             mr = MR_XCONNECT;
         }
-    } else {
+    } else if (pkt->vp_type == VP_TYPE_IP6) {
+        icmp6 = (struct vr_icmp *) pkt_data(pkt);
+        
+        if (icmp6->icmp_type >= VR_ICMP6_TYPE_ROUTER_SOL &&
+            icmp6->icmp_type <= VR_ICMP6_TYPE_REDIRECT) {
+            if (vr_unsolicited_nda(icmp6)) {
+                return MR_XCONNECT;
+            }
+
+            mr = vm_mac_request(vif, pkt, fmd, dmac);
+            if ((mr != MR_XCONNECT) && (mr != MR_PROXY)) {
+                mr = MR_XCONNECT;
+            }
+        }
+
         /* Handle V6 */
-        if (vif->vif_type == VIF_TYPE_GATEWAY)
-            mr = MR_DROP;
+        /*if (vif->vif_type == VIF_TYPE_GATEWAY)
+            mr = MR_DROP;*/
     }
 
     return mr;
@@ -1322,8 +1337,9 @@ static mac_response_t
 eth_mac_request(struct vr_interface *vif, struct vr_packet *pkt,
         struct vr_forwarding_md *fmd, unsigned char *dmac)
 {
-    bool underlay_arp = false;
+    bool underlay_arp = false, underlay_ipv6 = false;
     struct vr_arp *sarp;
+    struct vr_icmp *icmp6;
     mac_response_t mr;
 
     if (vif_mode_xconnect(vif))
@@ -1332,12 +1348,19 @@ eth_mac_request(struct vr_interface *vif, struct vr_packet *pkt,
     /*
      * If there is a label or if the vrf is different, it is meant for VM's
      */
+    if (pkt->vp_type == VP_TYPE_ARP)
+        sarp = (struct vr_arp *) pkt_data(pkt);
+    else if (pkt->vp_type == VP_TYPE_IP6)
+        icmp6 = (struct vr_icmp *) pkt_data(pkt);
 
-    sarp = (struct vr_arp *)pkt_data(pkt);
     if ((fmd->fmd_label == -1) && (fmd->fmd_dvrf == vif->vif_vrf)) {
         if (pkt->vp_type == VP_TYPE_ARP) {
             underlay_arp = true;
             if (vr_grat_arp(sarp))
+                return MR_TRAP_X;
+        } else if(pkt->vp_type == VP_TYPE_IP6) {
+            underlay_ipv6 = true;
+            if (vr_unsolicited_nda(icmp6))
                 return MR_TRAP_X;
         }
     }
@@ -1348,6 +1371,8 @@ eth_mac_request(struct vr_interface *vif, struct vr_packet *pkt,
                     " converting to Xconnect\n",
                     mr, sarp->arp_dpa, sarp->arp_spa);
 
+        mr = MR_XCONNECT;
+    } else if (underlay_ipv6 && (mr != MR_XCONNECT) && (mr != MR_PROXY)) {
         mr = MR_XCONNECT;
     }
 
@@ -2393,6 +2418,12 @@ vr_interface_add(vr_interface_req *req, bool need_response)
     ip6 = (uint64_t *)(vif->vif_ip6);
     *ip6 = req->vifr_ip6_u;
     *(ip6 + 1) = req->vifr_ip6_l;
+
+    /* Enable IPv6 underlay if vhost has an IPv6 address */
+    if (vif_is_vhost(vif) && ((*ip6 != 0) || ((*(ip6+1)) != 0))) {
+        vr_printf("Enabling IPv6 underlay in vRouter\n");
+        vr_set_ipv6_underlay_enabled();
+    }
 
     if (req->vifr_name) {
         strncpy(vif->vif_name, req->vifr_name, sizeof(vif->vif_name) - 1);
