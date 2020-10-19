@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "68dd03f8_6e07f6d9",
+        "filename": "dp-core/vr_datapath.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 758,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-10-19T09:26:42Z",
+      "side": 1,
+      "message": "We need to also xconnect non IPv6 ND but IPv6 Multicast pkts.\nYou can do this change once my other change is merged.",
+      "revId": "c02c394bab281e6a1823d2b828d36163d54ce514",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
