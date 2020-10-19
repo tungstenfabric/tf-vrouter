@@ -746,7 +746,7 @@ vr_fabric_input(struct vr_interface *vif, struct vr_packet *pkt,
         return 0;
     }
 
-    if (pkt->vp_type == VP_TYPE_IP6)
+    if ((pkt->vp_type == VP_TYPE_IP6) && !vr_is_ipv6_underlay_enabled())
         return vif_xconnect(vif, pkt, fmd);
 
     /*
