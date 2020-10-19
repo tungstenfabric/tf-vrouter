@@ -34,6 +34,24 @@
       "revId": "8b16b6880e64d777addb8c759923f1842ecc0052",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "accf6e1d_4cdb9d65",
+        "filename": "utils/vif.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-10-19T03:04:49Z",
+      "side": 1,
+      "message": "Hi Asim, we need to find a way of doing this without redefining the macro.",
+      "parentUuid": "820f586d_c0e65dff",
+      "revId": "8b16b6880e64d777addb8c759923f1842ecc0052",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
