@@ -496,3 +496,81 @@ class TestRTIPv4(unittest.TestCase):
             else:
                 self.assertEqual(nh1.idx(), temp_inet.get_rtr_nh_idx())
             del(temp_inet)
+
+    # Add default route(bucket expands automatically)
+    def test_rt_add_default_route(self):
+        vmi = VirtualVif(name="tap_5", ipv4_str="192.168.1.1",
+                         mac_str="de:ad:be:ef:00:02")
+
+        nh1 = EncapNextHop(encap_oif_id=vmi.idx(),
+                           encap="de ad be ef 00 02 de ad be ef 00 01 08 00")
+
+        # add default inet route
+        inet_rt1 = InetRoute(
+            vrf=9,
+            prefix="0.0.0.0",
+            prefix_len=0,
+            nh_idx=nh1.idx(),
+            rtr_label_flags=constants.VR_RT_LABEL_VALID_FLAG,
+            rtr_label=12)
+
+        ObjectBase.sync_all()
+
+        inet_query_obj = InetRoute(
+            vrf=9,
+            prefix="2.0.0.0",
+            prefix_len=8,
+            nh_idx=5)
+
+        # Query the objects back
+        self.assertEqual(nh1.idx(), inet_rt1.get_rtr_nh_idx())
+        self.assertEqual(nh1.idx(), inet_query_obj.get_rtr_nh_idx())
+
+    # Add default route followed by a sub route and delete the sub route
+    def test_rt_add_default_route_del_sub_route(self):
+        vmi = VirtualVif(name="tap_5", ipv4_str="192.168.1.1",
+                         mac_str="de:ad:be:ef:00:02")
+
+        nh1 = EncapNextHop(encap_oif_id=vmi.idx(),
+                           encap="de ad be ef 00 02 de ad be ef 00 01 08 00")
+
+        nh2 = EncapNextHop(encap_oif_id=vmi.idx(),
+                           encap="de ad be ef 00 02 de ad be ef 00 01 08 01")
+
+        # add inet routes
+        inet_rt1 = InetRoute(
+            vrf=10,
+            prefix="0.0.0.0",
+            prefix_len=0,
+            nh_idx=nh1.idx(),
+            rtr_label_flags=constants.VR_RT_LABEL_VALID_FLAG,
+            rtr_label=12)
+
+        inet_rt2 = InetRoute(
+            vrf=10,
+            prefix="10.0.0.0",
+            prefix_len=8,
+            nh_idx=nh2.idx(),
+            rtr_label_flags=constants.VR_RT_LABEL_VALID_FLAG,
+            rtr_label=13)
+
+        ObjectBase.sync_all()
+
+        inet_query_obj = InetRoute(
+            vrf=10,
+            prefix="10.0.0.0",
+            prefix_len=8,
+            nh_idx=6)
+
+        # Query the objects back
+        self.assertEqual(nh1.idx(), inet_rt1.get_rtr_nh_idx())
+        self.assertEqual(nh2.idx(), inet_rt2.get_rtr_nh_idx())
+
+        # delete sub route
+        inet_rt2.rtr_nh_id = nh1.idx()
+        inet_rt2.rtr_replace_plen = 0
+        inet_rt2.rtr_label = inet_rt1.rtr_label
+        inet_rt2.delete()
+        self.assertNotIn(inet_rt2.__obj_id__, ObjectBase.__obj_dict__)
+        self.assertEqual(nh1.idx(), inet_rt1.get_rtr_nh_idx())
+        self.assertEqual(12, int(inet_rt1.get('rtr_label')))
