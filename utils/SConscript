@@ -112,7 +112,7 @@ env.Alias('install', env.Install(env['INSTALL_BIN'], binaries + scripts))
 
 if 'install' in COMMAND_LINE_TARGETS:
     install_root = GetOption('install_root')
-    env.Alias('install', env.Install(install_root + '/usr/local/lib64/wireshark/plugins/', 'agent_hdr/agent_hdr.lua'))
+    env.Alias('install', env.Install(install_root + '/usr/local/lib64/wireshark/plugins/', 'agent_hdr_plugin/agent_hdr.lua'))
 
 # Local Variables:
 # mode: python
