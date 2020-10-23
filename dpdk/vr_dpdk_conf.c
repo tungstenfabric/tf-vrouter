@@ -57,3 +57,19 @@ dpdk_conf_del_ddp(VR_INFO_ARGS)
     }
     return 0;
 }
+
+int
+dpdk_conf_min_log(VR_INFO_ARGS)
+{
+    VR_INFO_BUF_INIT();
+
+    if (strcmp(msg_req->inbuf, "1") == 0) {
+        vr_pkt_droplog_min_sysctl_en = 1;
+    } else {
+        vr_pkt_droplog_min_sysctl_en = 0;
+    }
+
+    VI_PRINTF("DPDK: Min log %s \n\n",
+            vr_pkt_droplog_min_sysctl_en ? "Enabled":"Disabled");
+    return 0;
+}

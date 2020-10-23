@@ -27,6 +27,9 @@ unsigned int vr_pkt_droplog_sysctl_en = 1;
  * It will log only timestamp, drop reason, file & line no */
 unsigned int vr_pkt_droplog_min_sysctl_en = 1;
 
+/* To set a specific drop type */
+unsigned int vr_pkt_droplog_type_set = 255;
+
 /* Function to return buffer size and its used by sandesh for memory allocation
  * */
 unsigned int vr_pkt_drop_log_req_get_size(void *object)

@@ -1539,6 +1539,14 @@ static inline void vr_pkt_drop_log_func(unsigned short drop_reason, struct vr_pa
     int buf_idx = vr_pkt_drop->vr_pkt_drop_log_buffer_index[cpu];
     vr_pkt_drop_log_t **vr_pkt_drop_log_buffer = vr_pkt_drop->vr_pkt_drop_log;
 
+    /* log specific drop type.
+     * vr_pkt_droplog_type_set value between 0 to 52.
+     */
+    if (vr_pkt_droplog_type_set !=255 &&
+        vr_pkt_droplog_type_set != drop_reason) {
+        return;
+    }
+
     memset(vr_pkt_drop_log_buffer[cpu] + buf_idx, 0, sizeof(vr_pkt_drop_log_t));
 
     /* Check Packet drop log enabled at load time*/

@@ -303,6 +303,18 @@ extern "C" {
     X(VP_DROP_CLONE_FAIL) \
     X(VP_DROP_MAX)
 
+#define DROP_VP_TYPE_MAP(X) \
+    X(INVALID) \
+    X(VP_TYPE_ARP) \
+    X(VP_TYPE_IP) \
+    X(VP_TYPE_IP6) \
+    X(VP_TYPE_IPOIP) \
+    X(VP_TYPE_IP6OIP) \
+    X(VP_TYPE_AGENT) \
+    X(VP_TYPE_PBB) \
+    X(VP_TYPE_UNKNOWN) \
+    X(VP_TYPE_MAX)
+
 #define enum_t(X) X,
 #define string(X) #X,
 
@@ -329,6 +341,7 @@ extern unsigned int vr_pkt_droplog_bufsz;
 extern unsigned int vr_pkt_droplog_buf_en;
 extern unsigned int vr_pkt_droplog_sysctl_en;
 extern unsigned int vr_pkt_droplog_min_sysctl_en;
+extern unsigned int vr_pkt_droplog_type_set;
 unsigned int vr_pkt_drop_log_req_get_size(void *);
 struct vr_drop_loc
 {

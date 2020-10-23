@@ -186,6 +186,30 @@ exit_get:
     return;
 }
 
+static void
+vr_pkt_drop_log_type_set(vr_drop_stats_req *req)
+{
+    int ret = 0;
+    vr_drop_stats_req *response = NULL;
+
+    response = vr_zalloc(sizeof(*response), VR_DROP_STATS_REQ_OBJECT);
+    if (!response && (ret = -ENOMEM))
+        goto exit_get;
+
+    /* drop reason starts from 0, subtracting 1 */
+    vr_pkt_droplog_type_set = req->vds_log_type - 1;
+
+    response->h_op = SANDESH_OP_ADD;
+
+exit_get:
+    vr_message_response(VR_DROP_STATS_OBJECT_ID, ret ? NULL : response, ret, false);
+
+    if (response != NULL)
+        vr_free(response, VR_DROP_STATS_REQ_OBJECT);
+
+    return;
+}
+
 void
 vr_drop_stats_req_process(void *s_req)
 {
@@ -198,6 +222,11 @@ vr_drop_stats_req_process(void *s_req)
         return;
     }
 
+    if (req->h_op == SANDESH_OP_ADD) {
+
+        vr_pkt_drop_log_type_set(req);
+        return;
+    }
     if ((req->h_op != SANDESH_OP_GET) && (ret = -EOPNOTSUPP))
         vr_send_response(ret);
 

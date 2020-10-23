@@ -29,8 +29,10 @@
 #include "vr_packet.h"
 
 static struct nl_client *cl;
-static int help_set, core_set, offload_set, log_set, clear_set, debug_set, sock_dir_set;
+static int help_set, core_set, offload_set, log_set, clear_set, debug_set, sock_dir_set, log_type_set, show_log_type;
 static unsigned int core = (unsigned)-1;
+static uint8_t pkt_drop_log_type  = 255;
+static uint8_t show_pkt_drop_type = 255;
 static unsigned int stats_index = 0;
 static int vr_get_pkt_drop_log(struct nl_client *cl,int core,int stats_index);
 
@@ -46,7 +48,7 @@ static void pkt_drop_log_req_process(void *s_req) {
         if(stats->vdl_pkt_droplog_en == 1)
         {
             /* Print the drop stats log*/
-            vr_print_pkt_drop_log(stats);
+            vr_print_pkt_drop_log(stats, show_pkt_drop_type);
 
             /* Since sandesh message doesn't support passing data more than 4KB,
              * So the message request sent in serial manner.
@@ -160,6 +162,10 @@ drop_stats_req_process(void *s_req)
     {
         printf("\nDropstats counters cleared successfully on all cores \n\n");
         return;
+    } else if (log_type_set)
+    {
+        printf("\nDropstats log type set successfully \n\n");
+        return;
     }
 
     if (core == (unsigned)-2)
@@ -230,11 +236,28 @@ vr_clear_drop_stats(struct nl_client *cl)
     return 0;
 }
 
+static int
+vr_set_pkt_drop_log_type(struct nl_client *cl, uint8_t pkt_log_type)
+{
+    int ret;
+    ret = vr_drop_type_set(cl, pkt_log_type);
+    if (ret < 0)
+        return ret;
+
+    ret = vr_recvmsg(cl, false);
+    if (ret <= 0)
+        return ret;
+
+    return 0;
+}
+
 enum opt_index {
     HELP_OPT_INDEX,
     CORE_OPT_INDEX,
     OFFL_OPT_INDEX,
     LOG_OPT_INDEX,
+    TYPE_OPT_INDEX,
+    SHOW_OPT_INDEX,
     CLEAR_OPT_INDEX,
     SOCK_DIR_OPT_INDEX,
     DEBUG_OPT_INDEX,
@@ -246,6 +269,8 @@ static struct option long_options[] = {
     [CORE_OPT_INDEX]    =   {"core",    required_argument,  &core_set,      1},
     [OFFL_OPT_INDEX]    =   {"offload", no_argument,        &offload_set,   1},
     [LOG_OPT_INDEX]     =   {"log",     required_argument,  &log_set,       1},
+    [TYPE_OPT_INDEX]     =  {"type",    required_argument,  &log_type_set,  1},
+    [SHOW_OPT_INDEX]     =  {"show",    required_argument,  &show_log_type, 1},
     [CLEAR_OPT_INDEX]   =   {"clear",   no_argument,        &clear_set,     1},
     [SOCK_DIR_OPT_INDEX]  = {"sock-dir", required_argument, &sock_dir_set,  1},
     [DEBUG_OPT_INDEX]   =   {"debug",   no_argument,        &debug_set,     1}, 
@@ -264,12 +289,68 @@ Usage()
         printf("--offload\t\t Show statistics for pkts offloaded on NIC\n");
         printf("\t\t\t (offload stats included if no flags given)\n");
     }
-    printf("--log <core number>\t Show Packet drops log for a specified core.. \
+    printf("--log <core number> [--show <drop_type>]\t Show Packet drops log for a specified core.. \
 		Core number starts from 1...n. If core number specified as zero, \
-		it will log for all cores \n");
+		it will log for all cores \
+    add drop type to show particular droponly\n");
+    printf("--type <drop log type|help>\t Log specific Packet drops type \n");
+    printf("--show <drop log type|help>\t Show specific Packet drops type \n");
     printf("--clear\t To clear stats counters on all cores\n");
     printf("--debug\t To Display Debug counters\n");
     exit(-EINVAL);
+}
+
+static void
+display_supported_drop_type()
+{
+    /* packet drop reasons */
+    printf("Discard                      1\t Mcast clone fail       28\n");
+    printf("Pull                         2\t No Memory              29\n");
+    printf("Invalid IF                   3\t Rewrite fail           30\n");
+    printf("Invalid ARP                  4\t MISC                   31\n");
+    printf("Trap no IF                   5\t Invalid packet         32\n");
+    printf("Nowhere to go                6\t Checksum error         33\n");
+    printf("Flow Queue limit exceeded    7\t No FMD                 34\n");
+    printf("Flow no memory               8\t Cloned Original        35\n");
+    printf("Flow invalid protocol        9\t Invalid VNID           36\n");
+    printf("Flow nat no rflow            10\t Fragments              37\n");
+    printf("Flow action drop             11\t Invalid source         38\n");
+    printf("Flow action invalid          12\t L2 no route            39\n");
+    printf("FLow Unusable                13\t Fragment queue fail    40\n");
+    printf("Flow table full              14\t Vlan FWD TX            41\n");
+    printf("Interface tx discard         15\t Vlan FWS Enq           42\n");
+    printf("Interface drop               16\t New flows              43\n");
+    printf("Duplicate                    17\t Flow evict             44\n");
+    printf("Push                         18\t Trap original          45\n");
+    printf("TTL Exceeded                 19\t Leaf to leaf           46\n");
+    printf("Invalid NH                   20\t BMAC ISID mismatch     47\n");
+    printf("Invalid label                21\t PKT Loop               48\n");
+    printf("Invalid protocol             22\t No crypt path          49\n");
+    printf("Interface RX discard         23\t Invalid HBS pkt        50\n");
+    printf("Invlaid mcast source         24\t No frag entry          51\n");
+    printf("Head alloc fail              25\t ICMP error             52\n");
+    printf("Pcow fail                    26\t Clone fail             53\n");
+    printf("Mcast df bit                 27\n");
+    exit(-EINVAL);
+}
+
+static int
+parse_log_type(char *opt_arg)
+{
+    uint8_t pkt_log_type;
+    if (!strcmp (opt_arg, "help")) {
+        display_supported_drop_type ();
+    } else {
+        pkt_log_type = (unsigned) strtol (opt_arg, NULL, 0);
+        if (errno) {
+            printf ("Error parsing log %s: %s (%d)\n", opt_arg,
+                    strerror (errno), errno);
+            Usage ();
+        } else if (pkt_log_type > 52) {
+            display_supported_drop_type ();
+        }
+    }
+    return pkt_log_type;
 }
 
 static void
@@ -294,13 +375,20 @@ parse_long_opts(int opt_index, char *opt_arg)
         core = -2;
         break;
     case LOG_OPT_INDEX:
-	core = (unsigned)strtol(opt_arg, NULL, 0);
-	if (errno) {
-		printf("Error parsing log %s: %s (%d)\n", opt_arg,
-			strerror(errno), errno);
-		Usage();
-	}
-	break;
+	    core = (unsigned)strtol(opt_arg, NULL, 0);
+	    if (errno) {
+		    printf("Error parsing log %s: %s (%d)\n", opt_arg,
+			    strerror(errno), errno);
+		    Usage();
+	    }
+	    break;
+    case TYPE_OPT_INDEX:
+        pkt_drop_log_type = parse_log_type(opt_arg);
+        break;
+    case SHOW_OPT_INDEX:
+        show_pkt_drop_type = parse_log_type(opt_arg);
+        show_log_type =1;
+        break;
     case CLEAR_OPT_INDEX:
     case DEBUG_OPT_INDEX:
         break;
@@ -325,7 +413,7 @@ main(int argc, char *argv[])
 
     parse_ini_file();
 
-    while (((opt = getopt_long(argc, argv, "h:c:o:l:s:",
+    while (((opt = getopt_long(argc, argv, "h:c:o:l:s:t",
                         long_options, &option_index)) >= 0)) {
         switch (opt) {
         case 'c':
@@ -341,6 +429,11 @@ main(int argc, char *argv[])
         case 'l':
             log_set = 1;
             parse_long_opts(LOG_OPT_INDEX, optarg);
+            break;
+
+        case 't':
+            log_type_set = 1;
+            parse_long_opts(TYPE_OPT_INDEX, optarg);
             break;
 
         case 's':
@@ -364,7 +457,11 @@ main(int argc, char *argv[])
     cl = vr_get_nl_client(VR_NETLINK_PROTO_DEFAULT);
     if (!cl)
         return -1;
-    
+
+    if ((option_index == SHOW_OPT_INDEX) && (!log_set)) {
+        Usage();
+    }
+
     if ((option_index == LOG_OPT_INDEX) || (log_set == 1))
     {
         log_core = atoi(argv[2]);
@@ -373,6 +470,12 @@ main(int argc, char *argv[])
         pkt_drop_log_nlutils_callbacks();
 
         vr_get_pkt_drop_log(cl,log_core,stats_index);
+        return 0;
+    }
+
+    if (option_index == TYPE_OPT_INDEX || (log_type_set == 1))
+    {
+        vr_set_pkt_drop_log_type(cl, pkt_drop_log_type);
         return 0;
     }
 

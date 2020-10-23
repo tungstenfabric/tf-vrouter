@@ -56,9 +56,13 @@ static struct nl_client *cl;
 static vr_info_msg_en msginfo;
 static int sock_dir_set;
 static bool dump_pending = false;
+/* For few  CLI, Inbuf has to send to vrouter for processing(i.e kind of fi    lter
+ */
+static uint8_t *vr_info_inbuf;
 
 enum opt_index {
     CONF_OPT_INDEX,
+    CONF_MIN_LOG_INDEX,
     HELP_OPT_INDEX,
     SOCK_DIR_OPT_INDEX,
     MAX_OPT_INDEX
@@ -66,6 +70,7 @@ enum opt_index {
 
 static struct option long_options[] = {
     [CONF_OPT_INDEX]         =   {"ddp",       required_argument,  NULL,        'd'},
+    [CONF_MIN_LOG_INDEX]     =   {"minlog",    required_argument,  NULL,        'm'},
     [HELP_OPT_INDEX]        =   {"help",       no_argument,        NULL,        'h'},
     [SOCK_DIR_OPT_INDEX]    =   {"sock-dir",   required_argument,  NULL,        's'},
     [MAX_OPT_INDEX]         =   { NULL,        0,                  NULL,        0},
@@ -75,6 +80,7 @@ static void
 Usage()
 {
     printf("Usage: dpdkconf [--ddp [add|delete]]\n");
+    printf("\t   [--minlog|m <1(enable)|2(disable)>]\n");
     printf("\t   [--sock-dir <sock dir>]\n");
     printf("\t   [--help]\n");
 
@@ -94,6 +100,16 @@ parse_long_opts(int option_index, char *opt_arg)
                 msginfo = CONF_DEL_DDP;
             } else {
                 Usage();
+            }
+            break;
+
+        case CONF_MIN_LOG_INDEX:
+            if (opt_arg && ((!strcmp (opt_arg, "1"))
+                    || (!strcmp (opt_arg, "0")))) {
+                msginfo = CONF_MIN_LOG;
+                vr_info_inbuf = opt_arg;
+            } else {
+                Usage ();
             }
             break;
 
@@ -135,7 +151,7 @@ vr_set_dpdkconf(struct nl_client *cl)
 {
     int ret;
 
-    ret = vr_send_ddp_req(cl, msginfo);
+    ret = vr_send_dpdk_conf_req(cl, msginfo, vr_info_inbuf);
     if (ret < 0)
         return ret;
 
@@ -158,11 +174,15 @@ main(int argc, char *argv[])
     parse_ini_file();
     platform = get_platform();
 
-    while ((opt = getopt_long(argc, argv, "hd:s:",
+    while ((opt = getopt_long(argc, argv, "hd:s:m:",
                     long_options, &option_index)) >= 0) {
         switch (opt) {
             case 'd':
                 parse_long_opts(CONF_OPT_INDEX, optarg);
+                break;
+
+            case 'm':
+                parse_long_opts(CONF_MIN_LOG_INDEX, optarg);
                 break;
 
             case 's':
@@ -178,6 +198,10 @@ main(int argc, char *argv[])
             default:
                 Usage();
         }
+    }
+
+    if (1 == argc) {
+        Usage();
     }
 
     sock_proto = VR_NETLINK_PROTO_DEFAULT;

@@ -501,6 +501,7 @@ buffer sandesh vr_drop_stats_req {
     55: i64             vds_no_frag_entry;
     56: i64             vds_icmp_error;
     57: i64             vds_clone_fail;
+    58: byte            vds_log_type;
 }
 
 buffer sandesh vr_qos_map_req {

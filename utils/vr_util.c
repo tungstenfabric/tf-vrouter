@@ -45,9 +45,12 @@
 #include "vr_mem.h"
 #include "ini_parser.h"
 
+void vr_print_pkt_drop_log_header(vr_pkt_drop_log_req *);
+
 /* Suppress NetLink error messages */
 bool vr_ignore_nl_errors = false;
 int genetlink_group_id = 0;
+static bool vr_header_include = 0;
 
 char *
 vr_extract_token(char *string, char token_separator)
@@ -491,123 +494,160 @@ vr_print_drop_stats(vr_drop_stats_req *stats, int core)
    if (stats->vds_pcpu_stats_failure_status)
        printf("Failed to maintain PerCPU stats for this interface\n\n");
 
-    printf("Invalid IF                    %" PRIu64 "\n",
+    if (stats->vds_invalid_if)
+        printf("Invalid IF                    %" PRIu64 "\n",
             stats->vds_invalid_if);
-    printf("Trap No IF                    %" PRIu64 "\n",
+    if (stats->vds_trap_no_if)
+        printf("Trap No IF                    %" PRIu64 "\n",
             stats->vds_trap_no_if);
-    printf("IF TX Discard                 %" PRIu64 "\n",
+    if (stats->vds_interface_tx_discard)
+        printf("IF TX Discard                 %" PRIu64 "\n",
             stats->vds_interface_tx_discard);
-    printf("IF Drop                       %" PRIu64 "\n",
+    if (stats->vds_interface_drop)
+        printf("IF Drop                       %" PRIu64 "\n",
             stats->vds_interface_drop);
-    printf("IF RX Discard                 %" PRIu64 "\n",
+    if (stats->vds_interface_rx_discard)
+        printf("IF RX Discard                 %" PRIu64 "\n",
             stats->vds_interface_rx_discard);
-    printf("\n");
-
-    printf("Flow Unusable                 %" PRIu64 "\n",
+    if (stats->vds_flow_unusable)
+        printf("Flow Unusable                 %" PRIu64 "\n",
             stats->vds_flow_unusable);
-    printf("Flow No Memory                %" PRIu64 "\n",
+    if (stats->vds_flow_no_memory)
+        printf("Flow No Memory                %" PRIu64 "\n",
             stats->vds_flow_no_memory);
-    printf("Flow Table Full               %" PRIu64 "\n",
+    if (stats->vds_flow_table_full)
+        printf("Flow Table Full               %" PRIu64 "\n",
             stats->vds_flow_table_full);
-    printf("Flow NAT no rflow             %" PRIu64 "\n",
+    if (stats->vds_flow_nat_no_rflow)
+        printf("Flow NAT no rflow             %" PRIu64 "\n",
             stats->vds_flow_nat_no_rflow);
-    printf("Flow Action Drop              %" PRIu64 "\n",
+    if (stats->vds_flow_action_drop)
+        printf("Flow Action Drop              %" PRIu64 "\n",
             stats->vds_flow_action_drop);
-    printf("Flow Action Invalid           %" PRIu64 "\n",
+    if (stats->vds_flow_action_invalid)
+        printf("Flow Action Invalid           %" PRIu64 "\n",
             stats->vds_flow_action_invalid);
-    printf("Flow Invalid Protocol         %" PRIu64 "\n",
+    if (stats->vds_flow_invalid_protocol)
+        printf("Flow Invalid Protocol         %" PRIu64 "\n",
             stats->vds_flow_invalid_protocol);
-    printf("Flow Queue Limit Exceeded     %" PRIu64 "\n",
+    if (stats->vds_flow_queue_limit_exceeded)
+        printf("Flow Queue Limit Exceeded     %" PRIu64 "\n",
             stats->vds_flow_queue_limit_exceeded);
-    printf("New Flow Drops                %" PRIu64 "\n",
+    if (stats->vds_drop_new_flow)
+        printf("New Flow Drops                %" PRIu64 "\n",
             stats->vds_drop_new_flow);
-    printf("Flow Unusable (Eviction)      %" PRIu64 "\n",
+    if (stats->vds_flow_evict)
+        printf("Flow Unusable (Eviction)      %" PRIu64 "\n",
             stats->vds_flow_evict);
-    printf("\n");
-
-    printf("Original Packet Trapped       %" PRIu64 "\n",
+    if (stats->vds_trap_original)
+        printf("Original Packet Trapped       %" PRIu64 "\n",
             stats->vds_trap_original);
-    printf("\n");
-
-    printf("Discards                      %" PRIu64 "\n",
+    if (stats->vds_discard)
+        printf("Discards                      %" PRIu64 "\n",
             stats->vds_discard);
-    printf("TTL Exceeded                  %" PRIu64 "\n",
+    if (stats->vds_ttl_exceeded)
+        printf("TTL Exceeded                  %" PRIu64 "\n",
             stats->vds_ttl_exceeded);
-    printf("Mcast Clone Fail              %" PRIu64 "\n",
+    if (stats->vds_mcast_clone_fail)
+        printf("Mcast Clone Fail              %" PRIu64 "\n",
             stats->vds_mcast_clone_fail);
-    printf("\n");
-
-    printf("Invalid NH                    %" PRIu64 "\n",
+    if (stats->vds_invalid_nh)
+        printf("Invalid NH                    %" PRIu64 "\n",
             stats->vds_invalid_nh);
-    printf("Invalid Label                 %" PRIu64 "\n",
+    if (stats->vds_invalid_label)
+        printf("Invalid Label                 %" PRIu64 "\n",
             stats->vds_invalid_label);
-    printf("Invalid Protocol              %" PRIu64 "\n",
+    if (stats->vds_invalid_protocol)
+        printf("Invalid Protocol              %" PRIu64 "\n",
             stats->vds_invalid_protocol);
-    printf("Etree Leaf to Leaf            %" PRIu64 "\n",
+    if (stats->vds_leaf_to_leaf)
+        printf("Etree Leaf to Leaf            %" PRIu64 "\n",
             stats->vds_leaf_to_leaf);
-    printf("Bmac/ISID Mismatch            %" PRIu64 "\n",
+    if (stats->vds_bmac_isid_mismatch)
+        printf("Bmac/ISID Mismatch            %" PRIu64 "\n",
             stats->vds_bmac_isid_mismatch);
-    printf("Rewrite Fail                  %" PRIu64 "\n",
+    if (stats->vds_rewrite_fail)
+        printf("Rewrite Fail                  %" PRIu64 "\n",
             stats->vds_rewrite_fail);
-    printf("Invalid Mcast Source          %" PRIu64 "\n",
+    if (stats->vds_invalid_mcast_source)
+        printf("Invalid Mcast Source          %" PRIu64 "\n",
             stats->vds_invalid_mcast_source);
-    printf("Packet Loop                   %" PRIu64 "\n",
+    if (stats->vds_pkt_loop)
+        printf("Packet Loop                   %" PRIu64 "\n",
             stats->vds_pkt_loop);
-    printf("\n");
-
-    printf("Push Fails                    %" PRIu64 "\n",
+    if (stats->vds_push)
+        printf("Push Fails                    %" PRIu64 "\n",
             stats->vds_push);
-    printf("Pull Fails                    %" PRIu64 "\n",
+    if (stats->vds_pull)
+        printf("Pull Fails                    %" PRIu64 "\n",
             stats->vds_pull);
-    printf("Duplicated                    %" PRIu64 "\n",
+    if (stats->vds_duplicated)
+        printf("Duplicated                    %" PRIu64 "\n",
             stats->vds_duplicated);
-    printf("Head Alloc Fails              %" PRIu64 "\n",
+    if (stats->vds_head_alloc_fail)
+        printf("Head Alloc Fails              %" PRIu64 "\n",
             stats->vds_head_alloc_fail);
-    printf("PCOW fails                    %" PRIu64 "\n",
+    if (stats->vds_pcow_fail)
+        printf("PCOW fails                    %" PRIu64 "\n",
             stats->vds_pcow_fail);
-    printf("Invalid Packets               %" PRIu64 "\n",
+    if (stats->vds_invalid_packet)
+        printf("Invalid Packets               %" PRIu64 "\n",
             stats->vds_invalid_packet);
-    printf("\n");
-
-    printf("Misc                          %" PRIu64 "\n",
+    if (stats->vds_misc)
+        printf("Misc                          %" PRIu64 "\n",
             stats->vds_misc);
-    printf("Nowhere to go                 %" PRIu64 "\n",
+    if (stats->vds_nowhere_to_go)
+        printf("Nowhere to go                 %" PRIu64 "\n",
             stats->vds_nowhere_to_go);
-    printf("Checksum errors               %" PRIu64 "\n",
+    if (stats->vds_cksum_err)
+        printf("Checksum errors               %" PRIu64 "\n",
             stats->vds_cksum_err);
-    printf("No Fmd                        %" PRIu64 "\n",
+    if (stats->vds_no_fmd)
+        printf("No Fmd                        %" PRIu64 "\n",
             stats->vds_no_fmd);
-    printf("Invalid VNID                  %" PRIu64 "\n",
+    if (stats->vds_invalid_vnid)
+        printf("Invalid VNID                  %" PRIu64 "\n",
             stats->vds_invalid_vnid);
-    printf("Fragment errors               %" PRIu64 "\n",
-            stats->vds_frag_err);
-    printf("Invalid Source                %" PRIu64 "\n",
+    if (stats->vds_frag_err)
+        printf("Fragment errors               %" PRIu64 "\n",
+             stats->vds_frag_err);
+    if (stats->vds_invalid_source)
+        printf("Invalid Source                %" PRIu64 "\n",
             stats->vds_invalid_source);
-    printf("Jumbo Mcast Pkt with DF Bit   %" PRIu64 "\n",
+    if (stats->vds_mcast_df_bit)
+        printf("Jumbo Mcast Pkt with DF Bit   %" PRIu64 "\n",
             stats->vds_mcast_df_bit);
-    printf("No L2 Route                   %" PRIu64 "\n",
+    if (stats->vds_l2_no_route)
+        printf("No L2 Route                   %" PRIu64 "\n",
             stats->vds_l2_no_route);
-
-    printf("Memory Failures               %" PRIu64 "\n",
+    if (stats->vds_no_memory)
+        printf("Memory Failures               %" PRIu64 "\n",
             stats->vds_no_memory);
-    printf("Fragment Queueing Failures    %" PRIu64 "\n",
+    if (stats->vds_fragment_queue_fail)
+        printf("Fragment Queueing Failures    %" PRIu64 "\n",
             stats->vds_fragment_queue_fail);
-    printf("No Encrypt Path Failures      %" PRIu64 "\n",
+    if (stats->vds_no_crypt_path)
+        printf("No Encrypt Path Failures      %" PRIu64 "\n",
             stats->vds_no_crypt_path);
-    printf("Invalid HBS received packet   %" PRIu64 "\n",
+    if (stats->vds_invalid_hbs_pkt)
+        printf("Invalid HBS received packet   %" PRIu64 "\n",
             stats->vds_invalid_hbs_pkt);
-    printf("No Fragment Entries           %" PRIu64 "\n",
+    if (stats->vds_no_frag_entry)
+        printf("No Fragment Entries           %" PRIu64 "\n",
             stats->vds_no_frag_entry);
-    printf("ICMP errors                   %" PRIu64 "\n",
+    if (stats->vds_icmp_error)
+        printf("ICMP errors                   %" PRIu64 "\n",
             stats->vds_icmp_error);
-    printf("Clone Failures                %" PRIu64 "\n",
+    if (stats->vds_clone_fail)
+        printf("Clone Failures                %" PRIu64 "\n",
             stats->vds_clone_fail);
-    printf("\n");
     if (platform == DPDK_PLATFORM) {
-        printf("VLAN fwd intf failed TX       %" PRIu64 "\n",
+        if (stats->vds_vlan_fwd_tx)
+            printf("VLAN fwd intf failed TX       %" PRIu64 "\n",
                 stats->vds_vlan_fwd_tx);
-        printf("VLAN fwd intf failed enq      %" PRIu64 "\n",
-                stats->vds_vlan_fwd_enq);
+        if (stats->vds_vlan_fwd_enq)
+            printf("VLAN fwd intf failed enq      %" PRIu64 "\n",
+                 stats->vds_vlan_fwd_enq);
     }
     return;
 }
@@ -619,7 +659,8 @@ vr_print_drop_dbg_stats(vr_drop_stats_req *stats, int core)
             stats->vds_cloned_original);
     return;
 }
-void vr_print_pkt_drop_log_data(vr_pkt_drop_log_req *pkt_log, int i)
+void vr_print_pkt_drop_log_data(vr_pkt_drop_log_req *pkt_log, int i,
+                                uint8_t show_pkt_drop_type)
 {
     int j = 0;
     vr_pkt_drop_log_t *pkt_log_utils =
@@ -637,12 +678,30 @@ void vr_print_pkt_drop_log_data(vr_pkt_drop_log_req *pkt_log, int i)
         DROP_RSN_MAP(string)
     };
 
+    /* String mapping for vp type reasons */
+    char vr_pkt_vp_type_rsn[][50] = {
+        DROP_VP_TYPE_MAP(string)
+    };
+
+    if (!pkt_log_utils[i].vp_type)
+        return;
+
+    if ((show_pkt_drop_type != 255) &&
+        (show_pkt_drop_type != pkt_log_utils[i].drop_reason))
+        return;
+
+    if((pkt_log->vdl_log_idx+i < VR_PKT_DROP_LOG_MAX) &&
+        (!vr_header_include)) {
+        vr_print_pkt_drop_log_header(pkt_log);
+        vr_header_include = 1;
+    }
+
     ptr_time = localtime(&(pkt_log_utils[i].timestamp));
 
     printf("sl no: %d  ", pkt_log->vdl_log_idx+i);
     printf("Epoch Time: %ld ", pkt_log_utils[i].timestamp);
     printf("Local Time: %s ", asctime(ptr_time));
-    printf("Packet Type: %d  ", pkt_log_utils[i].vp_type);
+    printf("Packet Type: %s  ", vr_pkt_vp_type_rsn[pkt_log_utils[i].vp_type]);
     if(pkt_log_utils[i].drop_reason)
         printf("Drop reason: %s  ", vr_pkt_droplog_rsn[pkt_log_utils[i].drop_reason]);
     else
@@ -698,10 +757,9 @@ void vr_print_pkt_drop_log_header(vr_pkt_drop_log_req *pkt_log)
         printf("Pkt Drop Log for Core %d\n\n", pkt_log->vdl_core);
 }
 void
-vr_print_pkt_drop_log(vr_pkt_drop_log_req *pkt_log)
+vr_print_pkt_drop_log(vr_pkt_drop_log_req *pkt_log, uint8_t show_pkt_drop_type)
 {
     int i = 0, log_buffer_iter = 0;
-    static bool vr_header_include = 0;
 
     /* When configured pkt buffer size is than MAX_ALLOWED_BUFFER_SIZE */
     if(pkt_log->vdl_pkt_droplog_max_bufsz - pkt_log->vdl_log_idx  <
@@ -712,16 +770,16 @@ vr_print_pkt_drop_log(vr_pkt_drop_log_req *pkt_log)
     else
         log_buffer_iter = VR_PKT_DROPLOG_MAX_ALLOW_BUFSZ;
 
-    if(pkt_log->vdl_log_idx == 0)
-        vr_header_include = 0;
-
-    if(!vr_header_include)
-    {
-        vr_print_pkt_drop_log_header(pkt_log);
-        vr_header_include = 1;
-    }
     for(i = 0; i < log_buffer_iter; i++)
-        vr_print_pkt_drop_log_data(pkt_log, i);
+        vr_print_pkt_drop_log_data(pkt_log, i, show_pkt_drop_type);
+
+    /* On Every VR_PKT_DROP_LOG_MAX count time need to check this
+     * flag to print PKT DROP header
+     */
+    if((pkt_log->vdl_log_idx + log_buffer_iter == VR_PKT_DROP_LOG_MAX) &&
+        (vr_header_include)) {
+        vr_header_include = 0;
+    }
 
     return;
 }
@@ -874,6 +932,18 @@ vr_drop_stats_reset(struct nl_client *cl)
 
     memset(&req, 0, sizeof(req));
     req.h_op = SANDESH_OP_RESET;
+
+    return vr_sendmsg(cl, &req, "vr_drop_stats_req");
+}
+
+int
+vr_drop_type_set(struct nl_client *cl, uint8_t pkt_drop_log_type)
+{
+    vr_drop_stats_req req;
+
+    memset(&req, 0, sizeof(req));
+    req.h_op         = SANDESH_OP_ADD;
+    req.vds_log_type = pkt_drop_log_type;
 
     return vr_sendmsg(cl, &req, "vr_drop_stats_req");
 }
@@ -2520,7 +2590,8 @@ vr_send_qos_map_add(struct nl_client *cl, unsigned int router_id,
 }
 
 int
-vr_send_ddp_req(struct nl_client *cl, vr_info_msg_en msginfo)
+vr_send_dpdk_conf_req(struct nl_client *cl, vr_info_msg_en msginfo,
+                      uint8_t *vr_info_inbuf)
 {
     vr_info_req req;
 
@@ -2528,6 +2599,10 @@ vr_send_ddp_req(struct nl_client *cl, vr_info_msg_en msginfo)
 
     req.h_op        = SANDESH_OP_DUMP;
     req.vdu_msginfo = msginfo;
+    if(vr_info_inbuf != NULL) {
+        req.vdu_inbuf_size = strlen(vr_info_inbuf);
+        req.vdu_inbuf      = vr_info_inbuf;
+    }
 
     return vr_sendmsg(cl, &req, "vr_info_req");
 }
