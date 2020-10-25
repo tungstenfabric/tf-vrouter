@@ -829,8 +829,10 @@ bool __vr_adjust_tcp_mss(struct vr_tcp *tcph, uint16_t len_overhead, uint16_t et
 #define VR_ICMP6_TYPE_ECHO_REQ     128
 #define VR_ICMP6_TYPE_ECHO_REPLY   129
 #define VR_ICMP6_TYPE_ROUTER_SOL   133
+#define VR_ICMP6_TYPE_ROUTER_AD    134
 #define VR_ICMP6_TYPE_NEIGH_SOL    135
 #define VR_ICMP6_TYPE_NEIGH_AD     136
+#define VR_ICMP6_TYPE_REDIRECT     137
 
 #define VR_ICMP6_NEIGH_AD_FLAG_ROUTER   0x8000
 #define VR_ICMP6_NEIGH_AD_FLAG_SOLCITED 0x4000
@@ -1431,6 +1433,24 @@ static inline unsigned short
 pkt_head_space(struct vr_packet *pkt)
 {
     return pkt->vp_data;
+}
+
+static inline bool
+vr_is_ipv6_nd_packet(struct vr_packet *pkt)
+{
+    struct vr_ip6 *ip6;
+    struct vr_icmp *icmp6;
+
+    if (pkt->vp_type == VP_TYPE_IP6) {
+        ip6 = (struct vr_ip6 *)pkt_network_header(pkt);
+        if (ip6->ip6_nxt == VR_IP_PROTO_ICMP6) {
+            icmp6 = (struct vr_icmp *)((unsigned char *)ip6 +
+                                        sizeof(struct vr_ip6));
+            return (icmp6->icmp_type >= VR_ICMP6_TYPE_ROUTER_SOL &&
+                    icmp6->icmp_type <= VR_ICMP6_TYPE_REDIRECT);
+        }
+    }
+    return false;
 }
 
 static inline void

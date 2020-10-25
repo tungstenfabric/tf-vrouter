@@ -132,6 +132,41 @@ vr_icmp6_checksum(struct vr_ip6 *ip6, struct vr_icmp *icmph)
     return vr_sum((unsigned char *)sum, sizeof(sum));
 }
 
+bool
+vr_ipv6_nd_input(struct vr_packet *pkt, struct vr_forwarding_md *fmd)
+{
+    bool handled = true;
+    struct vr_icmp *icmp6;
+    struct vr_ip6 *ip6;
+    unsigned char *data, eth_dmac[VR_ETHER_ALEN];
+
+    PKT_LOG(0, pkt, 0, VR_PROTO_IP6_C, __LINE__);
+
+    ip6 = (struct vr_ip6 *)pkt_data(pkt);
+    icmp6 = (struct vr_icmp *) ((unsigned char *)ip6 + sizeof(struct vr_ip6));
+    data = pkt_data(pkt);
+
+    switch(icmp6->icmp_type) {
+        case VR_ICMP6_TYPE_NEIGH_SOL:
+            VR_MAC_COPY(eth_dmac, data);
+            handled = vr_neighbor_input(pkt, fmd, eth_dmac);
+            break;
+
+        case VR_ICMP6_TYPE_NEIGH_AD:
+            handled = vr_neighbor_reply(icmp6, pkt, fmd);
+            break;
+
+        case VR_ICMP6_TYPE_ROUTER_SOL:
+        case VR_ICMP6_TYPE_ROUTER_AD:
+        case VR_ICMP6_TYPE_REDIRECT:
+        default:
+            handled = false;
+            break;
+    }
+
+    return handled;
+}
+
 static bool
 vr_icmp6_input(struct vrouter *router, struct vr_packet *pkt,
                struct vr_forwarding_md *fmd)
@@ -635,6 +670,43 @@ vm_neighbor_request(struct vr_interface *vif, struct vr_packet *pkt,
     }
 
     return MR_FLOOD;
+}
+
+int
+vr_neighbor_reply(struct vr_icmp *icmp6, struct vr_packet *pkt,
+                  struct vr_forwarding_md *fmd)
+{
+    struct vr_interface *vif = pkt->vp_if;
+    struct vr_packet *cloned_pkt;
+    int handled = 1;
+
+    if (vif_mode_xconnect(vif) || vif->vif_type == VIF_TYPE_HOST) {
+        vif_xconnect(vif, pkt, fmd);
+        return handled;
+    }
+
+    if (vif_is_fabric(vif)) {
+        if (fmd->fmd_label >= 0)
+            return !handled;
+
+        if (fmd->fmd_dvrf != vif->vif_vrf)
+            return !handled;
+
+        cloned_pkt = pkt_cow(pkt, AGENT_PKT_HEAD_SPACE);
+        if (cloned_pkt) {
+            vr_preset(cloned_pkt);
+            vif_xconnect(vif, cloned_pkt, fmd);
+        }
+
+        vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
+
+        return handled;
+    }
+
+    PKT_LOG(VP_DROP_INVALID_IF, pkt, 0, VR_PROTO_IP6_C, __LINE__);
+    vr_pfree(pkt, VP_DROP_INVALID_IF);
+
+    return handled;
 }
 
 int

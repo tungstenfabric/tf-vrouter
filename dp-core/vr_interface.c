@@ -723,6 +723,11 @@ vhost_mac_request(struct vr_interface *vif, struct vr_packet *pkt,
 
             mr = MR_XCONNECT;
         }
+    } else if (vr_is_ipv6_nd_packet(pkt)) {
+        mr = vm_mac_request(vif, pkt, fmd, dmac);
+        if ((mr != MR_XCONNECT) && (mr != MR_PROXY)) {
+            mr = MR_XCONNECT;
+        }
     } else {
         /* Handle V6 */
         if (vif->vif_type == VIF_TYPE_GATEWAY)
@@ -1322,8 +1327,10 @@ static mac_response_t
 eth_mac_request(struct vr_interface *vif, struct vr_packet *pkt,
         struct vr_forwarding_md *fmd, unsigned char *dmac)
 {
-    bool underlay_arp = false;
+    bool underlay_arp = false, underlay_ipv6 = false;
     struct vr_arp *sarp;
+    struct vr_icmp *icmp6;
+    bool is_ipv6_nd_packet = false;
     mac_response_t mr;
 
     if (vif_mode_xconnect(vif))
@@ -1332,13 +1339,19 @@ eth_mac_request(struct vr_interface *vif, struct vr_packet *pkt,
     /*
      * If there is a label or if the vrf is different, it is meant for VM's
      */
+    is_ipv6_nd_packet = vr_is_ipv6_nd_packet(pkt);
+    if (pkt->vp_type == VP_TYPE_ARP)
+        sarp = (struct vr_arp *)pkt_data(pkt);
+    else if (is_ipv6_nd_packet)
+        icmp6 = (struct vr_icmp *)pkt_data(pkt);
 
-    sarp = (struct vr_arp *)pkt_data(pkt);
     if ((fmd->fmd_label == -1) && (fmd->fmd_dvrf == vif->vif_vrf)) {
         if (pkt->vp_type == VP_TYPE_ARP) {
             underlay_arp = true;
             if (vr_grat_arp(sarp))
                 return MR_TRAP_X;
+        } else if (is_ipv6_nd_packet) {
+            underlay_ipv6 = true;
         }
     }
 
@@ -1348,6 +1361,8 @@ eth_mac_request(struct vr_interface *vif, struct vr_packet *pkt,
                     " converting to Xconnect\n",
                     mr, sarp->arp_dpa, sarp->arp_spa);
 
+        mr = MR_XCONNECT;
+    } else if (underlay_ipv6 && (mr != MR_XCONNECT) && (mr != MR_PROXY)) {
         mr = MR_XCONNECT;
     }
 
