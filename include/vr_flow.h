@@ -388,6 +388,7 @@ struct vr_dummy_flow_entry {
     uint32_t fe_src_info;
     struct vr_mirror_meta_entry *fe_mme;
     unsigned int fe_tcp_ack;
+    int8_t fe_underlay_ecmp_index;
 } __attribute__packed__close__;
 
 /*
@@ -429,6 +430,7 @@ struct vr_flow_entry {
     uint32_t fe_src_info;
     struct vr_mirror_meta_entry *fe_mme;
     unsigned int fe_tcp_ack;
+    int8_t fe_underlay_ecmp_index;
     unsigned char fe_pack[VR_FLOW_ENTRY_PACK];
 } __attribute__packed__close__;
 

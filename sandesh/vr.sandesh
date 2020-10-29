@@ -240,6 +240,7 @@ buffer sandesh vr_flow_req {
    36: byte         fr_ttl;
    37: i16          fr_extflags;
    38: i16          fr_flags1;
+   39: byte         fr_underlay_ecmp_index;
 }
 
 buffer sandesh vr_vrf_assign_req {
