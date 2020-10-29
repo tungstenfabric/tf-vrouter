@@ -192,7 +192,7 @@
 #define VP_DROP_PKT_LOOP                    47
 #define VP_DROP_NO_CRYPT_PATH               48
 #define VP_DROP_INVALID_HBS_PKT             49
-#define VP_DROP_NO_FRAG_ENTRY               50 
+#define VP_DROP_NO_FRAG_ENTRY               50
 #define VP_DROP_ICMP_ERROR                  51
 #define VP_DROP_CLONE_FAIL                  52
 #define VP_DROP_MAX                         53
@@ -1085,6 +1085,7 @@ struct vr_forwarding_md {
     int8_t fmd_dmac[VR_ETHER_ALEN];
     int8_t fmd_smac[VR_ETHER_ALEN];
     int8_t fmd_local_ttl;
+    int8_t fmd_underlay_ecmp_index;
 };
 
 static inline void
@@ -1106,6 +1107,7 @@ vr_init_forwarding_md(struct vr_forwarding_md *fmd)
     fmd->fmd_dscp = -1;
     fmd->fmd_dotonep = -1;
     fmd->fmd_local_ttl = FMD_PKT_LOOP_TTL;
+    fmd->fmd_underlay_ecmp_index = -1;
     VR_MAC_RESET(fmd->fmd_dmac);
     VR_MAC_RESET(fmd->fmd_smac);
 

@@ -28,6 +28,7 @@ class Flow(ObjectBase, vr_flow_req):
             qos_id=-1,
             action=constants.VR_FLOW_ACTION_FORWARD,
             ecmp_nh_index=-1,
+            underlay_ecmp_index=-1,
             flow_vrf=None,
             rflow_nh_idx=0,
             flags1=None,
@@ -52,6 +53,7 @@ class Flow(ObjectBase, vr_flow_req):
         self.fr_flow_vrf = flow_vrf
         self.fr_src_nh_index = src_nh_idx
         self.fr_ecmp_nh_index = ecmp_nh_index
+        self.fr_underlay_ecmp_index = underlay_ecmp_index
         self.fr_action = action
         self.fr_qos_id = qos_id
         self.fr_flags1 = flags1

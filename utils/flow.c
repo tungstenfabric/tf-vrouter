@@ -754,6 +754,10 @@ flow_dump_entry(struct vr_flow_entry *fe)
     flow_print_field_name("Flow Protocol");
     printf("%s\n", vr_proto_string(fe->fe_key.flow_proto));
 
+    if(fe->fe_underlay_ecmp_index >= 0) {
+        flow_print_field_name("Flow Underlay ECMP Index");
+        printf("%d\n", fe->fe_underlay_ecmp_index);
+    }
 
     flow_print_field_name("Flow Action");
     switch (fe->fe_action) {
@@ -1487,6 +1491,10 @@ flow_dump_table(struct flow_table *ft)
             printed = print_new_line_if_required(printed, 70);
             printf(" TTL %d,", fe->fe_ttl);
             printed = print_new_line_if_required(printed, 70);
+            if(fe->fe_underlay_ecmp_index >= 0) {
+                printf(" UnderlayEcmpIdx:%d,", fe->fe_underlay_ecmp_index);
+                printed = print_new_line_if_required(printed, 70);
+            }
             if (fe->fe_flags1 & VR_FLOW_FLAG1_HBS_LEFT)
                 printed += printf(" HbsLeft,");
             else if (fe->fe_flags1 & VR_FLOW_FLAG1_HBS_RIGHT)
