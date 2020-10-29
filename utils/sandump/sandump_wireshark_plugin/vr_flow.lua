@@ -264,3 +264,8 @@ vr_flow_table[38].field_name = "fr_flags1"
 vr_flow_table[38].ProtoField = ProtoField.uint16
 vr_flow_table[38].base = base.HEX
 vr_flow_table[38].decode_bits = vr_flow_flags1
+
+vr_flow_table[39] = {}
+vr_flow_table[39].field_name = "fr_underlay_ecmp_index"
+vr_flow_table[39].ProtoField = ProtoField.int16
+vr_flow_table[39].base = base.DEC
