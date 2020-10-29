@@ -237,6 +237,7 @@ __vr_flow_reset_entry(struct vrouter *router, struct vr_flow_entry *fe)
     fe->fe_flags1 &=
         ~(VR_FLOW_FLAG1_HBS_LEFT | VR_FLOW_FLAG1_HBS_RIGHT);
     fe->fe_ttl = 0;
+    fe->fe_underlay_ecmp_index = -1;
     fe->fe_src_info = 0;
 
     return;
@@ -528,6 +529,8 @@ vr_flow_table_get_free_entry(struct vrouter *router, struct vr_flow *key,
             fe->fe_flags = ((flags & ~VR_FLOW_FLAG_EVICTED) |
                      VR_FLOW_FLAG_NEW_FLOW);
         }
+
+        fe->fe_underlay_ecmp_index = -1;
 
         fe->fe_gen_id = (fe->fe_gen_id + 1) %
             (1 << (8 * sizeof(fe->fe_gen_id)));
@@ -951,7 +954,7 @@ vr_flow_action_hbs(struct vrouter *router, struct vr_flow_entry *fe,
 
     vrf_entry = vrouter_get_vrf_table(router, dvrf);
 
-    /* Packet entering vrouter and going to hbs-l or hbs-r 
+    /* Packet entering vrouter and going to hbs-l or hbs-r
      * for hbs-flows
      */
     if (fe->fe_flags1 & VR_FLOW_FLAG1_HBS_LEFT) {
@@ -1023,7 +1026,7 @@ vr_flow_action_hbs(struct vrouter *router, struct vr_flow_entry *fe,
         hbs_r = vrf_entry->hbs_r_vif;
         if (hbs_r) {
             /* Packet entering vrouter from fabric and going to hbs-r,
-             * encode flow_id in dst mac 
+             * encode flow_id in dst mac
              *
              * Note: packet can also enter vrouter and goto hbs-r
              * from vmi (instead of fabric) in case of intra-compute
@@ -1865,7 +1868,7 @@ vr_do_flow_lookup(struct vrouter *router, struct vr_packet *pkt,
 }
 
 static void
-vr_reinit_forwarding_md(struct vrouter *router, struct vr_packet *pkt, 
+vr_reinit_forwarding_md(struct vrouter *router, struct vr_packet *pkt,
                         struct vr_flow_entry *fe, uint32_t flow_index,
                         struct vr_nexthop *nh, struct vr_forwarding_md *fmd)
 {
@@ -1887,7 +1890,7 @@ vr_flow_forward(struct vrouter *router, struct vr_packet *pkt,
         /* Pkt entering vrouter from hbs-r
          *   - If SMAC has magic, Restore actual SMAC from flow_index and continue
          *   - If DMAC has magic, Restore actual DMAC from flow_index and continue
-         */ 
+         */
         struct vr_eth_hbs_md *eth_hbs = (struct vr_eth_hbs_md*)pkt_data(pkt);
         struct vr_eth *eth = (struct vr_eth*)pkt_data(pkt);
         uint16_t magic;
@@ -1913,7 +1916,7 @@ vr_flow_forward(struct vrouter *router, struct vr_packet *pkt,
         if (vr_htable_get_hentry_by_index(router->vr_flow_table, flow_index)) {
             struct vr_nexthop *nh;
             fe = CONTAINER_OF(
-                           fe_hentry, 
+                           fe_hentry,
                            struct vr_flow_entry,
                            vr_htable_get_hentry_by_index(
                                 router->vr_flow_table, flow_index)
@@ -1931,12 +1934,12 @@ vr_flow_forward(struct vrouter *router, struct vr_packet *pkt,
          *   - DMAC of the packet contains flow_index
          *   - Restore actual DMAC from flow_index and continue
          *     flow action
-         * If VR_HBS_FROM_VMI is set in the DMAC - 
+         * If VR_HBS_FROM_VMI is set in the DMAC -
          *   - The packet originated from VMI (instead of fabric)
          *   - Happens if both src and dst tenant VMs are in
          *     the same compute (intra-compute case)
-         *   - Restore actual DMAC from "reverse flow_index"  
-         */ 
+         *   - Restore actual DMAC from "reverse flow_index"
+         */
         struct vr_eth *eth = (struct vr_eth*)pkt_data(pkt);
         struct vr_eth_hbs_md *eth_hbs = (struct vr_eth_hbs_md*)pkt_data(pkt);
         uint16_t magic = ntohs(eth_hbs->magic_dmac);
@@ -1951,7 +1954,7 @@ vr_flow_forward(struct vrouter *router, struct vr_packet *pkt,
         if (vr_htable_get_hentry_by_index(router->vr_flow_table, flow_index)) {
             struct vr_nexthop *nh;
             fe = CONTAINER_OF(
-                           fe_hentry, 
+                           fe_hentry,
                            struct vr_flow_entry,
                            vr_htable_get_hentry_by_index(
                                 router->vr_flow_table, flow_index)
@@ -1974,7 +1977,7 @@ vr_flow_forward(struct vrouter *router, struct vr_packet *pkt,
             pkt->vp_if = nh->nh_dev;
             if (magic & VR_HBS_L3_PKT)
                memcpy(eth->eth_dmac, pkt->vp_if->vif_mac, VR_ETHER_ALEN);
-            else 
+            else
                 memcpy(eth->eth_dmac, nh->nh_data, VR_ETHER_ALEN);
             result = vr_flow_action_default(router, fe, flow_index, pkt, fmd);
             return __vr_flow_forward(result, pkt, fmd);
@@ -2752,6 +2755,7 @@ vr_flow_set(struct vrouter *router, vr_flow_req *req,
     }
 
     fe->fe_ttl = req->fr_ttl;
+    fe->fe_underlay_ecmp_index = req->fr_underlay_ecmp_index;
 
     if (fe->fe_action == VR_FLOW_ACTION_DROP)
         fe->fe_drop_reason = (uint8_t)req->fr_drop_reason;
