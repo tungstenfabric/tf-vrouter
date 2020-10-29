@@ -392,6 +392,7 @@ vr_mirror(struct vrouter *router, uint8_t mirror_id, struct vr_packet *pkt,
 
     memcpy(&new_fmd, fmd, sizeof(*fmd));
     new_fmd.fmd_ecmp_nh_index = -1;
+    new_fmd.fmd_underlay_ecmp_index = -1;
     fmd = &new_fmd;
 
     vr_fmd_put_mirror_type(fmd, mtype);
