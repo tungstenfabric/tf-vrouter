@@ -1,0 +1,123 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "89d14716_98b5d00e",
+        "filename": "dp-core/vr_datapath.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 755,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-10-30T08:02:41Z",
+      "side": 1,
+      "message": "Can you update the comment as well?",
+      "revId": "606de914786e1f231a715d6ab2b4041ecc741a13",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "189dc2dd_4681fd69",
+        "filename": "dp-core/vr_proto_ip6.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-10-30T08:02:41Z",
+      "side": 1,
+      "message": "Can you delete the leading spaces?",
+      "revId": "606de914786e1f231a715d6ab2b4041ecc741a13",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a8e34c4e_9d7ce726",
+        "filename": "dp-core/vr_proto_ip6.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 693,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-10-30T08:02:41Z",
+      "side": 1,
+      "message": "Delete the spaces, same in other place",
+      "revId": "606de914786e1f231a715d6ab2b4041ecc741a13",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "57a51f44_43ec7fcf",
+        "filename": "tests/test_ipv6_nd.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-10-30T08:02:41Z",
+      "side": 1,
+      "message": "What about unsolicited NA cases? I don\u0027t see any test cases for them. Can you please add it?",
+      "revId": "606de914786e1f231a715d6ab2b4041ecc741a13",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6d644eda_7250e0f9",
+        "filename": "tests/test_ipv6_nd.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-10-30T08:02:41Z",
+      "side": 1,
+      "message": "Can you do some more validations here ? for eg: vif counter increment, pkt contents etc to see we indeed received the right pkt?",
+      "revId": "606de914786e1f231a715d6ab2b4041ecc741a13",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bc77c43a_81ec2f3e",
+        "filename": "tests/test_ipv6_nd.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 115,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-10-30T08:02:41Z",
+      "side": 1,
+      "message": "Same as above, do more validations",
+      "revId": "606de914786e1f231a715d6ab2b4041ecc741a13",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b24e6cf2_0dd1b963",
+        "filename": "tests/test_ipv6_nd.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-10-30T08:02:41Z",
+      "side": 1,
+      "message": "You should also check the the NA gets trapped to agent in case it is coming from fabric.",
+      "revId": "606de914786e1f231a715d6ab2b4041ecc741a13",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
