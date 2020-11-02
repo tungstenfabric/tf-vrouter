@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "759ea554_b706e138",
+        "filename": "dp-core/vr_flow.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 2758,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-11-02T11:59:47Z",
+      "side": 1,
+      "message": "Can you use compare and swap operation here as done for fe_ecmp_nh_index ? Its good to do it since the same variable is used in parallel in the data threads.",
+      "revId": "810ca4b34b091cc6cc576bac07a0b720bfff9cf9",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0f6e2b35_fd8892ce",
+        "filename": "include/vr_flow.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 391,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-11-02T11:59:47Z",
+      "side": 1,
+      "message": "you might need this in fmd struct as well similar to what is done for fe_ecmp_nh_index.",
+      "revId": "810ca4b34b091cc6cc576bac07a0b720bfff9cf9",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "01d6c4cf_8499a2f9",
+        "filename": "sandesh/vr.sandesh",
+        "patchSetId": 2
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-11-02T11:59:47Z",
+      "side": 1,
+      "message": "Why i16? can\u0027t we use byte?",
+      "revId": "810ca4b34b091cc6cc576bac07a0b720bfff9cf9",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
