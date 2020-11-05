@@ -40,8 +40,11 @@ int vr_ip_input(struct vrouter *, struct vr_packet *,
                 struct vr_forwarding_md *);
 int vr_neighbor_input(struct vr_packet *, struct vr_forwarding_md *,
         unsigned char *);
+int vr_neighbor_reply(struct vr_icmp *, struct vr_packet *,
+                      struct vr_forwarding_md *);
 int vr_ip6_input(struct vrouter *, struct vr_packet *,
                  struct vr_forwarding_md *);
+bool vr_ipv6_nd_input(struct vr_packet *, struct vr_forwarding_md *);
 extern void vr_ip_update_csum(struct vr_packet *, unsigned int, unsigned int);
 extern uint16_t vr_icmp6_checksum(struct vr_ip6 *, struct vr_icmp *);
 
