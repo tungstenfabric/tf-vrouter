@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "af306fa4_9bfb3a5f",
+        "filename": "dp-core/vr_flow.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2761,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-11-05T08:21:45Z",
+      "side": 1,
+      "message": "Need to have a while loop to repeat if setting fails",
+      "revId": "9cf113d3660dfb8474b47e5a5facefc992528fed",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
