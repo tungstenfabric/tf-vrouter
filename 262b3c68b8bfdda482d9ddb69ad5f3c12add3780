@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a9fc551b_d402d98c",
+        "filename": "dp-core/vr_pkt_droplog.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-11-05T08:13:31Z",
+      "side": 1,
+      "message": "Can you change to 0xFF or give some macro, would be more readable",
+      "revId": "262b3c68b8bfdda482d9ddb69ad5f3c12add3780",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a6f46162_18a9b116",
+        "filename": "utils/dropstats.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 165,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-11-05T08:13:31Z",
+      "side": 1,
+      "message": "Specify which type has been set",
+      "revId": "262b3c68b8bfdda482d9ddb69ad5f3c12add3780",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
