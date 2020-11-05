@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "37f93419_b534856d",
+        "filename": "dp-core/vr_flow.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 2767,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-11-05T15:03:14Z",
+      "side": 1,
+      "message": "you need to read the new value of fe-\u003efe_underlay_ecmp_index into cur_fe_underlay_ecmp_index",
+      "revId": "797964b315c15c05282318068e703f4d4f83df13",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
