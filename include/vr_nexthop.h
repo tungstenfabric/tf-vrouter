@@ -242,6 +242,8 @@ extern int vr_is_local_ecmp_nh(struct vr_nexthop *nh);
 extern struct vr_interface *vr_get_ecmp_first_member_dev(struct vr_nexthop *nh);
 
 extern struct vr_nexthop *vr_discard_nh;
+extern int vr_ipv6_rcv(struct vrouter *router, struct vr_packet *pkt,
+                       struct vr_forwarding_md *fmd);
 #ifdef __cplusplus
 }
 #endif

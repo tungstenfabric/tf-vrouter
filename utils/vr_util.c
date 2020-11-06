@@ -1946,7 +1946,7 @@ vr_send_nexthop_encap_tunnel_add(struct nl_client *cl, unsigned int router_id,
 int
 vr_send_nexthop_add(struct nl_client *cl, unsigned int router_id,
         unsigned int type, int nh_index, unsigned int flags, int vrf_index,
-        int vif_index)
+        int vif_index, int family)
 {
     vr_nexthop_req req;
 
@@ -1959,6 +1959,7 @@ vr_send_nexthop_add(struct nl_client *cl, unsigned int router_id,
     req.nhr_flags = flags;
     req.nhr_type = type;
     req.nhr_encap_oif_id = vif_index;
+    req.nhr_family = family;
 
     return vr_sendmsg(cl, &req, "vr_nexthop_req");
 }
