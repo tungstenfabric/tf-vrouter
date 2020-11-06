@@ -447,7 +447,7 @@ op_retry:
             ret = vr_send_nexthop_composite_add(cl, 0, nh_id, flags, vrf_id,
                     comp_nh_ind, comp_nh, lbl, family);
         } else {
-            ret = vr_send_nexthop_add(cl, 0, type, nh_id, flags, vrf_id, if_id);
+            ret = vr_send_nexthop_add(cl, 0, type, nh_id, flags, vrf_id, if_id, family);
         }
 
         break;
