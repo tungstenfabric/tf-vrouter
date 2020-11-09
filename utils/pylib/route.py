@@ -56,6 +56,12 @@ class Route(ObjectBase, vr_route_req):
         """
         return int(self.get('rtr_nh_id'))
 
+    def get_rtr_label_flags(self):
+        """
+        Queries vrouter and returns rtr_label_flags from response xml file
+        """
+        return int(self.get('rtr_label_flags'))
+
 
 class BridgeRoute(Route):
     """
