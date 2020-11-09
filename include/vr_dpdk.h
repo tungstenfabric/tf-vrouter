@@ -414,6 +414,8 @@ struct vr_dpdk_queue {
     struct vr_interface *q_vif;
     /* Incase of multiqueue, store vring queue_id */
     uint16_t vring_queue_id;
+    /* vhost device id */
+    int      vr_vid;
 };
 
 /* We store the queue params in the separate structure to increase CPU
