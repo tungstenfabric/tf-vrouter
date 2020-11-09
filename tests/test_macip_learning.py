@@ -386,3 +386,52 @@ class TestVmToFabricIntraVn(VmToFabricIntraVn):
         # Check if the packet was trapped to agent vif
         self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
         self.assertEqual(1, self.agent_vif.get_vif_opackets())
+
+
+class Test_MACIP_LEARNT_FLAG(unittest.TestCase):
+
+    @classmethod
+    def setup_class(cls):
+        ObjectBase.setUpClass()
+        ObjectBase.set_auto_features(cleanup=True)
+
+    @classmethod
+    def teardown_class(cls):
+        ObjectBase.tearDownClass()
+
+    def setup_method(self, method):
+        ObjectBase.setUp(method)
+
+    def teardown_method(self, method):
+        ObjectBase.tearDown()
+
+    def test_macip_learnt_flag(self):
+        # add virtual vif
+        vmi = VirtualVif(name="tap_5", ipv4_str="192.168.1.1",
+                         mac_str="de:ad:be:ef:00:02")
+        # add encap nh 1
+        nh1 = EncapNextHop(encap_oif_id=vmi.idx(),
+                           encap="de ad be ef 00 02 de ad be ef 00 01 08 00",
+                           nh_family=constants.AF_BRIDGE)
+        # add encap nh 2
+        nh2 = EncapNextHop(encap_oif_id=vmi.idx(),
+                           encap="de ad be ef 00 02 de ad be ef 00 01 08 00")
+        # add bridge route
+        bridge_rt = BridgeRoute(
+            vrf=0,
+            mac_str="de:ad:be:ef:00:02",
+            nh_idx=nh1.idx())
+        # add inet route
+        inet_rt = InetRoute(
+            vrf=0,
+            prefix="192.168.1.1",
+            prefix_len=32,
+            nh_idx=nh2.idx(),
+            rtr_label_flags=constants.VR_RT_MAC_IP_LEARNT_FLAG)
+        # sync all objects
+        ObjectBase.sync_all()
+
+        # Query the objects back
+        self.assertEqual("tap_5", vmi.get_vif_name())
+        self.assertEqual(constants.VR_RT_MAC_IP_LEARNT_FLAG,
+                inet_rt.get_rtr_label_flags())
