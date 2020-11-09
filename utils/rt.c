@@ -48,6 +48,7 @@ static uint8_t rt_prefix[16], rt_marker[16];
 static bool cmd_proxy_set = false;
 static bool cmd_trap_set = false;
 static bool cmd_flood_set = false;
+static bool cmd_macip_learnt_set = false;
 
 static int cmd_set, dump_set, get_set, monitor_set;
 static int family_set, help_set, vrf_set, sock_dir_set;
@@ -89,10 +90,11 @@ static struct bridge_table {
 
 
 struct vr_util_flags inet_flags[] = {
-    {VR_RT_LABEL_VALID_FLAG,    "L",    "Label Valid"   },
-    {VR_RT_ARP_PROXY_FLAG,      "P",    "Proxy ARP"     },
-    {VR_RT_ARP_TRAP_FLAG,       "T",    "Trap ARP"      },
-    {VR_RT_ARP_FLOOD_FLAG,      "F",    "Flood ARP"     },
+    {VR_RT_LABEL_VALID_FLAG,    "L",    "Label Valid"           },
+    {VR_RT_ARP_PROXY_FLAG,      "P",    "Proxy ARP"             },
+    {VR_RT_ARP_TRAP_FLAG,       "T",    "Trap ARP"              },
+    {VR_RT_ARP_FLOOD_FLAG,      "F",    "Flood ARP"             },
+    {VR_RT_MAC_IP_LEARNT_FLAG,  "Ml",   "MAC-IP learnt route"   },
 };
 
 struct vr_util_flags bridge_flags[] = {
@@ -172,6 +174,8 @@ vr_bridge_print_route(uint8_t *mac, unsigned int index,
         strcat(flag_string, "N");
     if (flags & VR_BE_EVPN_CONTROL_PROCESSING_FLAG)
         strcat(flag_string, "Ec");
+    if (flags & VR_RT_MAC_IP_LEARNT_FLAG)
+        strcat(flag_string, "Ml");
 
     ret = printf("%-9d", index);
     for (i = ret; i < 12; i++)
@@ -237,11 +241,13 @@ vr_print_route_json(vr_route_req *rt)
             printf(",\"nh_id\":%d", rt->rtr_nh_id);
         }
 
-        printf(",\"flags\":{\"label_valid\":%s, \"arp_proxy\":%s, \"arp_trap\":%s, \"arp_flood\":%s}",
+        printf(",\"flags\":{\"label_valid\":%s, \"arp_proxy\":%s, \"arp_trap\":%s,"
+                "\"arp_flood\":%s, \"macip_learnt\":%s}",
             rt->rtr_label_flags & VR_RT_LABEL_VALID_FLAG ? "true" : "false",
             rt->rtr_label_flags & VR_RT_ARP_PROXY_FLAG ? "true" : "false",
             rt->rtr_label_flags & VR_RT_ARP_TRAP_FLAG ? "true" : "false",
-            rt->rtr_label_flags & VR_RT_ARP_FLOOD_FLAG ? "true" : "false");
+            rt->rtr_label_flags & VR_RT_ARP_FLOOD_FLAG ? "true" : "false",
+            rt->rtr_label_flags & VR_RT_MAC_IP_LEARNT_FLAG ? "true" : "false");
 
         if (rt->rtr_label_flags & VR_RT_LABEL_VALID_FLAG)
             printf(",\"label\":%d", rt->rtr_label);
@@ -295,6 +301,8 @@ route_req_process(void *s_req)
             strcat(flags, "T");
         if (rt->rtr_label_flags & VR_RT_ARP_FLOOD_FLAG)
             strcat(flags, "F");
+        if (rt->rtr_label_flags & VR_RT_MAC_IP_LEARNT_FLAG)
+            strcat(flags, "Ml");
 
         printf("%5s", flags);
 
@@ -424,6 +432,9 @@ vr_route_op(struct nl_client *cl)
     if (cmd_trap_set)
         flags |= VR_RT_ARP_TRAP_FLAG;
 
+    if(cmd_macip_learnt_set)
+        flags |= VR_RT_MAC_IP_LEARNT_FLAG;
+
     if (cmd_dst_mac_set)
         dst_mac = cmd_dst_mac;
 
@@ -538,6 +549,7 @@ usage_internal()
            "       f <family 0 - AF_INET 1 - AF_BRIDGE 2 - AF_INET6 >\n"
            "       e <mac address in : format>\n"
            "       T <trap ARP requests to Agent for this route>\n"
+           "       M <MAC-IP learnt route>\n"
            "       r <replacement route prefix length for delete>\n"
            "       v <vrfid>\n"
            "       x <custom flag in hexa> \n"
@@ -547,6 +559,7 @@ usage_internal()
            "          VR_RT_ARP_PROXY_FLAG        0x2\n"
            "          VR_RT_ARP_TRAP_FLAG         0x4\n"
            "          VR_RT_ARP_FLOOD_FLAG        0x8\n"
+           "          VR_RT_MAC_IP_LEARNT_FLAG    0x10\n"
            "\n"
            "           for bridge routes:  \n"
            "          VR_BE_VALID_FLAG            0x01\n"
@@ -791,7 +804,7 @@ main(int argc, char *argv[])
     cmd_label = -1;
     cmd_family_id = AF_INET;
 
-    while ((opt = getopt_long(argc, argv, "TcdbmPn:p:l:v:t:s:e:f:u:r:Fx:",
+    while ((opt = getopt_long(argc, argv, "TcdbmPnM:p:l:v:t:s:e:f:u:r:Fx:",
                     long_options, &option_index)) >= 0) {
             switch (opt) {
             case 'c':
@@ -881,6 +894,10 @@ main(int argc, char *argv[])
 
             case 'T':
                 cmd_trap_set = true;
+                break;
+
+            case 'M':
+                cmd_macip_learnt_set = true;
                 break;
 
             case 'x':
