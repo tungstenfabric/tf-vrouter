@@ -56,6 +56,7 @@ enum rt_type{
 #define VR_RT_ARP_PROXY_FLAG        0x2
 #define VR_RT_ARP_TRAP_FLAG         0x4
 #define VR_RT_ARP_FLOOD_FLAG        0x8
+#define VR_RT_MAC_IP_LEARNT_FLAG    0x10
 
 /* for bridge routes */
 #define VR_BE_VALID_FLAG                    0x01
