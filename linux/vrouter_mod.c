@@ -52,6 +52,16 @@ extern unsigned int vr_uncond_close_flow_on_tcp_rst;
 
 extern char *ContrailBuildInfo;
 
+extern int vr_perfr;
+extern int vr_perfs;
+extern int vr_perfr1;
+extern int vr_perfr2;
+extern int vr_perfr3;
+extern int vr_perfp;
+extern int vr_perfq1;
+extern int vr_perfq2;
+extern int vr_perfq3;
+
 int vrouter_dbg;
 
 extern struct vr_packet *linux_get_packet(struct sk_buff *,
@@ -2606,6 +2616,34 @@ vrouter_linux_exit(void)
     return;
 }
 
+static int
+vr_perfq_check(unsigned int vr_num_cpus)
+{
+    bool invalid = false;
+
+    if (vr_perfq1 < 0 || vr_perfq1 >= vr_num_cpus)
+    {
+        printk("%s:%d Invalid CPU number vr_perfq1:%d\n",
+                __FUNCTION__, __LINE__, vr_perfq1);
+        invalid = true;
+    }
+
+    if (vr_perfq2 < 0 || vr_perfq2 >= vr_num_cpus)
+    {
+        printk("%s:%d Invalid CPU number vr_perfq2:%d\n",
+                __FUNCTION__, __LINE__, vr_perfq2);
+        invalid = true;
+    }
+
+    if (vr_perfq3 < 0 || vr_perfq3 >= vr_num_cpus)
+    {
+        printk("%s:%d Invalid CPU number vr_perfq3:%d\n",
+                __FUNCTION__, __LINE__, vr_perfq3);
+        invalid = true;
+    }
+
+    return invalid ? 1 : 0;
+}
 
 static int __init
 vrouter_linux_init(void)
@@ -2620,6 +2658,10 @@ vrouter_linux_init(void)
                 __FUNCTION__, __LINE__);
         return -1;
     }
+
+    ret = vr_perfq_check(vr_num_cpus);
+    if (ret)
+        return ret;
 
     vr_huge_pages_init();
 
@@ -2700,6 +2742,33 @@ MODULE_PARM_DESC(vr_memory_alloc_checks, "Audit memory frees against allocs. Def
 
 module_param(datapath_offloads, uint, S_IRUGO);
 MODULE_PARM_DESC(datapath_offloads, "Enable hardware offloads. Default is disabled");
+
+module_param(vr_perfr, uint, S_IRUGO);
+MODULE_PARM_DESC(vr_perfr, "<0|1> Turn on|off GRO ");
+
+module_param(vr_perfs, uint, S_IRUGO);
+MODULE_PARM_DESC(vr_perfs, "<0|1> Turn on|off segmentation in software ");
+
+module_param(vr_perfr1, uint, S_IRUGO);
+MODULE_PARM_DESC(vr_perfr1, "<0|1> RPS after pulling inner hdr");
+
+module_param(vr_perfr2, uint, S_IRUGO);
+MODULE_PARM_DESC(vr_perfr2, "<0|1> RPS after GRO on pkt1");
+
+module_param(vr_perfr3, uint, S_IRUGO);
+MODULE_PARM_DESC(vr_perfr3, "<0|1> RPS from phys rx handler");
+
+module_param(vr_perfp, uint, S_IRUGO);
+MODULE_PARM_DESC(vr_perfp, "<0|1>  Pull inner hdr (faster version)");
+
+module_param(vr_perfq1, uint, S_IRUGO);
+MODULE_PARM_DESC(vr_perfq1, "<cpu> CPU to send pkts to if perfr1 set");
+
+module_param(vr_perfq2, uint, S_IRUGO);
+MODULE_PARM_DESC(vr_perfq2, "<cpu> CPU to send pkts to if perfr2 set");
+
+module_param(vr_perfq3, uint, S_IRUGO);
+MODULE_PARM_DESC(vr_perfq3, "<cpu> CPU to send pkts to if perfr3 set");
 
 module_init(vrouter_linux_init);
 module_exit(vrouter_linux_exit);
