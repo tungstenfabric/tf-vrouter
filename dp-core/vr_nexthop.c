@@ -1824,6 +1824,7 @@ nh_composite_fabric(struct vr_packet *pkt, struct vr_nexthop *nh,
     struct vr_nexthop *dir_nh;
     unsigned short drop_reason, pkt_vrf;
     struct vr_packet *new_pkt;
+    bool l2_control_data = false;
 
     if (!fmd) {
         drop_reason = VP_DROP_NO_FMD;
@@ -1855,6 +1856,11 @@ nh_composite_fabric(struct vr_packet *pkt, struct vr_nexthop *nh,
     pkt_vrf = fmd->fmd_dvrf;
     if (nh->nh_flags & NH_FLAG_TUNNEL_PBB)
         vr_mcast_mac_from_isid(pkt->vp_if->vif_isid, eth_mac);
+
+    if (vr_fmd_l2_control_data_is_enabled(fmd)) {
+        l2_control_data = true;
+        vr_fmd_update_l2_control_data(fmd, false);
+    }
 
     for (i = 0; i < nh->nh_component_cnt; i++) {
         dir_nh = nh->nh_component_nh[i].cnh;
@@ -1909,7 +1915,7 @@ nh_composite_fabric(struct vr_packet *pkt, struct vr_nexthop *nh,
             break;
         }
 
-        /* If from VM or Tor add vxlan header */
+        /* If from VM or Tor add PBB header if use PBB protocol */
         if (vif_is_virtual(new_pkt->vp_if) ||
                         (fmd->fmd_src == TOR_SOURCE)) {
             /*
@@ -1930,30 +1936,14 @@ nh_composite_fabric(struct vr_packet *pkt, struct vr_nexthop *nh,
                     continue;
                 }
             }
-
-            if (nh->nh_family == AF_BRIDGE) {
-                /*
-                 * Add vxlan encapsulation. The vxlan id need to be taken
-                 * from Bridge entry
-                 */
-                vr_fmd_set_label(fmd, label, VR_LABEL_TYPE_UNKNOWN);
-                fmd->fmd_dvrf = dir_nh->nh_dev->vif_vrf;
-                if (nh_vxlan_tunnel_helper(nh->nh_router, &new_pkt,
-                                        fmd, sip, dip) == false) {
-                    PKT_LOG(VP_DROP_PUSH, pkt, 0, VR_NEXTHOP_C, __LINE__);
-                    vr_pfree(new_pkt, VP_DROP_PUSH);
-                    break;
-                }
-            }
         }
 
         if (nh->nh_family == AF_BRIDGE) {
-            if (vr_l2_control_data_add(&new_pkt) == false) {
+            if (l2_control_data && !vr_l2_control_data_add(&new_pkt)) {
                 PKT_LOG(VP_DROP_PUSH, pkt, 0, VR_NEXTHOP_C, __LINE__);
                 vr_pfree(new_pkt, VP_DROP_PUSH);
                 break;
             }
-            vr_fmd_update_l2_control_data(fmd, false);
         }
 
         /* MPLS label for outer header encapsulation */
