@@ -33,10 +33,10 @@ typedef struct vr_uvh_client {
 } vr_uvh_client_t;
 
 void vr_uvhost_client_init(void);
-vr_uvh_client_t *vr_uvhost_new_client(int fd, char *path, int cidx);
+vr_uvh_client_t *vr_uvhost_new_client(char *path, int cidx);
 void vr_uvhost_del_client(vr_uvh_client_t *vru_cl);
 vr_uvh_client_t *vr_uvhost_get_client(unsigned int cidx);
-vr_uvh_client_t *vr_uvhost_get_vhost_client(int vid);
 vr_uvh_client_t *vr_uvhost_update_client(int vid, char *path, vr_uvh_client_state_t state);
+vr_uvh_client_t *vr_uvhost_get_client_from_vid(int vid);
 #endif /* __VR_UVHOST_CLIENT_H__ */
 
