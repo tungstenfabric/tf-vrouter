@@ -863,3 +863,163 @@ vr_ip6_well_known_packet(struct vr_packet *pkt)
 
     return L4_TYPE_UNKNOWN;
 }
+
+static int
+vr_myip6(struct vr_interface *vif, uint8_t *ip6)
+{
+    struct vr_nexthop *nh;
+
+    if (vif->vif_type != VIF_TYPE_PHYSICAL)
+        return 1;
+
+    nh = vr_inet6_ip_lookup(vif->vif_vrf, ip6);
+
+    if (!nh || nh->nh_type != NH_RCV)
+        return 0;
+
+    return 1;
+}
+
+int
+vr_ipv6_rcv(struct vrouter *router, struct vr_packet *pkt,
+            struct vr_forwarding_md *fmd)
+{
+    struct vr_ip6 *ip6 = NULL;
+    uint32_t pull_len = 0;
+    uint8_t next_hdr;
+    struct vr_ip6_ext_hdr *ip6_ext = NULL;
+    uint32_t ext_size = 0;
+    int unhandled = 1;
+    bool flow_processing = false;
+    struct vr_interface *vif = NULL;
+    unsigned short drop_reason;
+    unsigned char *l2_hdr;
+
+    ip6 = (struct vr_ip6 *) pkt_data(pkt);
+
+    /*
+     * Loop through the IPv6 Ext Hdrs till we reach
+     * a Routing Hdr or upper layer protocol or Fragment header/Unknown header;
+     * If we reach Routing Hdr, do SRv6 processing
+     * If we reach upper layer protocol like MPLS/UDP/GRE, do decap processing
+     * For fragment headers and other types of headers,
+     * let kernel handle it
+     */
+    pull_len = sizeof(struct vr_ip6);
+    next_hdr = ip6->ip6_nxt;
+    ip6_ext = (struct vr_ip6_ext_hdr *) ((uint8_t *) pkt_data(pkt) + pull_len);
+    while (is_ipv6_exthdr_type(next_hdr)) {
+        if ((next_hdr == IP6_EXT_HDR_TYPE_FRAGMENT) ||
+            (next_hdr == IP6_EXT_HDR_TYPE_ROUTING)) {
+            break;
+        }
+        ext_size = IP6_EXT_HDR_SIZE_MIN + ip6_ext->ip6_ext_hdr_len*8;
+        pull_len += ext_size;
+        ip6_ext = (struct vr_ip6_ext_hdr *) ((uint8_t *)ip6_ext + ext_size);
+        next_hdr = ip6_ext->ip6_ext_hdr_nxt;
+    }
+    /* pull_len has the bytes from pkt_data(pkt) which can be pulled */
+    pkt_pull(pkt, pull_len);
+
+    if ((pkt->vp_nh) || (vr_myip6(pkt->vp_if, ip6->ip6_dst))) {
+        if (next_hdr == IP6_EXT_HDR_TYPE_ROUTING) {
+            /* do SRv6 processing */
+        } else if (next_hdr == VR_IP_PROTO_MPLS) {
+            unhandled = vr_mpls_input(router, pkt, fmd);
+        } else if (next_hdr == VR_IP_PROTO_UDP) {
+            /* check for mpls over udp or vxlan case */
+        } else if (next_hdr == VR_IP_PROTO_GRE) {
+            /* check for mpls over gre */
+        }
+    }
+
+    if (unhandled) {
+        /* Push the header back and reset ip6 hdr pointer */
+        if (!(ip6 = (struct vr_ip6 *)pkt_push(pkt, pull_len))) {
+            drop_reason = VP_DROP_PUSH;
+            PKT_LOG(drop_reason, pkt, 0, VR_PROTO_IP6_C, __LINE__);
+            goto drop_pkt;
+        }
+        if (pkt->vp_nh) {
+            vif = pkt->vp_nh->nh_dev;
+
+            /*
+             * If flow processing is already not done, not in cross
+             * connect mode, not mirror packet,
+             * lets subject it to flow processing.
+             */
+            if (!(pkt->vp_flags & VP_FLAG_FLOW_SET) &&
+                !(pkt->vp_flags & (VP_FLAG_TO_ME | VP_FLAG_FROM_DP))) {
+
+                if (vif_is_vhost(vif) &&
+                        (vif->vif_flags & VIF_FLAG_POLICY_ENABLED)) {
+                    flow_processing = true;
+                }
+                /*
+                 * Not handling relaxed policy for now as the usecase
+                 * is not clear for IPv6 underlay
+                 */
+            }
+
+            if (flow_processing) {
+                /* Force the flow lookup */
+                pkt->vp_flags |= VP_FLAG_FLOW_GET;
+
+                /* Subject it to flow */
+                if (!vr_flow_forward(router, pkt, fmd))
+                    return 0;
+
+                /*
+                 * For Policy enabled vhost interface, the layer3 processing
+                 * must have been already complete. So it can be
+                 * skipped. But if there is any VRF translation, which
+                 * gets marked in fmd_to_me, lets subject it l3
+                 * processing again.
+                 */
+                if (fmd->fmd_to_me) {
+                    if (--fmd->fmd_local_ttl <= 0) {
+                        drop_reason = VP_DROP_PKT_LOOP;
+                        PKT_LOG(drop_reason, pkt, 0, VR_PROTO_IP6_C, __LINE__);
+                        goto drop_pkt;
+                    }
+                    if (!vr_l3_input(pkt, fmd)) {
+                        drop_reason = VP_DROP_NOWHERE_TO_GO;
+                        PKT_LOG(drop_reason, pkt, 0, VR_PROTO_IP6_C, __LINE__);
+                        goto drop_pkt;
+                    }
+                    return 0;
+                }
+            }
+        }
+        /* Get the xconnect vif if required */
+        if (!vif && !(vif = pkt->vp_if->vif_bridge) &&
+                                !(vif = router->vr_host_if)) {
+            drop_reason = VP_DROP_TRAP_NO_IF;
+            PKT_LOG(drop_reason, pkt, 0, VR_PROTO_IP6_C, __LINE__);
+            goto drop_pkt;
+        }
+
+        if ((pkt->vp_flags & VP_FLAG_FROM_DP) ||
+                !vr_phead_len(pkt)) {
+            /* push the l2 header */
+            l2_hdr = pkt_push(pkt, sizeof(vif->vif_rewrite));
+            if (!l2_hdr) {
+                drop_reason = VP_DROP_PUSH;
+                PKT_LOG(drop_reason, pkt, 0, VR_PROTO_IP6_C, __LINE__);
+                goto drop_pkt;
+            }
+
+            memcpy(l2_hdr, vif->vif_rewrite, sizeof(vif->vif_rewrite));
+            *((unsigned short *)(l2_hdr + VR_ETHER_HLEN - VR_ETHER_PROTO_LEN)) =
+                                                  htons(VR_ETH_PROTO_IP6);
+        } else {
+            vr_preset(pkt);
+        }
+        vif->vif_tx(vif, pkt, fmd);
+    }
+    return 0;
+
+drop_pkt:
+    vr_pfree(pkt, drop_reason);
+    return 0;
+}

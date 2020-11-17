@@ -33,6 +33,8 @@
 #define VR_IP_PROTO_ICMP6       58
 #define VR_IP_PROTO_SCTP        132
 
+#define VR_IP_PROTO_MPLS        137
+
 #define VR_GRE_FLAG_CSUM        (ntohs(0x8000))
 #define VR_GRE_FLAG_KEY         (ntohs(0x2000))
 
@@ -508,6 +510,34 @@ struct vr_ip6 {
 
 #define VR_IP4_MAPPED_IP6_ZERO_BYTES    10
 #define VR_IP4_MAPPED_IP6_ONE_BYTES     2
+
+#define IP6_EXT_HDR_TYPE_HOP_BY_HOP     0
+#define IP6_EXT_HDR_TYPE_ROUTING        43
+#define IP6_EXT_HDR_TYPE_FRAGMENT       44
+#define IP6_EXT_HDR_TYPE_DEST_OPTIONS   60
+
+#define IP6_EXT_HDR_SIZE_MIN            8
+
+__attribute__packed__open__
+struct vr_ip6_ext_hdr {
+    uint8_t ip6_ext_hdr_nxt;
+    uint8_t ip6_ext_hdr_len;
+} __attribute__packed__close__;
+
+static inline int
+is_ipv6_exthdr_type (uint8_t type)
+{
+    switch (type) {
+    case IP6_EXT_HDR_TYPE_HOP_BY_HOP:
+    case IP6_EXT_HDR_TYPE_ROUTING:
+    case IP6_EXT_HDR_TYPE_FRAGMENT:
+    case IP6_EXT_HDR_TYPE_DEST_OPTIONS:
+        return 1;
+    default:
+        break;
+    }
+    return 0;
+}
 
 static inline uint8_t
 vr_inet6_get_tos(struct vr_ip6 *ip6h)
