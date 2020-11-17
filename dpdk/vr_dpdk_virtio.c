@@ -155,7 +155,6 @@ dpdk_virtio_writer_free(void *port)
 
     /* reset the virtio */
     memset(tx_virtioq, 0, sizeof(vr_dpdk_virtioq_t));
-    tx_virtioq->vdv_vid = -1;
     rte_free(port);
 
     return 0;
@@ -228,8 +227,6 @@ dpdk_virtio_reader_free(void *port)
 
     /* reset the virtio */
     memset(rx_virtioq, 0, sizeof(vr_dpdk_virtioq_t));
-    rx_virtioq->vdv_vid = -1;
-
     rte_free(port);
 
     return 0;
@@ -344,7 +341,6 @@ vr_dpdk_virtio_rx_queue_init(unsigned int lcore_id, struct vr_interface *vif,
 // IF_NAME_SZ, MAX_VHOST_DEVICE   defined in (vhost.h)
     /* init virtio queue */
     vr_dpdk_virtio_rxqs[vif_idx][queue_id].vdv_ready_state = VQ_NOT_READY;
-    vr_dpdk_virtio_rxqs[vif_idx][queue_id].vdv_vid = -1;
     vr_dpdk_virtio_rxqs[vif_idx][queue_id].vdv_vif_idx = vif->vif_idx;
     vr_dpdk_virtio_rxqs[vif_idx][queue_id].vdv_queue_id = queue_id;
 
@@ -436,11 +432,7 @@ vr_dpdk_virtio_tx_queue_init(unsigned int lcore_id, struct vr_interface *vif,
     /* init virtio queue */
     vr_dpdk_virtio_txqs[vif_idx][queue_id].vdv_ready_state = VQ_NOT_READY;
     vr_dpdk_virtio_txqs[vif_idx][queue_id].vdv_vif_idx = vif->vif_idx;
-    vr_dpdk_virtio_txqs[vif_idx][queue_id].vdv_vid = -1;
     vr_dpdk_virtio_txqs[vif_idx][queue_id].vdv_queue_id = queue_id;
-    // naren explicitly set here the queue_id for queue number 0
-     vr_dpdk_virtio_txqs[vif_idx][0].vdv_vid = -1;
-     vr_dpdk_virtio_txqs[vif_idx][0].vdv_queue_id = queue_id;
 
     /* create the queue */
     struct dpdk_virtio_writer_params writer_params = {
@@ -682,6 +674,8 @@ vr_dpdk_virtio_rx_queue_set(void *arg)
         lcore = vr_dpdk.lcores[lcore_id];
         rx_queue = &lcore->lcore_rx_queues[p->vif_id];
         lcore->lcore_rx_queues[p->vif_id].vring_queue_id = p->queue_id;
+        RTE_LOG(ERR, UVHOST, "%s: RX queue %d of vif %d to be added to lcore, queue %d\n",
+                __func__, p->queue_id, p->vif_id, lcore_id);
         dpdk_lcore_queue_add(lcore_id, &lcore->lcore_rx_head, rx_queue);
 
     } else {
@@ -801,7 +795,7 @@ dpdk_virtio_from_vm_rx(void *port, struct rte_mbuf **pkts, uint32_t max_pkts)
     vr_dpdk_virtioq_t *vq = p->rx_virtioq;
     vr_uvh_client_t *vru_cl;
     uint16_t nb_pkts = 0;
-    int rx_ring_queue_id;
+    int vring_idx;
 
     if (unlikely(vq->vdv_ready_state == VQ_NOT_READY)) {
         DPDK_UDEBUG(VROUTER, &vq->vdv_hash, "%s: queue %p is not ready\n",
@@ -825,10 +819,9 @@ dpdk_virtio_from_vm_rx(void *port, struct rte_mbuf **pkts, uint32_t max_pkts)
                 __func__, vq);
         return 0;
     }
-
-    // rx_ring_queue_id = (0x1 << vq->vdv_queue_id) | 0x1;
-    rx_ring_queue_id = 0x1;
-    nb_pkts = rte_vhost_dequeue_burst(vru_cl->vruc_vid, rx_ring_queue_id, vr_dpdk.rss_mempool, pkts, (uint16_t)max_pkts);
+    /*queue id = vring_idx/ 2 and rx vrings are odd and tx vrings are even*/
+    vring_idx = (vq->vdv_queue_id * 2) + 1;
+    nb_pkts = rte_vhost_dequeue_burst(vru_cl->vruc_vid, vring_idx, vr_dpdk.rss_mempool, pkts, (uint16_t)max_pkts);
 
     return nb_pkts;
 }
@@ -862,7 +855,7 @@ dpdk_virtio_to_vm_tx(void *port, struct rte_mbuf *pkt)
     struct dpdk_virtio_writer *p = (struct dpdk_virtio_writer *)port;
     vr_dpdk_virtioq_t *vq = p->tx_virtioq;
     uint16_t nb_pkts = 0;
-    int tx_ring_queue_id;
+    int vring_idx;
     vr_uvh_client_t *vru_cl;
 
     vru_cl = vr_dpdk_virtio_get_vif_client(vq->vdv_vif_idx);
@@ -881,9 +874,9 @@ dpdk_virtio_to_vm_tx(void *port, struct rte_mbuf *pkt)
         return 0;
     }
     
-    // tx_ring_queue_id = (0x1 << vq->vdv_queue_id);
-    tx_ring_queue_id = 0x0;
-    nb_pkts = rte_vhost_enqueue_burst(vru_cl->vruc_vid, tx_ring_queue_id, &pkt, 1);
+    /*queue id = vring_idx/ 2 and rx vrings are odd and tx vrings are even*/
+    vring_idx = 2 * vq->vdv_queue_id;
+    nb_pkts = rte_vhost_enqueue_burst(vru_cl->vruc_vid, vring_idx, &pkt, 1);
     if (!nb_pkts) {
         // error
         RTE_LOG_DP(ERR, UVHOST, "%s: TX Unable to send Pkt, queue %p\n",
@@ -1054,7 +1047,7 @@ vr_dpdk_set_virtq_ready(unsigned int vif_idx, unsigned int vring_idx,
 {
     vr_dpdk_virtioq_t *vq;
 
-        RTE_LOG_DP(DEBUG, UVHOST, "vif idx %d setting ready state\n", vif_idx);
+     RTE_LOG_DP(DEBUG, UVHOST, "vif idx %d setting ready state\n", vif_idx);
     if ((vif_idx >= VR_MAX_INTERFACES)
         || (vring_idx >= (2 * VR_DPDK_VIRTIO_MAX_QUEUES))) {
         return -1;
@@ -1071,9 +1064,7 @@ vr_dpdk_set_virtq_ready(unsigned int vif_idx, unsigned int vring_idx,
         vq = &vr_dpdk_virtio_txqs[vif_idx][vring_idx/2];
     }
 
-        RTE_LOG_DP(DEBUG, UVHOST, "NAREN setting ready state\n");
     vq->vdv_ready_state = ready;
-        RTE_LOG_DP(DEBUG, UVHOST, "NAREN Done setting ready state\n");
 
     return 0;
 }
