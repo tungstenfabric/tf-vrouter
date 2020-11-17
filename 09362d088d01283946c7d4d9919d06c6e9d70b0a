@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c464d1c4_e029d9a9",
+        "filename": "dpdk/vr_uvhost_client.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 484
+      },
+      "writtenOn": "2020-11-17T02:41:49Z",
+      "side": 1,
+      "message": "We probably don\u0027t need this fn. When proper del client is implemented, I\u0027ll remove \"unlink\". For now it is fine.",
+      "range": {
+        "startLine": 84,
+        "startChar": 0,
+        "endLine": 84,
+        "endChar": 34
+      },
+      "revId": "09362d088d01283946c7d4d9919d06c6e9d70b0a",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8b483076_4f5e9c34",
+        "filename": "dpdk/vr_uvhost_msg.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 352,
+      "author": {
+        "id": 484
+      },
+      "writtenOn": "2020-11-17T02:41:49Z",
+      "side": 1,
+      "message": "Could you please check with the previous logic, w.r.t the size of bytes copied and concat as well.",
+      "range": {
+        "startLine": 352,
+        "startChar": 4,
+        "endLine": 352,
+        "endChar": 15
+      },
+      "revId": "09362d088d01283946c7d4d9919d06c6e9d70b0a",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b639f870_61a88cc7",
+        "filename": "dpdk/vr_uvhost_msg.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 397,
+      "author": {
+        "id": 484
+      },
+      "writtenOn": "2020-11-17T02:41:49Z",
+      "side": 1,
+      "message": "what are the other return values we could receive?",
+      "range": {
+        "startLine": 397,
+        "startChar": 15,
+        "endLine": 397,
+        "endChar": 18
+      },
+      "revId": "09362d088d01283946c7d4d9919d06c6e9d70b0a",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "29a3a9d0_e36a9745",
+        "filename": "dpdk/vr_uvhost_msg.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 510,
+      "author": {
+        "id": 484
+      },
+      "writtenOn": "2020-11-17T02:41:49Z",
+      "side": 1,
+      "message": "Could you please verify if the flags set are valid prior to \"vr_uvh_vring_state_changed_cb\" being called. Otherwise this might impact our performance.",
+      "range": {
+        "startLine": 510,
+        "startChar": 8,
+        "endLine": 510,
+        "endChar": 43
+      },
+      "revId": "09362d088d01283946c7d4d9919d06c6e9d70b0a",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "944b887f_60c76930",
+        "filename": "dpdk/vr_uvhost_msg.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 572,
+      "author": {
+        "id": 484
+      },
+      "writtenOn": "2020-11-17T02:41:49Z",
+      "side": 1,
+      "message": "Why are we not using \"vr_uvhost_get_vhost_client()\"? Shouldn\u0027t the string lookup is expensive?",
+      "range": {
+        "startLine": 572,
+        "startChar": 13,
+        "endLine": 572,
+        "endChar": 42
+      },
+      "revId": "09362d088d01283946c7d4d9919d06c6e9d70b0a",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}

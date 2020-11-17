@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9e36719e_94c1aa6c",
+        "filename": "dpdk/vr_uvhost_client.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 484
+      },
+      "writtenOn": "2020-11-17T02:41:49Z",
+      "side": 0,
+      "message": "Can u retain this fn. This fn was a place holder for updating the states of the client from vrouter perspective. we can remove, if not used after the final patch.",
+      "range": {
+        "startLine": 60,
+        "startChar": 0,
+        "endLine": 60,
+        "endChar": 23
+      },
+      "revId": "5381be74ea628bc64b9da54dfb824215de66c8a2",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7767cdec_746a5335",
+        "filename": "dpdk/vr_uvhost_client.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 484
+      },
+      "writtenOn": "2020-11-17T02:41:49Z",
+      "side": 0,
+      "message": "I wanted to avoid expensive string operations, so added this fn. we can discuss. By this approach the string operation is done during add cb fn, rest of the reference to client is used by array reference.",
+      "revId": "5381be74ea628bc64b9da54dfb824215de66c8a2",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
