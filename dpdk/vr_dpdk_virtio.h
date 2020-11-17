@@ -35,7 +35,6 @@ struct dpdk_virtio_writer;
 typedef struct vr_dpdk_virtioq {
     uint16_t            vdv_ready_state;
     uint16_t            vdv_vif_idx;
-    int                 vdv_vid; /* vhost device id */
     int                 vdv_queue_id; /* queue_id */
     DPDK_DEBUG_VAR(uint32_t vdv_hash);
 } __rte_cache_aligned vr_dpdk_virtioq_t;
