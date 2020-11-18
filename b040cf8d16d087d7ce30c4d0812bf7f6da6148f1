@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9cb1d931_5a59b7af",
+        "filename": "linux/vrouter_mod.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2740,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-11-18T08:09:21Z",
+      "side": 1,
+      "message": "Can we do some validation for the cpu number entered?",
+      "range": {
+        "startLine": 2732,
+        "startChar": 0,
+        "endLine": 2740,
+        "endChar": 0
+      },
+      "revId": "b040cf8d16d087d7ce30c4d0812bf7f6da6148f1",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
