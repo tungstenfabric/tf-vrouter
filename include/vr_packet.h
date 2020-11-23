@@ -104,7 +104,10 @@
 
 #define VP_TYPE_AGENT           6
 #define VP_TYPE_PBB             7
-#define VP_TYPE_UNKNOWN         8
+#define VP_TYPE_IPOIP6          8
+#define VP_TYPE_IP6OIP6         9
+
+#define VP_TYPE_UNKNOWN         10
 #define VP_TYPE_MAX             VP_TYPE_UNKNOWN
 
 

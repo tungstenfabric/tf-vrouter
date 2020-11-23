@@ -379,8 +379,8 @@ err:
     return -1;
 }
 
-static void
-dpdk_adjust_outer_header(struct rte_mbuf *m, uint16_t outer_header_len)
+static inline void
+dpdk_adjust_outer_header_ipv4(struct rte_mbuf *m, uint16_t outer_header_len)
 {
     struct vr_packet *pkt = vr_dpdk_mbuf_to_pkt(m);
     struct vr_ip *inner_ip = NULL;
@@ -416,6 +416,26 @@ dpdk_adjust_outer_header(struct rte_mbuf *m, uint16_t outer_header_len)
     outer_ip->ip_csum = vr_ip_csum(outer_ip);
 }
 
+static inline void
+dpdk_adjust_outer_header_ipv6(struct rte_mbuf *m, uint16_t outer_header_len)
+{
+    char *outer_header_ptr = rte_pktmbuf_prepend(m, outer_header_len);
+    uint16_t eth_hlen = dpdk_get_ether_header_len(outer_header_ptr);
+
+    struct vr_ip6 *outer_ip = (struct vr_ip6 *)(outer_header_ptr + eth_hlen);
+    outer_ip->ip6_plen = rte_cpu_to_be_16(rte_pktmbuf_pkt_len(m) - eth_hlen - sizeof(struct vr_ip6));
+
+    /* Adjust UDP length to match IP segment size */
+    if (outer_ip->ip6_nxt == VR_IP_PROTO_UDP) {
+        struct vr_udp *udp = (struct vr_udp *)((char *)outer_ip +
+                              sizeof(struct vr_ip6));
+        udp->udp_length = outer_ip->ip6_plen;
+        // calculate udp checksum (mandatory for IPv6)
+        udp->udp_csum = 0;
+        udp->udp_csum = dpdk_ipv6_udptcp_cksum(m, (struct rte_ipv6_hdr *)outer_ip, (uint8_t*)udp);
+    }
+}
+
 int
 dpdk_segment_packet(struct vr_packet *pkt, struct rte_mbuf *mbuf_in,
                  struct rte_mbuf **mbuf_out, const unsigned short out_num,
@@ -425,12 +445,15 @@ dpdk_segment_packet(struct vr_packet *pkt, struct rte_mbuf *mbuf_in,
     struct dpdk_gso_state state;
     int number_of_packets = 0, i;
     uint16_t outer_header_len;
+    bool outer_header_ipv6 = ((pkt->vp_type == VP_TYPE_IPOIP6) ||
+                              (pkt->vp_type == VP_TYPE_IP6OIP6));
 
     outer_header_len = pkt_get_inner_network_header_off(pkt) -
             pkt_head_space(pkt);
 
     if (dpdk_gso_init_state(&state, mbuf_in, outer_header_len,
-                (pkt->vp_type == VP_TYPE_IP6OIP), do_outer_ip_csum) < 0)
+                ((pkt->vp_type == VP_TYPE_IP6OIP) || (pkt->vp_type == VP_TYPE_IP6OIP6)),
+                do_outer_ip_csum) < 0)
         return -1;
 
     number_of_packets = dpdk_gso_segment_ip_tcp(mbuf_in, &state, mbuf_out,
@@ -444,7 +467,11 @@ dpdk_segment_packet(struct vr_packet *pkt, struct rte_mbuf *mbuf_in,
         m = mbuf_out[i];
         /* Get into the inner IP header */
         rte_pktmbuf_adj(m, outer_header_len);
-        dpdk_adjust_outer_header(m, outer_header_len);
+        if (!outer_header_ipv6) {
+            dpdk_adjust_outer_header_ipv4(m, outer_header_len);
+        } else {
+            dpdk_adjust_outer_header_ipv6(m, outer_header_len);
+        }
         m->l2_len = mbuf_in->l2_len;
         m->l3_len = mbuf_in->l3_len;
         m->vlan_tci = mbuf_in->vlan_tci;
