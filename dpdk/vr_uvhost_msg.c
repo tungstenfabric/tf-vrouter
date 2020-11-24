@@ -28,6 +28,8 @@
 #include <rte_errno.h>
 #include <rte_hexdump.h>
 #include <rte_vhost.h>
+// CLEANUP #include <rte_string_fns.h>
+#include <rte_vhost.h>
 
 #define uvhm_client_name(vru_cl) (vru_cl->vruc_path + strlen(vr_socket_dir) \
     + sizeof(VR_UVH_VIF_PFX) - 1)
@@ -37,9 +39,11 @@
  *  vr_dpdk_store_persist_feature()
  *
  */
-// naren
-static int vr_uvhm_set_vring_enable(vr_uvh_client_t *vru_cl, uint16_t vring_idx, int enable);
 static int vr_uvhm_enable_disable_features(const char *file_path);
+static int vr_uvh_new_device_cb(int vid);
+static int vr_uvh_new_connection_cb(int vid);
+static void vr_uvh_destroy_connection_cb(int vid);
+static int vr_uvh_vring_state_changed_cb(int vid,  uint16_t vring_idx, int enable);
 
  /*
  * Return the basename given a full path
@@ -210,50 +214,50 @@ vr_uvh_nl_vif_del_handler(vrnu_vif_del_t *msg)
     return 0;
 }
 
-
-// naren
-static int vr_uvh_new_device_cb(int vid)
+/*
+ * uvhm_check_vring_ready - check if virtual queue is ready to use and
+ * set the ready status.
+ *
+ * Returns 1 if vring ready, 0 otherwise.
+ */
+static int
+uvhm_check_vring_ready(vr_uvh_client_t *vru_cl, unsigned int vring_idx)
 {
-    vr_uvh_client_t *vru_cl;
-    char file_path[VR_UNIX_PATH_MAX];
-    vr_uvhost_log("    vhost callback vid %d\n",
-                            vid);
-    // get the path from the vhost device
-    if (rte_vhost_get_ifname(vid, file_path, sizeof(file_path) - 1) < 0) {
-        // error in finding the device name
+    unsigned int vif_idx = vru_cl->vruc_idx;
+    vr_dpdk_virtioq_t *vq;
+
+    if (vif_idx >= VR_MAX_INTERFACES) {
+        return 0;
     }
 
-    vr_uvhost_log("    vhost callback ifname %s\n",
-                            file_path);
-
-    vru_cl = vr_uvhost_update_client(vid, file_path, VR_CLIENT_READY);
-    if (vru_cl == NULL) {
-        // fatal error
-    vr_uvhost_log("    error vid = %d, ifname %s\n",
-                            vid, file_path);
-        return -1;
+    if (vring_idx & 1) {
+        vq = &vr_dpdk_virtio_rxqs[vif_idx][vring_idx/2];
+    } else {
+        vq = &vr_dpdk_virtio_txqs[vif_idx][vring_idx/2];
     }
 
-    /* Disable notifications in queue callback fn. */
-    rte_vhost_enable_guest_notification(vid, 0, 0);
-    rte_vhost_enable_guest_notification(vid, 1, 0);
+    /* vring is ready when addresses are set. */
+    if (vq->vdv_ready_state != VQ_READY) {
+        /*
+         * Now the virtio queue is ready for forwarding.
+         * TODO - need a memory barrier here for non-x86 CPU?
+         */
+        if (vr_dpdk_set_virtq_ready(vru_cl->vruc_idx, vring_idx, VQ_READY)) {
+            vr_uvhost_log("Client %s: error setting vring %u ready state\n",
+                    uvhm_client_name(vru_cl), vring_idx);
+            return -1;
+        }
 
-    vr_uvhm_set_vring_enable(vru_cl, 0, 1);
-    vr_uvhm_set_vring_enable(vru_cl, 1, 1);
-    
-    /* Send netlink interface up message to agent */
-    vr_uvh_nl_send_intf_state(1, vru_cl->vruc_idx, basename(vru_cl->vruc_path));
+        vr_uvhost_log("Client %s: vring %d is ready\n",
+                uvhm_client_name(vru_cl), vring_idx);
+
+        return 1;
+    }
+
     return 0;
 }
 
-void vr_uvh_destroy_connection_cb(int vid)
-{
-
-}
-
-/*
- * Handle the VHOST_USER_SET_VRING_ENABLE vhost-user protocol message.
- */
+#if 0
 static int
 vr_uvhm_set_vring_enable(vr_uvh_client_t *vru_cl, uint16_t vring_idx, int enable)
 {
@@ -292,18 +296,21 @@ vr_uvhm_set_vring_enable(vr_uvh_client_t *vru_cl, uint16_t vring_idx, int enable
         
     return 0;
 }
+#endif
 
-// naren    
+/*Callbacks registered to DPDK library*/
 static const struct vhost_device_ops dpdk_rte_vhost_device_ops =
 {
     .new_device = vr_uvh_new_device_cb,
+    .new_connection = vr_uvh_new_connection_cb,
     .destroy_connection = vr_uvh_destroy_connection_cb,
+    .vring_state_changed = vr_uvh_vring_state_changed_cb,
 };
 
 static int
 vr_uvh_nl_vif_add_dpdk_handler(vrnu_vif_add_t *msg)
 {
-    int ret = -1;
+    int ret = 0;
     char file_path[VR_UNIX_PATH_MAX];
     uint64_t flags = 0;
     vr_uvh_client_t *vru_cl = NULL;
@@ -341,28 +348,23 @@ vr_uvh_nl_vif_add_dpdk_handler(vrnu_vif_add_t *msg)
     mkdir(vr_socket_dir, VR_DEF_SOCKET_DIR_MODE);
     /* qemu in server mode needs rw access */
     chmod(vr_socket_dir, 0777);
-    
     strncpy(file_path, vr_socket_dir, sizeof(file_path) -1);
     strncat(file_path, "/"VR_UVH_VIF_PFX, sizeof(file_path)
         - strlen(file_path) - 1);
     strncat(file_path, msg->vrnu_vif_name,
         sizeof(file_path) - strlen(file_path) - 1);
 
-
+    #if 0 //CLEANUP 
+    rte_strlcpy(file_path, vr_socket_dir, sizeof(file_path));
+    rte_strlcat(file_path, "/"VR_UVH_VIF_PFX, sizeof(file_path));
+    rte_strlcat(file_path, msg->vrnu_vif_name, sizeof(file_path));
+    #endif
     ret = rte_vhost_driver_register(file_path, flags);
     if (ret != 0) {
         ret = rte_vhost_driver_unregister(file_path);
-        if (ret != 0) {
-            vr_uvhost_log("    error unregsiter the driver for %s\n",
-                    file_path);
-        }
-        vr_uvhost_log("    error connecting uvhost socket to %s\n",
+        vr_uvhost_log("    error unregsiter the driver for %s\n",
                 file_path);
         goto error;
-    } else {
-        // sock_connected = 1;
-        vr_uvhost_log("connected to sock    vif %u socket %s FD is %s\n",
-                msg->vrnu_vif_idx, msg->vrnu_vif_name, file_path);
     }
 
     // enable/disable features based on user config
@@ -380,7 +382,7 @@ vr_uvh_nl_vif_add_dpdk_handler(vrnu_vif_add_t *msg)
     }
 
     // Naren need to revisit
-    vru_cl = vr_uvhost_new_client(1, file_path, msg->vrnu_vif_idx);
+    vru_cl = vr_uvhost_new_client(file_path, msg->vrnu_vif_idx);
     if (vru_cl == NULL) {
         vr_uvhost_log("    error creating vif %u socket %s new vhost client\n",
                       msg->vrnu_vif_idx, file_path);
@@ -391,21 +393,22 @@ vr_uvh_nl_vif_add_dpdk_handler(vrnu_vif_add_t *msg)
     vru_cl->vruc_flags = flags;
     vru_cl->vruc_vif_gen = msg->vrnu_vif_gen;
     vru_cl->vruc_vhostuser_mode = msg->vrnu_vif_vhostuser_mode;
-
     vr_dpdk_virtio_set_vif_client(msg->vrnu_vif_idx, vru_cl);
-    /* Send netlink interface down message to agent */
-    vr_uvh_nl_send_intf_state(0, vru_cl->vruc_idx, basename(vru_cl->vruc_path));
+
     ret = rte_vhost_driver_start(file_path);
-    if (ret < 0) {
-        vr_uvhost_log("    error starting vhost drive vif %u socket: %s (%d)\n",
-                        msg->vrnu_vif_idx, rte_strerror(errno), errno);
+    if (ret == -1) {
+        vr_uvh_nl_send_intf_state(0, vru_cl->vruc_idx, basename(vru_cl->vruc_path));
+        vr_uvhost_log("    error connecting uvhost socket FD to %s:"
+            " %s (%d)\n", file_path, rte_strerror(errno), errno);
         goto error;
+    } else if (ret == 0){
+            vr_uvhost_log("%s:Started vhost driver for %s\n",
+                __func__, basename(vru_cl->vruc_path));
     }
 
-    return 0;
-
 error:
-    if (vru_cl) {
+    if (ret != 0 && vru_cl) {
+        vr_uvhost_log("%s:Deleted vru cl driver\n", __func__);
         vr_uvhost_del_client(vru_cl);
     }
 
@@ -490,5 +493,121 @@ vr_uvh_nl_listen_handler(int fd, void *arg)
         return -1;
     }
 
+    return 0;
+}
+
+/*This callback is invoked when a virtio device becomes ready.
+ *  vid is the vhost device ID*/
+static int
+vr_uvh_new_device_cb(int vid)
+{
+    int i;
+    vr_uvh_client_t *vru_cl;
+    char file_path[VR_UNIX_PATH_MAX];
+    vr_uvhost_log("%s: New device cb %d\n", __func__, vid);
+    // get the path from the vhost device
+    if (rte_vhost_get_ifname(vid, file_path, sizeof(file_path) - 1) < 0) {
+        // error in finding the device name
+    }
+    vru_cl = vr_uvhost_update_client(vid, file_path, VR_CLIENT_READY);
+
+    vru_cl  = vr_uvhost_get_client_from_vid(vid);
+    if (unlikely(!vru_cl)) {
+       vr_uvhost_log("%s: No client found for the vhost device id %d\n", __func__, vid);
+       return 0;
+    }
+    vru_cl->vruc_state = VR_CLIENT_READY;
+
+    /* Disable notifications in queue callback fn. */
+
+    vr_uvhost_log("%s: Number of vrings  %d\n", __func__,  rte_vhost_get_vring_num(vid));
+    for (i = 0; i < rte_vhost_get_vring_num(vid); i++) {
+        rte_vhost_enable_guest_notification(vid, i, 0);
+    }
+    return 0;
+}
+
+/*This callback is invoked on new vhost-user socket connection.*/
+static int
+vr_uvh_new_connection_cb(int vid)
+{
+    vr_uvh_client_t *vru_cl  = vr_uvhost_get_client_from_vid(vid);
+    if (unlikely(!vru_cl)) {
+       vr_uvhost_log("%s: No client found for the vhost device id %d\n",
+           __func__, vid);
+       return 0;
+    }
+    vru_cl->vruc_vid = vid;
+    /* Send netlink interface up message to agent */
+    vr_uvh_nl_send_intf_state(1, vru_cl->vruc_idx, basename(vru_cl->vruc_path));
+    return 0;
+}
+
+/*This callback is invoked when vhost-user socket connection is closed.
+ * It indicates that device with id vid is no longer in use.*/
+static void
+vr_uvh_destroy_connection_cb(int vid)
+{
+    vr_uvh_client_t *vru_cl  = vr_uvhost_get_client_from_vid(vid);
+    if (unlikely(!vru_cl)) {
+       vr_uvhost_log("%s: No client found for the vhost device id %d\n",
+           __func__, vid);
+       return;
+    }
+    vr_uvhost_del_client(vru_cl);
+}
+
+/*
+ * Handle the VHOST_USER_SET_VRING_ENABLE vhost-user protocol message.
+ */
+static int
+vr_uvh_vring_state_changed_cb(int vid,  uint16_t vring_idx, int enable)
+{
+    vr_uvh_client_t *vru_cl;
+    unsigned int queue_id;
+
+    /* QEMU should NEVER send the disable command for queue 0 */
+    if ((vring_idx == 0 || vring_idx == 1) && !enable) {
+        RTE_LOG(ERR, UVHOST, "%s: Can not disable RX/TX queue 0\n", __func__);
+        return 0;
+    }
+
+    /*
+     * If the queue is higher than the number supported by vrouter, silently
+     * fail here (as there is no error message returned to qemu).
+     */
+    if ((vring_idx / 2) >= vr_dpdk.nb_fwd_lcores) {
+        RTE_LOG(ERR, UVHOST, "%s: Can not %s %s queue %d (only %d queues)\n",
+            __func__, enable ? "enable" : "disable",
+            (vring_idx & 1) ? "RX" : "TX", vring_idx / 2,
+            vr_dpdk.nb_fwd_lcores);
+        return 0;
+    }
+
+    vru_cl = vr_uvhost_get_client_from_vid(vid);
+    if(!vru_cl) {
+        vr_uvhost_log("%s: No client found for the vhost device id %d\n",
+            __func__, vid);
+        return 0;
+    }
+
+    vr_uvhost_log("Client %s: setting vring %u ready state %d\n",
+                  uvhm_client_name(vru_cl), vring_idx, enable);
+
+    uvhm_check_vring_ready(vru_cl, vring_idx);
+
+    queue_id = vring_idx / 2;
+
+    if (vring_idx & 1) {
+        /* RX queues */
+        vr_dpdk_virtio_rx_queue_enable_disable(vru_cl->vruc_idx,
+                                               vru_cl->vruc_vif_gen, queue_id,
+                                               enable);
+    } else {
+        /* TX queues */
+        vr_dpdk_virtio_tx_queue_enable_disable(vru_cl->vruc_idx,
+                                               vru_cl->vruc_vif_gen, queue_id,
+                                               enable);
+    }
     return 0;
 }

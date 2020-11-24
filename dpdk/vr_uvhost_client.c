@@ -9,11 +9,12 @@
 #include "vr_uvhost_client.h"
 #include "vr_uvhost_util.h"
 #include "vr_uvhost_msg.h"
-
+#include "nl_util.h"
+//CLEANUP #include <rte_string_fns.h>
+#include <rte_vhost.h>
 
 static vr_uvh_client_t vr_uvh_clients[VR_UVH_MAX_CLIENTS];
 static int vr_uvh_vhost_devices[VR_UVH_MAX_CLIENTS];
-
 /*
  * vr_uvhost_client_init - initialize the client array.
  */
@@ -39,7 +40,7 @@ vr_uvhost_client_init(void)
  * Returns a pointer to the client state on success, NULL otherwise.
  */
 vr_uvh_client_t *
-vr_uvhost_new_client(int fd, char *path, int cidx)
+vr_uvhost_new_client(char *path, int cidx)
 {
     if (cidx >= VR_UVH_MAX_CLIENTS) {
         return NULL;
@@ -51,12 +52,12 @@ vr_uvhost_new_client(int fd, char *path, int cidx)
     vr_uvh_clients[cidx].vruc_state = VR_CLIENT_PENDING_READY;
 
     strncpy(vr_uvh_clients[cidx].vruc_path, path, VR_UNIX_PATH_MAX - 1);
+    //Use during CLEANUP :rte_strlcpy(vr_uvh_clients[cidx].vruc_path, path, sizeof(vr_uvh_clients[cidx].vruc_path));
     vr_uvh_clients[cidx].vruc_flags = 0;
 
     return &vr_uvh_clients[cidx];
 }
-
-vr_uvh_client_t * 
+vr_uvh_client_t *
 vr_uvhost_update_client(int vid, char *path, vr_uvh_client_state_t state)
 {
     int cidx;
@@ -90,7 +91,7 @@ vr_uvhost_update_client(int vid, char *path, vr_uvh_client_state_t state)
             // error
     vr_uvhost_log("    NAREN NAREN error setting vid = %d, %d\n",
                             vid, vr_uvh_clients[cidx].vruc_vid);
-            
+
             return NULL;
         }
     } else {
@@ -125,12 +126,13 @@ vr_uvhost_del_client(vr_uvh_client_t *vru_cl)
             close(vru_cl->vruc_fd);
     }
 
-    vru_cl->vruc_fd = -1;
 #endif
-    if (vru_cl->vruc_vhostuser_mode == VRNU_VIF_MODE_CLIENT)
+    if (vru_cl->vruc_vhostuser_mode == VRNU_VIF_MODE_CLIENT) {
         unlink(vru_cl->vruc_path);
+    }
     vru_cl->vruc_flags = 0;
-
+    vru_cl->vruc_vid = -1;
+    vru_cl->vruc_state = VR_CLIENT_NOT_READY;
     return;
 }
 
@@ -160,11 +162,28 @@ vr_uvhost_get_vhost_client(int vid)
     if (vid >= VR_UVH_MAX_CLIENTS) {
         return NULL;
     }
-    
+
     cidx = vr_uvh_vhost_devices[vid];
-    if (cidx < 0) { 
+
+    if (cidx < 0) {
         return NULL;
     }
 
     return &vr_uvh_clients[cidx];
+}
+
+vr_uvh_client_t *
+vr_uvhost_get_client_from_vid(int vid)
+{
+    int i;
+    char ifname[VR_UNIX_PATH_MAX];
+
+    rte_vhost_get_ifname(vid, ifname, sizeof(ifname));
+
+    for (i = 0; i < VR_UVH_MAX_CLIENTS; i++) {
+        if(strncmp(vr_uvh_clients[i].vruc_path, ifname, strlen(ifname)) == 0) {
+            return &vr_uvh_clients[i];
+        }
+    }
+    return NULL;
 }

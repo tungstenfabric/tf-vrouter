@@ -1638,6 +1638,8 @@ dpdk_if_tx(struct vr_interface *vif, struct vr_packet *pkt)
              */
             if (likely(vif->vif_flags & VIF_FLAG_TX_CSUM_OFFLOAD)) {
                 dpdk_ipv4_outer_tunnel_hw_checksum(pkt);
+                if (!will_fragment)
+                    dpdk_hw_checksum_at_offset(pkt, pkt_get_inner_network_header_off(pkt));
 
             } else if (likely(!will_fragment)) {
                 /* if wont fragment it later */
