@@ -70,8 +70,7 @@ vr_dpdk_virtio_rx_queue_set(void *arg);
 int vr_dpdk_set_virtq_ready(unsigned int vif_idx, unsigned int vring_idx, vq_ready_state_t ready);
 void vr_dpdk_virtio_set_vif_client(unsigned int idx, void *client);
 void *vr_dpdk_virtio_get_vif_client(unsigned int idx);
-// NAREN TBD VM shutdown
-// int vr_dpdk_virtio_stop(unsigned int vif_idx);
+int vr_dpdk_virtio_stop(unsigned int vif_idx);
 
 void vr_dpdk_virtio_xstats_update(struct vr_interface_stats *stats,
     struct vr_dpdk_queue *queue);

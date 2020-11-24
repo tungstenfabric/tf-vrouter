@@ -70,14 +70,13 @@ struct dpdk_virtio_writer_params {
     vr_dpdk_virtioq_t *tx_virtioq;
 };
 
-#ifdef NAREN_VM_SHUTDOWN
 /*
  * vr_dpdk_virtio_stop - stop the virtio interface.
  *
  * Returns 0 on success, -1 otherwise.
  */
 int
-vr_dpdk_virtiotop(unsigned int vif_idx)
+vr_dpdk_virtio_stop(unsigned int vif_idx)
 {
     int i;
     vr_dpdk_virtioq_t *vq;
@@ -98,21 +97,11 @@ vr_dpdk_virtiotop(unsigned int vif_idx)
             vr_dpdk_set_virtq_ready(vif_idx, i, VQ_NOT_READY);
             rte_wmb();
             synchronize_rcu();
-            /*
-             * TODO: code duplication to minimize the changes.
-             * See vr_dpdk_virtio_get_vring_base().
-             */
-            vq->vdv_desc = NULL;
-            if (vq->vdv_callfd) {
-                close(vq->vdv_callfd);
-                vq->vdv_callfd = 0;
-            }
         }
     }
 
     return 0;
 }
-#endif
 
 static void *
 dpdk_virtio_writer_create(void *params, int socket_id)
@@ -814,21 +803,16 @@ dpdk_virtio_from_vm_rx(void *port, struct rte_mbuf **pkts, uint32_t max_pkts)
         return 0;
     }
 
-    if (unlikely(vru_cl->vruc_state != VR_CLIENT_READY)) {
-        RTE_LOG_DP(DEBUG, UVHOST, "%s: RX client is not ready, queue %p\n",
-                __func__, vq);
-        return 0;
-    }
-
     if (unlikely(vru_cl->vruc_vid < 0)) {
         RTE_LOG_DP(ERR, UVHOST, "%s: RX Device not setup, queue %p\n",
                 __func__, vq);
         return 0;
     }
 
-    // rx_ring_queue_id = (0x1 << vq->vdv_queue_id) | 0x1;
     rx_ring_queue_id = 0x1;
-    nb_pkts = rte_vhost_dequeue_burst(vru_cl->vruc_vid, rx_ring_queue_id, vr_dpdk.rss_mempool, pkts, (uint16_t)max_pkts);
+    nb_pkts = rte_vhost_dequeue_burst(vru_cl->vruc_vid, rx_ring_queue_id,
+                                      vr_dpdk.rss_mempool, pkts,
+                                      (uint16_t)max_pkts);
 
     return nb_pkts;
 }
@@ -865,15 +849,16 @@ dpdk_virtio_to_vm_tx(void *port, struct rte_mbuf *pkt)
     int tx_ring_queue_id;
     vr_uvh_client_t *vru_cl;
 
+
+    if (unlikely(vq->vdv_ready_state == VQ_NOT_READY))
+       return 0;
+
     vru_cl = vr_dpdk_virtio_get_vif_client(vq->vdv_vif_idx);
     if (unlikely(vru_cl == NULL)) {
         RTE_LOG_DP(ERR, UVHOST, "%s: TX client not found, queue %p\n",
                 __func__, vq);
         return 0;
     }
-
-    if (unlikely(vq->vdv_ready_state == VQ_NOT_READY))
-        return 0;
 
     if (unlikely(vru_cl->vruc_vid < 0)) {
         RTE_LOG_DP(ERR, UVHOST, "%s: TX Device not setup, queue %p\n",
@@ -1071,9 +1056,7 @@ vr_dpdk_set_virtq_ready(unsigned int vif_idx, unsigned int vring_idx,
         vq = &vr_dpdk_virtio_txqs[vif_idx][vring_idx/2];
     }
 
-        RTE_LOG_DP(DEBUG, UVHOST, "NAREN setting ready state\n");
     vq->vdv_ready_state = ready;
-        RTE_LOG_DP(DEBUG, UVHOST, "NAREN Done setting ready state\n");
 
     return 0;
 }

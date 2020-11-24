@@ -14,15 +14,8 @@
  */
 #define VR_UVH_MAX_CLIENTS VR_MAX_INTERFACES
 
-typedef enum vr_uvh_client_ready_state {
-    VR_CLIENT_NOT_READY,
-    VR_CLIENT_PENDING_READY,
-    VR_CLIENT_READY,
-} vr_uvh_client_state_t;
-
 typedef struct vr_uvh_client {
     char vruc_path[VR_UNIX_PATH_MAX];
-    uint8_t      vruc_state;
     unsigned int vruc_idx;
     int          vruc_vid;
     unsigned int vruc_vif_gen;
@@ -34,9 +27,8 @@ typedef struct vr_uvh_client {
 
 void vr_uvhost_client_init(void);
 vr_uvh_client_t *vr_uvhost_new_client(int fd, char *path, int cidx);
-void vr_uvhost_del_client(vr_uvh_client_t *vru_cl);
 vr_uvh_client_t *vr_uvhost_get_client(unsigned int cidx);
 vr_uvh_client_t *vr_uvhost_get_vhost_client(int vid);
-vr_uvh_client_t *vr_uvhost_update_client(int vid, char *path, vr_uvh_client_state_t state);
+vr_uvh_client_t *vr_uvhost_update_client(int vid, char *path);
 #endif /* __VR_UVHOST_CLIENT_H__ */
 
