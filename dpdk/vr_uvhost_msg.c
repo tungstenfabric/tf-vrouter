@@ -187,6 +187,7 @@ vr_uvh_nl_vif_del_handler(vrnu_vif_del_t *msg)
 {
     unsigned int cidx = msg->vrnu_vif_idx;
     vr_uvh_client_t *vru_cl;
+    int ret;
 
     vr_uvhost_log("Deleting vif %d virtual device\n", cidx);
 
@@ -203,19 +204,27 @@ vr_uvh_nl_vif_del_handler(vrnu_vif_del_t *msg)
                       cidx);
         return -1;
     }
-    /* Unmmap guest memory. */
-    // uvhm_client_munmap(vru_cl);
-    vr_uvhost_del_client(vru_cl);
+
+    ret = rte_vhost_driver_unregister(vru_cl->vruc_path);
+    if (ret !=0 ) {
+        vr_uvhost_log("Error in unregister driver for virtual device:%d\n", cidx);
+    }
+    // reset the path 
+    vru_cl->vruc_path[0] = '\0';
+    vru_cl->vruc_vid = -1;
+    vru_cl->vruc_flags = 0;
+
 
     return 0;
 }
 
 
-// naren
 static int vr_uvh_new_device_cb(int vid)
 {
     vr_uvh_client_t *vru_cl;
     char file_path[VR_UNIX_PATH_MAX];
+    uint64_t support_flags;
+
     vr_uvhost_log("    vhost callback vid %d\n",
                             vid);
     // get the path from the vhost device
@@ -226,7 +235,7 @@ static int vr_uvh_new_device_cb(int vid)
     vr_uvhost_log("    vhost callback ifname %s\n",
                             file_path);
 
-    vru_cl = vr_uvhost_update_client(vid, file_path, VR_CLIENT_READY);
+    vru_cl = vr_uvhost_update_client(vid, file_path);
     if (vru_cl == NULL) {
         // fatal error
     vr_uvhost_log("    error vid = %d, ifname %s\n",
@@ -242,13 +251,55 @@ static int vr_uvh_new_device_cb(int vid)
     vr_uvhm_set_vring_enable(vru_cl, 1, 1);
     
     /* Send netlink interface up message to agent */
+    rte_vhost_get_negotiated_features(vid, &support_flags);
+    vr_uvhost_log("    Negotiated FEATURES: returns 0x%"PRIx64"\n",
+                                            support_flags);
     vr_uvh_nl_send_intf_state(1, vru_cl->vruc_idx, basename(vru_cl->vruc_path));
     return 0;
 }
 
+// called for VM shutdown/pause
+void vr_uvh_destroy_device_cb(int vid)
+{
+    vr_uvh_client_t  *vru_cl;
+    
+    vru_cl = vr_uvhost_get_vhost_client(vid);
+    if (vru_cl == NULL) {
+        vr_uvhost_log("    Fatal error finding client for vhost device (%d)\n",
+                        vid);
+    }
+    vr_uvhost_log("    vhost device destroy for vif %u socket: %s\n",
+            vru_cl->vruc_idx, vru_cl->vruc_path);
+    /*
+     * stop the virtio polling of the queues
+     */
+    vr_dpdk_virtio_stop(vru_cl->vruc_idx);
+
+    /* Send netlink interface down message */
+    vr_uvh_nl_send_intf_state(0, vru_cl->vruc_idx, basename(vru_cl->vruc_path));
+
+    // TODO for Nandini 
+    // add multi-queue handling, if any here
+    // For multi-queue, set the vq->vdv_ready_state = VQ_NOT_READY or disable
+    vr_uvhm_set_vring_enable(vru_cl, 0, 0);
+    vr_uvhm_set_vring_enable(vru_cl, 1, 0);
+}
+
 void vr_uvh_destroy_connection_cb(int vid)
 {
-
+    vr_uvh_client_t  *vru_cl;
+    
+    vru_cl = vr_uvhost_get_vhost_client(vid);
+    if (vru_cl == NULL) {
+        vr_uvhost_log("    Error close connection: No client for vhost device (%d)\n",
+                        vid);
+    }
+    vr_uvhost_log("    vhost close connection for vif %u socket: %s\n",
+            vru_cl->vruc_idx, vru_cl->vruc_path);
+    // reset the client info, except path info.
+    // File path should be cleared after calling unregister driver
+    vru_cl->vruc_vid = -1;
+    vru_cl->vruc_flags = 0;
 }
 
 /*
@@ -293,10 +344,12 @@ vr_uvhm_set_vring_enable(vr_uvh_client_t *vru_cl, uint16_t vring_idx, int enable
     return 0;
 }
 
-// naren    
 static const struct vhost_device_ops dpdk_rte_vhost_device_ops =
 {
     .new_device = vr_uvh_new_device_cb,
+    // VM shutdown or paused
+    .destroy_device = vr_uvh_destroy_device_cb,
+    // device destroyed
     .destroy_connection = vr_uvh_destroy_connection_cb,
 };
 
@@ -326,8 +379,10 @@ vr_uvh_nl_vif_add_dpdk_handler(vrnu_vif_add_t *msg)
      */
     if (msg->vrnu_vif_vhostuser_mode == VRNU_VIF_MODE_CLIENT) {
         msg->vrnu_vif_vhostuser_mode = VRNU_VIF_MODE_SERVER;
+        // qemu in server-mode, dpdk vhost-user in client-mode
         flags |= RTE_VHOST_USER_CLIENT;
     } else {
+        // qemu in server-mode, dpdk vhost-user in client-mode
         flags |= RTE_VHOST_USER_CLIENT;
     }
 
@@ -360,7 +415,6 @@ vr_uvh_nl_vif_add_dpdk_handler(vrnu_vif_add_t *msg)
                 file_path);
         goto error;
     } else {
-        // sock_connected = 1;
         vr_uvhost_log("connected to sock    vif %u socket %s FD is %s\n",
                 msg->vrnu_vif_idx, msg->vrnu_vif_name, file_path);
     }
@@ -379,7 +433,6 @@ vr_uvh_nl_vif_add_dpdk_handler(vrnu_vif_add_t *msg)
         goto error;
     }
 
-    // Naren need to revisit
     vru_cl = vr_uvhost_new_client(1, file_path, msg->vrnu_vif_idx);
     if (vru_cl == NULL) {
         vr_uvhost_log("    error creating vif %u socket %s new vhost client\n",
@@ -392,9 +445,6 @@ vr_uvh_nl_vif_add_dpdk_handler(vrnu_vif_add_t *msg)
     vru_cl->vruc_vif_gen = msg->vrnu_vif_gen;
     vru_cl->vruc_vhostuser_mode = msg->vrnu_vif_vhostuser_mode;
 
-    vr_dpdk_virtio_set_vif_client(msg->vrnu_vif_idx, vru_cl);
-    /* Send netlink interface down message to agent */
-    vr_uvh_nl_send_intf_state(0, vru_cl->vruc_idx, basename(vru_cl->vruc_path));
     ret = rte_vhost_driver_start(file_path);
     if (ret < 0) {
         vr_uvhost_log("    error starting vhost drive vif %u socket: %s (%d)\n",
@@ -402,11 +452,20 @@ vr_uvh_nl_vif_add_dpdk_handler(vrnu_vif_add_t *msg)
         goto error;
     }
 
+    vr_uvh_nl_send_intf_state(0, vru_cl->vruc_idx, basename(vru_cl->vruc_path));
+    vr_dpdk_virtio_set_vif_client(msg->vrnu_vif_idx, vru_cl);
+
     return 0;
 
 error:
     if (vru_cl) {
-        vr_uvhost_del_client(vru_cl);
+        /* Send netlink interface down message to agent */
+        vr_uvh_nl_send_intf_state(0, vru_cl->vruc_idx, basename(vru_cl->vruc_path));
+        /* reset the client info, except path info.
+         * File path should be cleared after calling unregister driver
+         */
+        vru_cl->vruc_vid = -1;
+        vru_cl->vruc_flags = 0;
     }
 
     return ret;
