@@ -375,7 +375,7 @@ vr_max_tx_queues_adjust(struct vr_dpdk_ethdev *ethdev, uint16_t *nb_tx_q)
 
 /* Update device info */
 static void
-dpdk_ethdev_info_update(struct vr_dpdk_ethdev *ethdev)
+dpdk_ethdev_info_update(struct vr_dpdk_ethdev *ethdev, struct vr_interface *vif)
 {
     struct rte_eth_dev_info dev_info;
 
@@ -429,6 +429,10 @@ dpdk_ethdev_info_update(struct vr_dpdk_ethdev *ethdev)
     if (ethdev->ethdev_reta_size == 0)
         ethdev->ethdev_nb_rx_queues = ethdev->ethdev_nb_rss_queues;
 #endif
+    /* Enable multicast to be received from the port */
+    if (vif && (vif->vif_flags & VIF_FLAG_ALL_MULTICAST_ENABLE)) {
+        rte_eth_allmulticast_enable(ethdev->ethdev_port_id);
+    }
 
     RTE_LOG(INFO, VROUTER, "Using %d TX queues, %d RX queues\n",
             ethdev->ethdev_nb_tx_queues, 
@@ -927,7 +931,7 @@ vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf
     ethdev->ethdev_ptr = &rte_eth_devices[port_id];
     vif = __vrouter_get_interface(vrouter_get(0), ethdev->ethdev_vif_idx);
 
-    dpdk_ethdev_info_update(ethdev);
+    dpdk_ethdev_info_update(ethdev, vif);
 
     ret = rte_eth_dev_configure(port_id, ethdev->ethdev_nb_rx_queues,
         ethdev->ethdev_nb_tx_queues, dev_conf);
@@ -1273,7 +1277,7 @@ dpdk_mbuf_parse_and_hash_packets(struct rte_mbuf *mbuf)
             return dpdk_mbuf_rss_hash(mbuf, ipv4_hdr, ipv6_hdr);
         } else {
             RTE_LOG_DP(DEBUG, VROUTER, "%s: RSS hash: 0x%x (from NIC)\n",
-                    __func__, mbuf->hash.rss);
+                       __func__, mbuf->hash.rss);
             return 0;
         }
     } else {

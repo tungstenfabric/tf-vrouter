@@ -80,7 +80,7 @@
 #define VIRTUAL_TRANSPORT_STRING    "virtual"
 
 static struct nl_client *cl;
-static char flag_string[64], if_name[IFNAMSIZ];
+static char flag_string[67], if_name[IFNAMSIZ];
 static int if_kindex = -1, vrf_id, vr_ifindex = -1;
 static int if_pmdindex = -1, vif_index = -1;
 static bool need_xconnect_if = false;
@@ -165,6 +165,7 @@ static struct vr_util_flags flag_metadata[] = {
     {VIF_FLAG_HBS_RIGHT,        "HbsR",     "HBS Right Intf"},
     {VIF_FLAG_IGMP_ENABLED,     "Ig",       "Igmp Trap Enabled"},
     {VIF_FLAG_MAC_IP_LEARNING,  "Ml",       "MAC-IP Learning Enabled"},
+    {VIF_FLAG_ALL_MULTICAST_ENABLE, "Me",   "Multicast Enabled"},
 };
 
 static char *

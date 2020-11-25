@@ -129,6 +129,17 @@
 /* Interface flag for MAC-IP Learning feature */
 #define VIF_FLAG_MAC_IP_LEARNING   0x40000000
 
+/*
+ * Enable Multicast traffic reception from NIC;
+ * Currently used to enable reception of IPv6 ND
+ * and routing protocols multicast pkts (Warthog usecase)
+ * NOTE: For bond interfaces, multicast is enabled
+ *       by default for bond functioning;
+ *       Hence this flag is only checked for non-bond
+ *       interfaces.
+ */
+#define VIF_FLAG_ALL_MULTICAST_ENABLE  0x80000000
+
 /* vrouter capabilities mask (cannot be changed by agent) */
 #define VIF_VR_CAP_MASK (VIF_FLAG_TX_CSUM_OFFLOAD | \
                          VIF_FLAG_VLAN_OFFLOAD | \
