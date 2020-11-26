@@ -33,6 +33,74 @@
       "revId": "262b3c68b8bfdda482d9ddb69ad5f3c12add3780",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "72a817ae_ea784691",
+        "filename": "utils/dropstats.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 292,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-11-26T10:27:08Z",
+      "side": 1,
+      "message": "What will happen when user has configured dropstats to capture only certain drop type and then he does \"dropstats --log \u003ccore\u003e\" ? Will you display only the configured drop stats or everything? I think we should display only the configured drop stats (basically type parameter need not be passed)",
+      "revId": "262b3c68b8bfdda482d9ddb69ad5f3c12add3780",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "70839b43_91b09b35",
+        "filename": "utils/dropstats.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 296,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-11-26T10:27:08Z",
+      "side": 1,
+      "message": "For better readability, can you call this as --set_type \u003clog type\u003e ?\nAs a convention, anything which we want to set via CLI, we should use set_ as the prefix.",
+      "revId": "262b3c68b8bfdda482d9ddb69ad5f3c12add3780",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "da066502_79bd9391",
+        "filename": "utils/vr_util.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 497,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-11-26T10:27:08Z",
+      "side": 1,
+      "message": "Instead of putting if conditions everywhere, you can write a macro PRINT_DROP_STAT(x) \\ if (x) printf(...)",
+      "revId": "262b3c68b8bfdda482d9ddb69ad5f3c12add3780",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b78f9cb8_30b9d4c8",
+        "filename": "utils/vr_util.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 751,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-11-26T10:27:08Z",
+      "side": 1,
+      "message": "If user has configured a specific drop log type to be captured, can we mention that here saying the drop log type option is active/set and the type which is set ?",
+      "revId": "262b3c68b8bfdda482d9ddb69ad5f3c12add3780",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
