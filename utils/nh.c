@@ -41,12 +41,15 @@ static int comp_nh[32], lbl[32];
 static int comp_nh_ind = 0, lbl_ind = 0;
 
 static struct in_addr sip, dip;
+static struct in6_addr sip6, dip6;
+
 static struct nl_client *cl;
 
 static int
 vr_nh_op(struct nl_client *cl, int command, int type, uint32_t nh_id,
         uint32_t if_id, uint32_t vrf_id, int8_t *dst, int8_t  *src,
-        struct in_addr sip, struct in_addr dip, uint32_t flags);
+        struct in_addr sip, struct in_addr dip, struct in6_addr sip6,
+        struct in6_addr dip6, uint32_t flags);
 
 char *
 nh_type(uint32_t type)
@@ -173,6 +176,11 @@ nh_flags(uint32_t flags, uint8_t type, char *ptr)
         case NH_FLAG_TUNNEL_UDP:
             if (type == NH_TUNNEL)
                 strcat(ptr, "Udp, ");
+            break;
+
+        case NH_FLAG_TUNNEL_MPLS_O_V6:
+            if (type == NH_TUNNEL)
+                strcat(ptr, "MPLSOV6");
             break;
 
         case NH_FLAG_COMPOSITE_ECMP:
@@ -324,10 +332,10 @@ nexthop_req_process(void *s_req)
                 a.s_addr = req->nhr_tun_dip;
                 printf(" Dip:%s", inet_ntoa(a));
             } else if (req->nhr_family == AF_INET6) {
-                printf("Sip: %s",
+                printf("Sip6: %s",
                     inet_ntop(AF_INET6, (struct in6_addr *)req->nhr_tun_sip6,
                     in6_dst, sizeof(in6_dst)));
-                printf(" Dip: %s",
+                printf(" Dip6: %s",
                     inet_ntop(AF_INET6, (struct in6_addr *)req->nhr_tun_dip6,
                     in6_dst, sizeof(in6_dst)));
             }
@@ -401,13 +409,13 @@ nexthop_req_process(void *s_req)
                 if (req->nhr_nh_list[i] == -1)
                     continue;
                 vr_nh_op(cl, command, type, req->nhr_nh_list[i], if_id, vrf_id,
-                            dst_mac, src_mac, sip, dip, flags);
+                            dst_mac, src_mac, sip, dip, sip6, dip6, flags);
             }
         }
 
         if ((req->nhr_flags & NH_FLAG_INDIRECT) && (req->nhr_nh_list_size)) {
             vr_nh_op(cl, command, type, req->nhr_nh_list[0], if_id, vrf_id,
-                         dst_mac, src_mac, sip, dip, flags);
+                         dst_mac, src_mac, sip, dip, sip6, dip6, flags);
         }
     }
 }
@@ -429,7 +437,8 @@ nh_fill_nl_callbacks()
 static int
 vr_nh_op(struct nl_client *cl, int command, int type, uint32_t nh_id,
         uint32_t if_id, uint32_t vrf_id, int8_t *dst, int8_t  *src,
-        struct in_addr sip, struct in_addr dip, uint32_t flags)
+        struct in_addr sip, struct in_addr dip, struct in6_addr sip6,
+        struct in6_addr dip6, uint32_t flags)
 {
     int ret;
     bool dump = false;
@@ -442,7 +451,7 @@ op_retry:
                     vrf_id, dst, comp_nh[0], lbl[0]);
         } else if ((type == NH_ENCAP) || (type == NH_TUNNEL)) {
             ret = vr_send_nexthop_encap_tunnel_add(cl, 0, type, nh_id,
-                    flags, vrf_id, if_id, src, dst, sip, dip, sport, dport, l3_vxlan_mac, family);
+                    flags, vrf_id, if_id, src, dst, sip, dip, sip6, dip6, sport, dport, l3_vxlan_mac, family);
         } else if (type == NH_COMPOSITE) {
             ret = vr_send_nexthop_composite_add(cl, 0, nh_id, flags, vrf_id,
                     comp_nh_ind, comp_nh, lbl, family);
@@ -563,6 +572,8 @@ enum opt_index {
     TYPE_OPT_IND,
     SIP_OPT_IND,
     DIP_OPT_IND,
+    SIP6_OPT_IND,
+    DIP6_OPT_IND,
     POL_OPT_IND,
     RPOL_OPT_IND,
     L2_OPT_IND,
@@ -608,7 +619,6 @@ opt_set(int ind)
         opt[ind] = 0;
         return true;
     }
-
     return false;
 }
 
@@ -620,6 +630,8 @@ static struct option long_options[] = {
     [TYPE_OPT_IND]      = {"type",  required_argument,  &opt[TYPE_OPT_IND],     1},
     [SIP_OPT_IND]       = {"sip",   required_argument,  &opt[SIP_OPT_IND],      1},
     [DIP_OPT_IND]       = {"dip",   required_argument,  &opt[DIP_OPT_IND],      1},
+    [SIP6_OPT_IND]      = {"sip6",  required_argument,  &opt[SIP6_OPT_IND],     1},
+    [DIP6_OPT_IND]      = {"dip6",  required_argument,  &opt[DIP6_OPT_IND],     1},
     [POL_OPT_IND]       = {"pol",   no_argument,        &opt[POL_OPT_IND],      1},
     [RPOL_OPT_IND]      = {"rpol",  no_argument,        &opt[RPOL_OPT_IND],     1},
     [L2_OPT_IND]        = {"l2",    no_argument,        &opt[L2_OPT_IND],       1},
@@ -675,6 +687,7 @@ parse_long_opts(int ind, char *opt_arg)
         nh_id = strtoul(opt_arg, NULL, 0);
         if (errno)
             usage();
+
         nh_set = 1;
         break;
 
@@ -682,6 +695,7 @@ parse_long_opts(int ind, char *opt_arg)
         if_id = strtoul(opt_arg, NULL, 0);
         if (errno)
             usage();
+
         break;
 
     case SMAC_OPT_IND:
@@ -690,6 +704,7 @@ parse_long_opts(int ind, char *opt_arg)
             memcpy(src_mac, mac, sizeof(src_mac));
         else
             cmd_usage();
+
         break;
 
     case DMAC_OPT_IND:
@@ -698,18 +713,21 @@ parse_long_opts(int ind, char *opt_arg)
             memcpy(dst_mac, mac, sizeof(dst_mac));
         else
             cmd_usage();
+
         break;
 
     case VRF_OPT_IND:
         vrf_id = strtoul(opt_arg, NULL, 0);
         if (errno)
             usage();
+
         break;
 
     case TYPE_OPT_IND:
         type = strtoul(opt_arg, NULL, 0);
         if (errno)
             usage();
+
         break;
 
     case SIP_OPT_IND:
@@ -718,6 +736,14 @@ parse_long_opts(int ind, char *opt_arg)
 
     case DIP_OPT_IND:
         inet_aton(opt_arg, &dip);
+        break;
+
+    case SIP6_OPT_IND:
+        inet_pton(AF_INET6, opt_arg, &sip6);
+        break;
+
+    case DIP6_OPT_IND:
+        inet_pton(AF_INET6, opt_arg, &dip6);
         break;
 
     case SPORT_OPT_IND:
@@ -838,9 +864,8 @@ validate_options(void)
         } else if (type == NH_TUNNEL) {
 
             if (opt_set(PBB_OPT_IND)) {
-                if (!opt_set(CNI_OPT_IND)) {
+                if (!opt_set(CNI_OPT_IND))
                     cmd_usage();
-                }
 
                 if (comp_nh_ind != 1)
                     cmd_usage();
@@ -850,9 +875,15 @@ validate_options(void)
 
                 flags |= NH_FLAG_TUNNEL_PBB;
 
-            } else if (!opt_set(OIF_OPT_IND) || !opt_set(SMAC_OPT_IND) ||
-                    !opt_set(DMAC_OPT_IND) || !opt_set(SIP_OPT_IND) ||
-                    !opt_set(DIP_OPT_IND)) {
+            } else if (opt_set(OIF_OPT_IND) && opt_set(SMAC_OPT_IND) &&
+                    opt_set(DMAC_OPT_IND)) {
+                if (opt_set(SIP6_OPT_IND) && opt_set(DIP6_OPT_IND)) {
+                    flags |= NH_FLAG_TUNNEL_MPLS_O_V6;
+                    family = AF_INET6;
+                } else if (!opt_set(SIP_OPT_IND) || !opt_set(DIP_OPT_IND)) {
+                    cmd_usage();
+                }
+            } else {
                 cmd_usage();
             }
 
@@ -865,12 +896,14 @@ validate_options(void)
                 flags |= NH_FLAG_TUNNEL_VXLAN;
                 if (!opt_set(SPORT_OPT_IND) || !opt_set(DPORT_OPT_IND))
                     cmd_usage();
+
                 if (opt_set(L3_VXLAN_OPT_IND))
                     flags |= NH_FLAG_L3_VXLAN;
             }
 
             if (!(flags & (NH_FLAG_TUNNEL_UDP_MPLS | NH_FLAG_TUNNEL_UDP |
-                        NH_FLAG_TUNNEL_VXLAN | NH_FLAG_TUNNEL_PBB)))
+                        NH_FLAG_TUNNEL_VXLAN | NH_FLAG_TUNNEL_PBB |
+                        NH_FLAG_TUNNEL_MPLS_O_V6)))
                 flags |= NH_FLAG_TUNNEL_GRE;
 
             if (memcmp(opt, zero_opt, sizeof(opt)))
@@ -937,6 +970,7 @@ validate_options(void)
     case SANDESH_OP_GET:
         if (memcmp(opt, zero_opt, sizeof(opt)))
             usage();
+
         break;
     }
 
@@ -974,7 +1008,7 @@ main(int argc, char *argv[])
     }
 
     vr_nh_op(cl, command, type, nh_id, if_id, vrf_id, dst_mac,
-            src_mac, sip, dip, flags);
+            src_mac, sip, dip, sip6, dip6, flags);
 
     return 0;
 }

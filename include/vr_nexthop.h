@@ -69,6 +69,7 @@ enum nexthop_type {
 #define NH_FLAG_L3_VXLAN                    0x02000000
 #define NH_FLAG_TUNNEL_MPLS_O_MPLS          0x04000000
 #define NH_FLAG_VALIDATE_MCAST_SRC          0x08000000
+#define NH_FLAG_TUNNEL_MPLS_O_V6            0x10000000
 
 #define NH_SOURCE_INVALID                   0
 #define NH_SOURCE_VALID                     1
