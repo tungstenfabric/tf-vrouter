@@ -113,7 +113,8 @@ vrouter_free_nexthop(struct vr_nexthop *nh)
         }
 
     } else if ((nh->nh_type == NH_TUNNEL) &&
-            (nh->nh_flags & NH_FLAG_TUNNEL_UDP) &&
+            ((nh->nh_flags & NH_FLAG_TUNNEL_UDP) ||
+              nh->nh_flags & NH_FLAG_TUNNEL_MPLS_O_V6)&&
             (nh->nh_family == AF_INET6)) {
         if (nh->nh_udp_tun6_sip) {
             vr_free(nh->nh_udp_tun6_sip, VR_NETWORK_ADDRESS_OBJECT);
@@ -2346,6 +2347,116 @@ nh_vxlan_tunnel_validate_src(struct vr_packet *pkt, struct vr_nexthop *nh,
     return NH_SOURCE_INVALID;
 }
 
+static nh_processing_t
+nh_mpls_o_v6_tunnel(struct vr_packet *pkt, struct vr_nexthop *nh,
+                    struct vr_forwarding_md *fmd)
+{
+    unsigned int overhead_len, mudp_head_space;
+    uint16_t tun_encap_len;
+    unsigned short reason = VP_DROP_PUSH;
+
+    int tun_encap_rewrite;
+    struct vr_forwarding_class_qos *qos;
+    struct vr_interface *vif;
+    struct vr_packet *tmp_pkt;
+    struct vr_df_trap_arg trap_arg;
+    unsigned int label_count = 1;
+
+    tun_encap_len = nh->nh_udp_tun6_encap_len;
+
+    if (!fmd || fmd->fmd_label < 0) {
+        vr_forward(nh->nh_router, pkt, fmd);
+        return NH_PROCESSING_COMPLETE;
+    }
+
+    vr_fmd_update_label_type(fmd, VR_LABEL_TYPE_MPLS);
+
+    /* Calculate the head space for mpls,udp ip and eth */
+    mudp_head_space = (label_count*VR_MPLS_HDR_LEN) +
+                sizeof(struct vr_ip6) + sizeof(struct vr_udp);
+    if (vr_fmd_l2_control_data_is_enabled(fmd))
+        mudp_head_space += VR_L2_CTRL_DATA_LEN;
+
+    if ((pkt->vp_type == VP_TYPE_IP) || (pkt->vp_type == VP_TYPE_IP6)) {
+        overhead_len = mudp_head_space;
+        if (vr_has_to_fragment(nh->nh_dev, pkt, overhead_len) &&
+                vr_ip_dont_fragment_set(pkt)) {
+            if (pkt->vp_flags & VP_FLAG_MULTICAST) {
+                reason = VP_DROP_MCAST_DF_BIT;
+                PKT_LOG(reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
+                goto send_fail;
+            }
+            trap_arg.df_mtu = vif_get_mtu(nh->nh_dev) -
+                (overhead_len + pkt_get_network_header_off(pkt) - pkt->vp_data);
+            trap_arg.df_flow_index = fmd->fmd_flow_index;
+            vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_HANDLE_DF, (void *)&trap_arg);
+            return NH_PROCESSING_COMPLETE;
+        }
+    }
+
+    mudp_head_space += tun_encap_len;
+
+    if (pkt_head_space(pkt) < mudp_head_space) {
+        tmp_pkt = vr_pexpand_head(pkt, mudp_head_space - pkt_head_space(pkt));
+        if (!tmp_pkt)
+            goto send_fail;
+
+        pkt = tmp_pkt;
+    }
+
+    if (vr_fmd_l2_control_data_is_enabled(fmd)) {
+        if (!vr_l2_control_data_add(&pkt))
+            goto send_fail;
+    }
+
+    qos = vr_qos_get_forwarding_class(nh->nh_router, pkt, fmd);
+    if (nh_push_mpls_header(pkt, fmd->fmd_label, qos, true) < 0)
+        goto send_fail;
+
+    if (vr_perfs)
+        pkt->vp_flags |= VP_FLAG_GSO;
+
+    if (pkt->vp_type == VP_TYPE_IPOIP6)
+        pkt->vp_type = VP_TYPE_IP;
+    else if (pkt->vp_type == VP_TYPE_IP6OIP6)
+        pkt->vp_type = VP_TYPE_IP6;
+
+    /*
+     * Change the packet type
+     */
+    if (pkt->vp_type == VP_TYPE_IP6)
+        pkt->vp_type = VP_TYPE_IP6OIP6;
+    else if (pkt->vp_type == VP_TYPE_IP)
+        pkt->vp_type = VP_TYPE_IPOIP6;
+    else
+        pkt->vp_type = VP_TYPE_IP;
+
+    pkt_set_network_header(pkt, pkt->vp_data);
+
+    /* slap l2 header */
+    vif = nh->nh_dev;
+    if (nh->nh_flags & NH_FLAG_CRYPT_TRAFFIC) {
+        if (!nh->nh_crypt_dev) {
+            reason = VP_DROP_NO_CRYPT_PATH;
+            PKT_LOG(reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
+            goto send_fail;
+        }
+        vif = nh->nh_crypt_dev;
+    }
+    tun_encap_rewrite = vif->vif_set_rewrite(vif, &pkt, fmd,
+            nh->nh_data, tun_encap_len);
+    if (tun_encap_rewrite < 0) {
+        goto send_fail;
+    }
+
+    vif->vif_tx(vif, pkt, fmd);
+
+    return NH_PROCESSING_COMPLETE;
+
+send_fail:
+    vr_pfree(pkt, reason);
+    return NH_PROCESSING_COMPLETE;
+}
 
 /*
  * nh_mpls_udp_tunnel - tunnel packet with MPLS label in UDP.
@@ -3402,6 +3513,10 @@ nh_tunnel_set_reach_nh(struct vr_nexthop *nh)
         if (dev) {
             nh->nh_reach_nh = nh_mpls_udp_tunnel;
         }
+    } else if (nh->nh_flags & NH_FLAG_TUNNEL_MPLS_O_V6) {
+        if (dev) {
+            nh->nh_reach_nh = nh_mpls_o_v6_tunnel;
+        }
     } else if (nh->nh_flags & NH_FLAG_TUNNEL_VXLAN) {
         if (dev) {
             nh->nh_reach_nh = nh_vxlan_tunnel;
@@ -3455,7 +3570,11 @@ nh_tunnel_add(struct vr_nexthop *nh, vr_nexthop_req *req)
         if (nh->nh_flags & NH_FLAG_TUNNEL_MPLS_O_MPLS) {
             nh->nh_gre_tun_label = req->nhr_transport_label;
         }
-    } else if (nh->nh_flags & NH_FLAG_TUNNEL_UDP) {
+    } else if (nh->nh_flags & NH_FLAG_TUNNEL_UDP ||
+               nh->nh_flags & NH_FLAG_TUNNEL_MPLS_O_V6) {
+        if (nh->nh_flags & NH_FLAG_TUNNEL_MPLS_O_V6) {
+            nh->nh_dev = vif;
+        }
         if (req->nhr_family == AF_INET) {
             nh->nh_udp_tun_sip = req->nhr_tun_sip;
             nh->nh_udp_tun_dip = req->nhr_tun_dip;
@@ -3892,7 +4011,8 @@ vr_nexthop_req_get_size(void *req_p)
     size += req->nhr_pbb_mac_size;
 
     if ((req->nhr_type == NH_TUNNEL) &&
-            (req->nhr_flags & NH_FLAG_TUNNEL_UDP) &&
+            ((req->nhr_flags & NH_FLAG_TUNNEL_UDP) ||
+             (req->nhr_flags & NH_FLAG_TUNNEL_MPLS_O_V6))&&
             (req->nhr_family == AF_INET6))
         size += (VR_IP6_ADDRESS_LEN * 2 * 4);
 
@@ -4001,7 +4121,8 @@ vr_nexthop_make_req(vr_nexthop_req *req, struct vr_nexthop *nh)
             if (nh->nh_flags & NH_FLAG_TUNNEL_MPLS_O_MPLS) {
                 req->nhr_transport_label = nh->nh_gre_tun_label;
             }
-        } else if (nh->nh_flags & NH_FLAG_TUNNEL_UDP) {
+        } else if ((nh->nh_flags & NH_FLAG_TUNNEL_UDP) ||
+                   (nh->nh_flags & NH_FLAG_TUNNEL_MPLS_O_V6)) {
             if (nh->nh_family == AF_INET) {
                 req->nhr_tun_sip = nh->nh_udp_tun_sip;
                 req->nhr_tun_dip = nh->nh_udp_tun_dip;
@@ -4098,7 +4219,8 @@ vr_nexthop_req_get(struct vr_nexthop *nh)
         return NULL;
 
     if ((nh->nh_type == NH_TUNNEL) &&
-            (nh->nh_flags & NH_FLAG_TUNNEL_UDP) &&
+            ((nh->nh_flags & NH_FLAG_TUNNEL_UDP) ||
+             (nh->nh_flags & NH_FLAG_TUNNEL_MPLS_O_V6))&&
             (nh->nh_family == AF_INET6)) {
         nhr->nhr_tun_sip6 = vr_malloc(VR_IP6_ADDRESS_LEN,
                 VR_NETWORK_ADDRESS_OBJECT);

@@ -202,12 +202,17 @@ class TunnelNextHopV6(NextHop):
     """
 
     def __init__(self, encap_oif_id, encap, tun_sip6, tun_dip6, nh_idx=1,
+                 nh_flags=constants.NH_FLAG_VALID, nh_vrf=0, encap_family=None,
                  **kwargs):
         super(TunnelNextHopV6, self).__init__(
             constants.NH_TYPE_TUNNEL,
+            nh_idx,
             constants.AF_INET6,
-            encap_oif,
+            nh_vrf,
+            nh_flags,
+            encap_oif_id,
             encap,
+            encap_family,
             **kwargs)
         self.nhr_tun_sip6 = tun_sip6
         self.nhr_tun_dip6 = tun_dip6

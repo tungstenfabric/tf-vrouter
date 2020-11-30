@@ -1895,7 +1895,8 @@ int
 vr_send_nexthop_encap_tunnel_add(struct nl_client *cl, unsigned int router_id,
         unsigned int type, int nh_index, unsigned int flags, int vrf_index,
         int vif_index, int8_t *smac, int8_t *dmac, struct in_addr sip,
-        struct in_addr dip, int sport, int dport, int8_t *l3_vxlan_mac, int family)
+        struct in_addr dip, struct in6_addr sip6, struct in6_addr dip6 ,
+        int sport, int dport, int8_t *l3_vxlan_mac, int family)
 {
     vr_nexthop_req req;
 
@@ -1924,8 +1925,22 @@ vr_send_nexthop_encap_tunnel_add(struct nl_client *cl, unsigned int router_id,
 #endif
 
     if (type == NH_TUNNEL) {
-        req.nhr_tun_sip = sip.s_addr;
-        req.nhr_tun_dip = dip.s_addr;
+        if (family == AF_INET6) {
+            req.nhr_tun_sip6_size = VR_IP6_ADDRESS_LEN;
+            req.nhr_tun_dip6_size = VR_IP6_ADDRESS_LEN;
+            req.nhr_tun_sip6 = malloc(req.nhr_tun_sip6_size);
+            if (!req.nhr_tun_sip6)
+                return -ENOMEM;
+            req.nhr_tun_dip6 = malloc(req.nhr_tun_dip6_size);
+            if (!req.nhr_tun_dip6)
+                return -ENOMEM;
+            memcpy(req.nhr_tun_sip6, sip6.s6_addr, VR_IP6_ADDRESS_LEN);
+            memcpy(req.nhr_tun_dip6, dip6.s6_addr, VR_IP6_ADDRESS_LEN);
+        } else {
+            req.nhr_tun_sip = sip.s_addr;
+            req.nhr_tun_dip = dip.s_addr;
+        }
+        req.nhr_family = family;
         if ((sport >= 0) && (dport >= 0)) {
             req.nhr_tun_sport = htons(sport);
             req.nhr_tun_dport = htons(dport);
