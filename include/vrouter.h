@@ -418,9 +418,19 @@ struct vrouter {
 
     struct vr_interface *vr_agent_if;
     struct vr_interface *vr_host_if;
-    struct vr_interface *vr_eth_if;
+    struct vr_interface *vr_eth_if[VR_MAX_PHY_INF];
     struct vr_pkt_drop_st *vr_pkt_drop;
+    unsigned int vr_num_phy_interfaces;
 };
+
+static inline int
+is_vrouter_multihomed (struct vrouter *router)
+{
+    if (router->vr_num_phy_interfaces > 1) {
+        return 1;
+    }
+    return 0;
+}
 
 struct vr_defer_data {
     void *vdd_data;

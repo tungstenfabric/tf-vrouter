@@ -19,6 +19,12 @@
  */
 #define VR_MAX_INTERFACES           (256 + 4096)
 
+/*
+ * Maximum number of physical interfaces that can be xconnected to
+ * vhost interface
+ */
+#define VR_MAX_PHY_INF 3
+
 /* 
  * Default size for the interface bridge table.
  */
@@ -386,7 +392,7 @@ struct vr_interface {
 #endif
     /* Big and less frequently used fields. */
     struct vr_interface *vif_parent;
-    struct vr_interface *vif_bridge;
+    struct vr_interface *vif_bridge[VR_MAX_PHY_INF];
     unsigned int vif_users;
     unsigned int vif_os_idx;
 
@@ -480,6 +486,13 @@ struct vr_host_interface_ops {
     int (*hif_get_vlan_info)(struct vr_interface *vif,
             struct vr_interface_vlan_info *vlan_info);
     int (*hif_clear_stats)(struct vr_interface *vif);
+    int (*hif_get_host_ip_mask)(struct vr_interface *vif,
+                                unsigned int *ip,
+                                unsigned int *mask);
+    int (*hif_get_host_mac_addr)(struct vr_interface *vif,
+                                 unsigned char **mac);
+    int (*hif_rx_pass)(struct vr_interface *, struct vr_packet *);
+    void (*hif_pkt_dump)(struct vr_packet *);
 };
 
 extern int vr_interface_init(struct vrouter *);
@@ -487,6 +500,7 @@ extern void vr_interface_exit(struct vrouter *, bool);
 extern void vr_interface_shut(struct vrouter *);
 extern struct vr_interface *vrouter_get_interface(unsigned int, unsigned int);
 extern struct vr_interface *__vrouter_get_interface(struct vrouter *, unsigned int);
+extern struct vr_interface *vrouter_get_vhost_interface(struct vrouter *router);
 extern void vrouter_put_interface(struct vr_interface *);
 extern int vr_interface_dump_wrapper(vr_interface_req *);
 extern int vr_interface_add(vr_interface_req *, bool);
@@ -509,6 +523,7 @@ extern unsigned int vr_interface_req_get_size(void *);
 
 #if defined(__linux__) && defined(__KERNEL__)
 extern void vr_set_vif_ptr(struct net_device *dev, void *vif);
+extern struct vr_interface *vr_get_vif_ptr(struct net_device *dev);
 #endif
 
 extern uint16_t vif_fat_flow_lookup(int incoming_vif, struct vr_interface *vif, uint8_t proto,

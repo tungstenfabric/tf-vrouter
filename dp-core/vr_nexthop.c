@@ -322,8 +322,12 @@ nh_resolve(struct vr_packet *pkt, struct vr_nexthop *nh,
          */
         pkt_clone = vr_pclone(pkt);
         if (pkt_clone) {
-            vr_preset(pkt_clone);
-            vif_xconnect(pkt->vp_if, pkt_clone, fmd);
+            /* will trap the packet to agent to create a route */
+            vr_trap(pkt_clone, fmd->fmd_dvrf, AGENT_TRAP_RESOLVE, NULL);
+            /* xconnect the original pkt */
+            vr_preset(pkt);
+            vif_xconnect(pkt->vp_if, pkt, fmd);
+            return NH_PROCESSING_COMPLETE;
         }
     }
 

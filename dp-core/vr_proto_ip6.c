@@ -684,10 +684,12 @@ vr_neighbor_input(struct vr_packet *pkt, struct vr_forwarding_md *fmd,
 
     case MR_TRAP_X:
         pkt_c = vr_pclone(pkt);
-        if (pkt_c)
-            vif_xconnect(pkt->vp_if, pkt_c, fmd);
-
-        vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
+        if (pkt_c) {
+            vr_trap(pkt_c, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
+            vif_xconnect(pkt->vp_if, pkt, fmd);
+        } else {
+            vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
+        }
         break;
 
     case MR_MIRROR:

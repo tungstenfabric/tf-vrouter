@@ -764,8 +764,8 @@ dpdk_fabric_if_add(struct vr_interface *vif)
              mtu += sizeof(uint32_t);
          }
          vif->vif_mtu = mtu;
-         if (vif->vif_bridge)
-             vif->vif_bridge->vif_mtu = mtu;
+         if (vif->vif_bridge[0])
+             vif->vif_bridge[0]->vif_mtu = mtu;
     }
 
     ethdev = &vr_dpdk.ethdevs[port_id];
@@ -900,11 +900,16 @@ dpdk_vhost_if_add(struct vr_interface *vif)
      * it looks for an interface with os_idx == cross_connect_idx
      * and sets vif->vif_bridge if there is such an interface.
      */
-    ethdev = (struct vr_dpdk_ethdev *)(vif->vif_bridge->vif_os);
+    if(!vif->vif_bridge[0])
+    {
+        RTE_LOG(ERR, VROUTER,"vif->vif_bridge is NULL\n" );
+        return -1;
+    }
+    ethdev = (struct vr_dpdk_ethdev *)(vif->vif_bridge[0]->vif_os);
     if (ethdev == NULL) {
         RTE_LOG(ERR, VROUTER, "Error adding vif %u device %s:"
             " bridge vif %u ethdev is not initialized\n",
-                vif->vif_idx, vif->vif_name, vif->vif_bridge->vif_idx);
+                vif->vif_idx, vif->vif_name, vif->vif_bridge[0]->vif_idx);
         return -ENOENT;
     }
     port_id = ethdev->ethdev_port_id;
@@ -2353,6 +2358,9 @@ struct vr_host_interface_ops dpdk_interface_ops = {
     .hif_get_bond_info  =    dpdk_if_get_bond_info,
     .hif_get_vlan_info  =    dpdk_if_get_vlan_info,
     .hif_clear_stats    =    dpdk_if_clear_stats,
+    .hif_get_host_ip_mask =  NULL,
+    .hif_get_host_mac_addr = NULL,
+    .hif_rx_pass        =    NULL,
 };
 
 void

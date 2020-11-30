@@ -538,6 +538,8 @@ vrouter_init(void)
     if (vr_init_cpuid != NULL)
         vr_init_cpuid(&vr_cpu_type);
 
+    router.vr_num_phy_interfaces = 0;
+
     vrouter_host = vrouter_get_host();
     if (!vrouter_host && (ret = -ENOMEM))
         goto init_fail;

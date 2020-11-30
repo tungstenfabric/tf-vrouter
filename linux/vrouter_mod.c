@@ -273,6 +273,7 @@ lh_palloc_head(struct vr_packet *pkt, unsigned int size)
     npkt->vp_ttl = pkt->vp_ttl;
     npkt->vp_flags = pkt->vp_flags;
     npkt->vp_type = pkt->vp_type;
+    npkt->vp_rx_pass = pkt->vp_rx_pass;
 
     skb_frag_list_init(skb_head);
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(4,3,0))
