@@ -104,7 +104,10 @@
 
 #define VP_TYPE_AGENT           6
 #define VP_TYPE_PBB             7
-#define VP_TYPE_UNKNOWN         8
+#define VP_TYPE_IPOIP6          8
+#define VP_TYPE_IP6OIP6         9
+#define VP_TYPE_UNKNOWN         10
+
 #define VP_TYPE_MAX             VP_TYPE_UNKNOWN
 
 
@@ -645,8 +648,6 @@ vr_ip_dont_fragment_set(struct vr_packet *pkt)
     struct vr_ip *ip;
 
     ip = (struct vr_ip *)pkt_network_header(pkt);
-    if (vr_ip_is_ip6(ip))
-        return true;
 
     if (ntohs(ip->ip_frag_off) & VR_IP_DF)
         return true;
