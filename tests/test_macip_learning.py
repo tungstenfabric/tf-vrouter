@@ -387,6 +387,66 @@ class TestVmToFabricIntraVn(VmToFabricIntraVn):
         self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
         self.assertEqual(1, self.agent_vif.get_vif_opackets())
 
+    def test_macip_learning_verify_gwless_fwd_arp(self):
+        self.tenant_vif.reload()
+        self.tenant_vif = VirtualVif(
+            name="tapc2234cd0-55",
+            ipv4_str="1.0.0.3",
+            mac_str="00:00:5e:00:01:00",
+            idx=5,
+            vrf=5,
+            nh_idx=38,
+            flags=constants.VIF_FLAG_POLICY_ENABLED |
+            constants.VIF_FLAG_MAC_IP_LEARNING)
+        self.tenant_vif.sync()
+
+        # add inet route
+        inet_rt = InetRoute(
+            vrf=5,
+            prefix="1.0.0.3",
+            prefix_len=32,
+            nh_idx=38)
+        # sync all objects
+        ObjectBase.sync_all()
+
+        # send ARP request from vif3
+        arp = ArpPacket(
+            sip='1.0.0.3',
+            dip='1.0.0.5',
+            src='02:c2:23:4c:d0:55',
+            dst='02:e7:03:ea:67:f1')
+        pkt = arp.get_packet()
+        pkt.show()
+
+        # send packet
+        self.tenant_vif.send_packet(pkt)
+
+        self.tenant_vif.reload()
+        self.fabric_vif.reload()
+        # Check if the packet was sent to agent vif
+        self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
+        self.assertEqual(1, self.fabric_vif.get_vif_opackets())
+
+        self.vif_nh.reload()
+        # Invalid encap data, so trap packet to agent
+        self.vif_nh = EncapNextHop(
+                encap_oif_id=self.tenant_vif.idx(),
+                encap="03 c2 23 4c d0 55 00 00 5e 00 01 00 08 00",
+                nh_idx=38,
+                nh_vrf=5,
+                nh_flags=constants.NH_FLAG_POLICY_ENABLED)
+        self.vif_nh.sync()
+
+        self.tenant_vif.clear()
+        # send packet
+        self.tenant_vif.send_packet(pkt)
+
+        self.tenant_vif.reload()
+        self.agent_vif.reload()
+        # Check if the packet was sent to agent vif
+        self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
+        self.assertEqual(1, self.agent_vif.get_vif_opackets())
+
 
 class Test_MACIP_LEARNT_FLAG(unittest.TestCase):
 
