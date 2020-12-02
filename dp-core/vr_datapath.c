@@ -647,6 +647,7 @@ vr_virtual_input(unsigned short vrf, struct vr_interface *vif,
     uint32_t rt_prefix[4];
     struct vr_arp *arp;
     struct vrouter *router;
+    int i;
 
     fmd->fmd_vlan = vlan_id;
     fmd->fmd_dvrf = vrf;
@@ -695,10 +696,17 @@ vr_virtual_input(unsigned short vrf, struct vr_interface *vif,
 
 
                 if(vr_req.rtr_nh && vr_req.rtr_nh->nh_id) {
-                    if(vr_req.rtr_req.rtr_mac == NULL ||
-                            !(VR_MAC_CMP(eth->eth_smac, vr_req.rtr_req.rtr_mac))) {
+                    if((vr_req.rtr_req.rtr_prefix_len != IP4_PREFIX_LEN) ||
+                            ((vr_req.rtr_req.rtr_mac != NULL) &&
+                            !(VR_MAC_CMP(eth->eth_smac, vr_req.rtr_req.rtr_mac)))) {
                         vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_MAC_IP_LEARNING, NULL);
                         return 0;
+                    } else if (vr_req.rtr_req.rtr_mac == NULL) {
+                        nh = vrouter_get_nexthop(0, vr_req.rtr_nh->nh_id);
+                        if(nh && !(VR_MAC_CMP(eth->eth_smac, (nh->nh_data )))) {
+                            vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_MAC_IP_LEARNING, NULL);
+                            return 0;
+                        }
                     }
                 } else {
                         vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_MAC_IP_LEARNING, NULL);
