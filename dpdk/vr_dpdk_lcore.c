@@ -881,6 +881,7 @@ vr_dpdk_lcore_vroute(struct vr_dpdk_lcore *lcore, struct vr_interface *vif,
  *
  * Returns total number of received packets.
  */
+static uint32_t vr_dpdk_pkt_distribute[8];
 static uint64_t
 dpdk_lcore_rxqs_vroute(struct vr_dpdk_lcore *lcore)
 {
@@ -924,7 +925,7 @@ dpdk_lcore_rxqs_vroute(struct vr_dpdk_lcore *lcore)
                     vr_dpdk_lcore_vroute(lcore, rx_queue->q_vif, pkts, nb_pkts);
                 } else {
                     /* Split packets to route and to distribute. */
-
+                    vr_dpdk_pkt_distribute[mask_to_distribute]++;
                     nb_pkts_to_route = 0;
                     nb_pkts_to_distribute = 0;
                     for (i = 0; i < nb_pkts; i++) {

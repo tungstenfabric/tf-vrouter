@@ -160,7 +160,7 @@ vr_fragment_queue_free(struct vr_fragment_queue *queue)
     while (vfqe) {
         next = vfqe->fqe_next;
         if (vfqe->fqe_pnode.pl_packet) {
-            PKT_LOG(VP_DROP_MISC, 0, 0, VR_FRAGMENT_C, __LINE__);
+            PKT_LOG(VP_DROP_MISC, vfqe->fqe_pnode.pl_packet, 0, VR_FRAGMENT_C, __LINE__);
             vr_pfree(vfqe->fqe_pnode.pl_packet, VP_DROP_MISC);
             vfqe->fqe_pnode.pl_packet = NULL;
         }
@@ -176,6 +176,7 @@ vr_fragment_queue_element_free(struct vr_fragment_queue_element *vfqe,
         unsigned int drop_reason)
 {
     if (vfqe->fqe_pnode.pl_packet) {
+        PKT_LOG(VP_DROP_FRAGMENTS, vfqe->fqe_pnode.pl_packet, 0, VR_FRAGMENT_C, __LINE__);
         vr_pfree(vfqe->fqe_pnode.pl_packet, drop_reason);
     }
 
