@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c36ce6c4_7d307dc2",
+        "filename": "dp-core/vr_datapath.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 703,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-03T11:00:41Z",
+      "side": 1,
+      "message": "Can you add a comment for this case?",
+      "revId": "2cc4b96ed9c3e9186c30c3ecb699c7801f7d50d8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0e96c6c4_8e0f94cd",
+        "filename": "tests/test_macip_learning.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 390,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-03T11:00:41Z",
+      "side": 1,
+      "message": "How are you testing with gwless forwarding mode here? I still see the same vif vrfs.",
+      "revId": "2cc4b96ed9c3e9186c30c3ecb699c7801f7d50d8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
