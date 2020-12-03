@@ -1510,7 +1510,7 @@ vr_dpdk_packet_get(struct rte_mbuf *m, struct vr_interface *vif)
     pkt->vp_network_h = pkt->vp_inner_network_h = 0;
     pkt->vp_nh = NULL;
     pkt->vp_flags = 0;
-    if (likely(m->ol_flags & PKT_RX_IP_CKSUM_BAD))
+    if (likely(m->ol_flags & (PKT_RX_IP_CKSUM_BAD | PKT_TX_TCP_CKSUM)))
         pkt->vp_flags |= VP_FLAG_CSUM_PARTIAL;
 
     pkt->vp_ttl = 64;
