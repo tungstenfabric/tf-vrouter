@@ -365,10 +365,10 @@ struct vr_dpdk_bond_member_info {
 
 /* needs to have a place holder for RX flags, to allow usuage of dpdk from upstream */
 #ifndef PKT_RX_GSO_TCP4
-#define PKT_RX_GSO_TCP4      (1ULL << 23)  /**< RX packet with TCPv4 segment offload */
+#define PKT_RX_GSO_TCP4      PKT_TX_TCP_SEG  /**< RX packet with TCPv4 segment offload */
 #endif /* PKT_RX_GSO_TCP4 */
 #ifndef PKT_RX_GSO_TCP6
-#define PKT_RX_GSO_TCP6      (1ULL << 24)  /**< RX packet with TCPv6 segment offload */
+#define PKT_RX_GSO_TCP6      PKT_TX_TCP_SEG  /**< RX packet with TCPv6 segment offload */
 #endif /* PKT_RX_GSO_TCP6 */
 
 /*
@@ -414,6 +414,8 @@ struct vr_dpdk_queue {
     struct vr_interface *q_vif;
     /* Incase of multiqueue, store vring queue_id */
     uint16_t vring_queue_id;
+    /* vhost device id */
+    int      vr_vid;
 };
 
 /* We store the queue params in the separate structure to increase CPU
