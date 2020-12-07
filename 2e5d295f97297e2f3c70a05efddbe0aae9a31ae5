@@ -1,0 +1,208 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2712e184_0c2afc53",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2365,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-07T07:16:24Z",
+      "side": 1,
+      "message": "what is the size of nh_udp_tun6_encap_len? what all headers is included in this?",
+      "revId": "2e5d295f97297e2f3c70a05efddbe0aae9a31ae5",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8df8edad_8797dd24",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2375,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-07T07:16:24Z",
+      "side": 1,
+      "message": "why are we calculating udp header len here?",
+      "revId": "2e5d295f97297e2f3c70a05efddbe0aae9a31ae5",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ba998292_fe5cc305",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2378,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-07T07:16:24Z",
+      "side": 1,
+      "message": "Why is this done?",
+      "revId": "2e5d295f97297e2f3c70a05efddbe0aae9a31ae5",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "465933f2_6611893f",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2383,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-07T07:16:24Z",
+      "side": 1,
+      "message": "For IPv6 pkt we shouldn\u0027t check for DF bit",
+      "revId": "2e5d295f97297e2f3c70a05efddbe0aae9a31ae5",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f8cb3d68_47cc2989",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2408,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-07T07:16:24Z",
+      "side": 1,
+      "message": "Why are we doing this?",
+      "revId": "2e5d295f97297e2f3c70a05efddbe0aae9a31ae5",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4e31756b_03e09832",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2412,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-07T07:16:24Z",
+      "side": 1,
+      "message": "There is no qos processing we supporting today for IPv6. Can you remove this code?",
+      "revId": "2e5d295f97297e2f3c70a05efddbe0aae9a31ae5",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5f39ece8_aff19dcf",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 2432,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-07T07:16:24Z",
+      "side": 1,
+      "message": "Why do we need this case? Setting to IP won\u0027t be correct here i think.",
+      "revId": "2e5d295f97297e2f3c70a05efddbe0aae9a31ae5",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "732eb991_5449cbe5",
+        "filename": "include/vr_nexthop.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-07T07:16:24Z",
+      "side": 1,
+      "message": "Can you rename it to NH_FLAG_TUNNEL_MPLS_O_IPV6 ?",
+      "revId": "2e5d295f97297e2f3c70a05efddbe0aae9a31ae5",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3ebeee8b_cbdb0d74",
+        "filename": "include/vr_nexthop.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 155,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-07T07:16:24Z",
+      "side": 1,
+      "message": "I think instead of reusing nh_udp_tun6, lets add a new struct like this. This would work for SR-MPLS case as well.\n\nstruct {\n    uint8_t    *tun_sip6;\n    uint8_t.   *tun_dip6;\n    uint32_t   *label_stack. // alloc an array of labels based on num_labels\n    uint8_t    num_labels;   // num of labels in the label stack\n} nh_mpls_tun6;\n\nIf num labels is 0, we will not encode the mpls labels (to support plain ipv6 encap)",
+      "revId": "2e5d295f97297e2f3c70a05efddbe0aae9a31ae5",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d9a10120_4be316ab",
+        "filename": "utils/nh.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-07T07:16:24Z",
+      "side": 1,
+      "message": "MPLSoIPv6",
+      "revId": "2e5d295f97297e2f3c70a05efddbe0aae9a31ae5",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6ed72451_cfd50e5e",
+        "filename": "utils/nh.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 534,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-07T07:16:24Z",
+      "side": 1,
+      "message": "Can you add the sip6, dip6 options here?",
+      "revId": "2e5d295f97297e2f3c70a05efddbe0aae9a31ae5",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "865d9a50_25fd9a62",
+        "filename": "utils/pylib/nexthop.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-07T07:16:24Z",
+      "side": 1,
+      "message": "What are the test cases for this?",
+      "revId": "2e5d295f97297e2f3c70a05efddbe0aae9a31ae5",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}

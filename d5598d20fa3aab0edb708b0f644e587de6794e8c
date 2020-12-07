@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f880b417_db7b556b",
+        "filename": "include/vr_packet.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 648,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-07T07:16:24Z",
+      "side": 0,
+      "message": "Why is this change removed? For ipv6 pkt there is no DF bit, so returning true is ok here.",
+      "revId": "d5598d20fa3aab0edb708b0f644e587de6794e8c",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
