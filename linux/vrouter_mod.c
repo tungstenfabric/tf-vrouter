@@ -1704,11 +1704,10 @@ lh_pull_inner_headers(struct vr_packet *pkt,
         } else if (ret == PKT_MPLS_TUNNEL_L2_MCAST) {
 
             /* L2 Multicast packet */
-            pull_len += VR_VXLAN_HDR_LEN + sizeof(struct vr_eth);
+            pull_len = pull_len - VR_L2_CTRL_DATA_LEN + sizeof(struct vr_eth);
             if (!pskb_may_pull(skb, pull_len))
                 goto error;
 
-            hoff += VR_L2_CTRL_DATA_LEN + VR_VXLAN_HDR_LEN;
             eth = (struct vr_eth *) (skb->head + hoff);
 		} else if (ret == PKT_MPLS_TUNNEL_L2_CONTROL_DATA) {
 

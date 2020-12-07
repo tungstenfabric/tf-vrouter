@@ -1523,6 +1523,8 @@ nh_composite_mcast(struct vr_packet *pkt, struct vr_nexthop *nh,
             if (pkt_src != PKT_SRC_EDGE_REPL_TREE) {
                 if (nh->nh_family == AF_BRIDGE) {
                     clone_size += VR_L2_MCAST_PKT_HEAD_SPACE;
+                    if (nh->nh_flags & NH_FLAG_L2_CONTROL_DATA)
+                        clone_size += VR_L2_CTRL_DATA_LEN;
                     if (dir_nh->nh_flags & NH_FLAG_TUNNEL_PBB)
                         clone_size += VR_ETHER_HLEN + sizeof(struct vr_pbb_itag);
                 } else {
@@ -1572,7 +1574,7 @@ nh_composite_mcast(struct vr_packet *pkt, struct vr_nexthop *nh,
         } else if (dir_nh->nh_flags & NH_FLAG_COMPOSITE_TOR) {
 
             /* Create head space for Vxlan header */
-            clone_size = VR_L2_MCAST_PKT_HEAD_SPACE - VR_L2_CTRL_DATA_LEN;
+            clone_size = VR_L2_MCAST_PKT_HEAD_SPACE;
             if (!(new_pkt = nh_mcast_clone(pkt, clone_size))) {
                 drop_reason = VP_DROP_MCAST_CLONE_FAIL;
                 PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
@@ -1821,6 +1823,7 @@ nh_composite_fabric(struct vr_packet *pkt, struct vr_nexthop *nh,
                     struct vr_forwarding_md *fmd)
 {
     int i;
+    bool l2_control_data = false;
     int32_t label;
     unsigned int dip, sip;
     int8_t eth_mac[VR_ETHER_ALEN];
@@ -1859,6 +1862,11 @@ nh_composite_fabric(struct vr_packet *pkt, struct vr_nexthop *nh,
     pkt_vrf = fmd->fmd_dvrf;
     if (nh->nh_flags & NH_FLAG_TUNNEL_PBB)
         vr_mcast_mac_from_isid(pkt->vp_if->vif_isid, eth_mac);
+
+    if (vr_fmd_l2_control_data_is_enabled(fmd)) {
+        l2_control_data = true;
+        vr_fmd_update_l2_control_data(fmd, false);
+    }
 
     for (i = 0; i < nh->nh_component_cnt; i++) {
         dir_nh = nh->nh_component_nh[i].cnh;
@@ -1934,30 +1942,14 @@ nh_composite_fabric(struct vr_packet *pkt, struct vr_nexthop *nh,
                     continue;
                 }
             }
-
-            if (nh->nh_family == AF_BRIDGE) {
-                /*
-                 * Add vxlan encapsulation. The vxlan id need to be taken
-                 * from Bridge entry
-                 */
-                vr_fmd_set_label(fmd, label, VR_LABEL_TYPE_UNKNOWN);
-                fmd->fmd_dvrf = dir_nh->nh_dev->vif_vrf;
-                if (nh_vxlan_tunnel_helper(nh->nh_router, &new_pkt,
-                                        fmd, sip, dip) == false) {
-                    PKT_LOG(VP_DROP_PUSH, pkt, 0, VR_NEXTHOP_C, __LINE__);
-                    vr_pfree(new_pkt, VP_DROP_PUSH);
-                    break;
-                }
-            }
         }
 
         if (nh->nh_family == AF_BRIDGE) {
-            if (vr_l2_control_data_add(&new_pkt) == false) {
+            if (l2_control_data && !vr_l2_control_data_add(&new_pkt)) {
                 PKT_LOG(VP_DROP_PUSH, pkt, 0, VR_NEXTHOP_C, __LINE__);
                 vr_pfree(new_pkt, VP_DROP_PUSH);
                 break;
             }
-            vr_fmd_update_l2_control_data(fmd, false);
         }
 
         /* MPLS label for outer header encapsulation */

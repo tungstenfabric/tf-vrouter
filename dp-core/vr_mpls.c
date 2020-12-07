@@ -416,11 +416,6 @@ vr_mpls_input(struct vrouter *router, struct vr_packet *pkt,
             pull_len = VR_L2_CTRL_DATA_LEN;
         }
 
-        if ((nh->nh_type == NH_COMPOSITE) && (label >= VR_MAX_UCAST_LABELS)) {
-            l2_offset = VR_VXLAN_HDR_LEN;
-            pull_len = VR_L2_CTRL_DATA_LEN;
-        }
-
         if (pull_len) {
             if (*(unsigned int *)pkt_data(pkt) != VR_L2_CTRL_DATA) {
                 drop_reason = VP_DROP_INVALID_PACKET;

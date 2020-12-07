@@ -1043,12 +1043,9 @@ struct vr_vxlan {
 #define VR_L2_CTRL_DATA_LEN       4
 
 /*
- * The L2 mcast head space contains Vxlan header and 4 bytes of control
- * word inaddtion to L3 mcast head space
+ * The L2 mcast head space is same as L3 mcast head space
  */
-#define VR_L2_MCAST_PKT_HEAD_SPACE  (VR_L3_MCAST_PKT_HEAD_SPACE + \
-                                      VR_VXLAN_HDR_LEN + \
-                                        VR_L2_CTRL_DATA_LEN)
+#define VR_L2_MCAST_PKT_HEAD_SPACE  VR_L3_MCAST_PKT_HEAD_SPACE
 
 
 extern unsigned short vr_ip_csum(struct vr_ip *);

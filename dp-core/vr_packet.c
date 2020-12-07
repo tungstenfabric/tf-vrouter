@@ -389,12 +389,8 @@ vr_inner_pkt_parse(unsigned char *va, int (*tunnel_type_cb)(unsigned int,
                 return PKT_RET_UNHANDLED;
             }
         } else if (pkt_type == PKT_MPLS_TUNNEL_L2_MCAST) {
-            /* L2 Multicast packet with control information and
-             * Vxlan header. Vxlan header contains IP + UDP + Vxlan */
-            eth = (struct vr_eth *)(va + pull_len + mpls_label_len +
-                    VR_L2_CTRL_DATA_LEN + VR_VXLAN_HDR_LEN);
-            pull_len += mpls_label_len + VR_L2_CTRL_DATA_LEN +
-                            VR_VXLAN_HDR_LEN + sizeof(struct vr_eth);
+            eth = (struct vr_eth *)(va + pull_len + mpls_label_len);
+            pull_len += mpls_label_len + sizeof(struct vr_eth);
         } else if (pkt_type == PKT_MPLS_TUNNEL_L2_CONTROL_DATA) {
             /* L2 packet with control information */
             eth = (struct vr_eth *)(va + pull_len + mpls_label_len +
