@@ -27,7 +27,9 @@ hdr_cmd_table[15] = "AGENT_TRAP_FLOW_ACTION_HOLD"
 hdr_cmd_table[16] = "AGENT_TRAP_ROUTER_ALERT"
 hdr_cmd_table[17] = "AGENT_TRAP_MAC_LEARN"
 hdr_cmd_table[18] = "AGENT_TRAP_MAC_MOVE"
-hdr_cmd_table[19] = "MAX_AGENT_HDR_COMMANDS"
+hdr_cmd_table[19] = "AGENT_TRAP_MAC_IP_LEARNING"
+hdr_cmd_table[20] = "AGENT_TRAP_BFD"
+hdr_cmd_table[21] = "MAX_AGENT_HDR_COMMANDS"
 
 agent_hdr_proto.fields = {}
 agent_hdr_proto.fields["rewrite_info"] = ProtoField.bytes(
