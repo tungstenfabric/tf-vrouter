@@ -24,7 +24,7 @@
 
 #define VR_ETHER_PROTO_MAC_OFF  1
 #define VR_ETHER_PROTO_MAC_LEN  2
-
+#define VR_TCP_PORT_BGP         0xB3
 #define VR_IP_PROTO_ICMP        1
 #define VR_IP_PROTO_IGMP        2
 #define VR_IP_PROTO_TCP         6
