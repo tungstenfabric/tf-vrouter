@@ -387,6 +387,112 @@ class TestVmToFabricIntraVn(VmToFabricIntraVn):
         self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
         self.assertEqual(1, self.agent_vif.get_vif_opackets())
 
+    def test_macip_learning_verify_gwless_fwd_arp(self):
+        # Add bridge Route
+        self.bridge_route.delete()
+        self.bridge_route = BridgeRoute(
+            vrf=0,
+            mac_str="02:e7:03:ea:67:f1",
+            nh_idx=21,
+            rtr_label_flags=constants.VR_RT_LABEL_VALID_FLAG |
+            constants.VR_RT_ARP_PROXY_FLAG |
+            constants.VR_BE_FLOOD_DHCP_FLAG,
+            rtr_label=144)
+        self.bridge_route.sync()
+        self.tenant_vif.delete()
+        self.tenant_vif = VirtualVif(
+            name="tapc2234cd0-55",
+            ipv4_str="1.0.0.3",
+            mac_str="00:00:5e:00:01:00",
+            idx=5,
+            vrf=0,
+            nh_idx=38,
+            flags=constants.VIF_FLAG_POLICY_ENABLED |
+            constants.VIF_FLAG_MAC_IP_LEARNING)
+        self.tenant_vif.sync()
+
+        self.vif_nh.delete()
+        # Invalid encap data, so trap packet to agent
+        self.vif_nh = EncapNextHop(
+                encap_oif_id=self.tenant_vif.idx(),
+                encap="02 c2 23 4c d0 55 00 00 5e 00 01 00 08 00",
+                nh_idx=38,
+                nh_vrf=0,
+                nh_flags=constants.NH_FLAG_POLICY_ENABLED)
+        self.vif_nh.sync()
+
+        # add inet route
+        self.inet_rt = InetRoute(
+            vrf=0,
+            prefix="1.0.0.3",
+            prefix_len=32,
+            nh_idx=38)
+        self.inet_rt.sync()
+
+        self.f_flow.delete()
+        self.r_flow.delete()
+        self.f_flow_1 = InetFlow(
+                   sip='1.0.0.3',
+                   dip='1.0.0.5',
+                   sport=4145,
+                   dport=0,
+                   proto=constants.VR_IP_PROTO_ICMP,
+                   flow_nh_idx=38,
+                   src_nh_idx=38,
+                   flow_vrf=0,
+                   rflow_nh_idx=21)
+
+        self.r_flow_1 = InetFlow(
+                   sip='1.0.0.5',
+                   dip='1.0.0.3',
+                   sport=4145,
+                   dport=0,
+                   proto=constants.VR_IP_PROTO_ICMP,
+                   flags=constants.VR_RFLOW_VALID,
+                   flow_nh_idx=38,
+                   src_nh_idx=21,
+                   flow_vrf=0,
+                   rflow_nh_idx=21)
+        self.f_flow_1.sync_and_link_flow(self.r_flow_1)
+
+        # send ARP request from vif3
+        arp = ArpPacket(
+            sip='1.0.0.3',
+            dip='1.0.0.5',
+            src='02:c2:23:4c:d0:55',
+            dst='02:e7:03:ea:67:f1')
+        pkt = arp.get_packet()
+        pkt.show()
+
+        # send packet
+        self.tenant_vif.send_packet(pkt)
+
+        self.tenant_vif.reload()
+        self.fabric_vif.reload()
+        # Check if the packet was sent to agent vif
+        self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
+        self.assertEqual(1, self.fabric_vif.get_vif_opackets())
+
+        self.vif_nh.reload()
+        # Invalid encap data, so trap packet to agent
+        self.vif_nh = EncapNextHop(
+                encap_oif_id=self.tenant_vif.idx(),
+                encap="03 c2 23 4c d0 55 00 00 5e 00 01 00 08 00",
+                nh_idx=38,
+                nh_vrf=0,
+                nh_flags=constants.NH_FLAG_POLICY_ENABLED)
+        self.vif_nh.sync()
+
+        self.tenant_vif.clear()
+        # send packet
+        self.tenant_vif.send_packet(pkt)
+
+        self.tenant_vif.reload()
+        self.agent_vif.reload()
+        # Check if the packet was sent to agent vif
+        self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
+        self.assertEqual(1, self.agent_vif.get_vif_opackets())
+
 
 class Test_MACIP_LEARNT_FLAG(unittest.TestCase):
 
