@@ -1910,10 +1910,17 @@ vrouter_add_interface(struct vr_interface *vif, vr_interface_req *vifr)
         return -EEXIST;
 
     if (vif->vif_type == VIF_TYPE_HOST) {
-        if (vifr->vifr_cross_connect_idx < 0)
-            return -EINVAL;
-
-        eth_vif = __vrouter_get_interface_os(router, vifr->vifr_cross_connect_idx);
+        if (vifr->vifr_cross_connect_idx) {
+            vr_printf("PRADEEP: 1 vifr_cross_connect_idx %p", vifr->vifr_cross_connect_idx);
+            if (vifr->vifr_cross_connect_idx[0] < 0) {
+                return -EINVAL;
+            }
+            vr_printf("PRADEEP: 2 vifr_cross_connect_idx %p", vifr->vifr_cross_connect_idx);
+            eth_vif = __vrouter_get_interface_os(router, vifr->vifr_cross_connect_idx[0]);
+        } else {
+            vr_printf("PRADEEP: vifr_cross_connect_idx is NULL");
+            eth_vif = __vrouter_get_interface_os(router, 0);
+        }
         if (!eth_vif)
             return -ENODEV;
     }
