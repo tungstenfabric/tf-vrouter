@@ -334,8 +334,8 @@ vif_req_table[48].base = base.DEC
 
 vif_req_table[49] = {}
 vif_req_table[49].field_name = "vifr_cross_connect_idx"
-vif_req_table[49].ProtoField = ProtoField.int32
-vif_req_table[49].base = base.DEC
+vif_req_table[49].ProtoField = ProtoField.bytes
+vif_req_table[49].base = base.SPACE
 
 vif_req_table[50] = {}
 vif_req_table[50].field_name = "vifr_src_mac"

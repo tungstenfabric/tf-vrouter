@@ -19,6 +19,11 @@
  */
 #define VR_MAX_INTERFACES           (256 + 4096)
 
+/*
+ * Number of maximum physical uplink interfaces
+ */
+#define VR_MAX_PHY_INF 3
+
 /* 
  * Default size for the interface bridge table.
  */
