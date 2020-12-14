@@ -447,9 +447,132 @@ dpdk_segment_packet(struct vr_packet *pkt, struct rte_mbuf *mbuf_in,
         dpdk_adjust_outer_header(m, outer_header_len);
         m->l2_len = mbuf_in->l2_len;
         m->l3_len = mbuf_in->l3_len;
+        m->l4_len = mbuf_in->l4_len;
+        m->tso_segsz = mbuf_in->tso_segsz;
         m->vlan_tci = mbuf_in->vlan_tci;
         m->ol_flags |= mbuf_in->ol_flags;
     }
 
     return number_of_packets;
+}
+
+static inline char *dpdk_pktmbuf_append(struct rte_mbuf *m, struct rte_mbuf *last, uint16_t len)
+{
+    void *tail;
+    struct rte_mbuf *m_last;
+
+    __rte_mbuf_sanity_check(m, 1);
+    __rte_mbuf_sanity_check(last, 1);
+
+    m_last = rte_pktmbuf_lastseg(last);
+    if (unlikely(len > rte_pktmbuf_tailroom(m_last)))
+        return NULL;
+
+    tail = (char *)m_last->buf_addr + m_last->data_off + m_last->data_len;
+    m_last->data_len = (uint16_t)(m_last->data_len + len);
+    m->pkt_len  = (m->pkt_len + len);
+    return (char*) tail;
+}
+
+/*
+ * dpdk_create_mss_sized_mbuf_chain - Create a chained mbuf where each segment
+ * in the chain is of length 'mss' and copy the data pointed to by pkt_addr
+ *
+ * @input -
+ * mbuf:       pointer to the mbuf where the chain needs to be created
+ * mss:        lenght of each segment in the chain
+ * pkt_addr:   pointer to the data which has to be copied to mbuf
+ * pkt_len:    length of the data which has to be copied
+ * header_len: first segment of the chain will have a length of mss + this value
+ *             to account for the headers
+ *
+ * @output -
+ * 0: success
+ * -1: failure
+ */
+
+static int
+dpdk_create_mss_sized_mbuf_chain(struct rte_mbuf *mbuf, uint32_t mss,
+                                 char* pkt_addr, uint32_t pkt_len,
+                                 uint32_t header_len)
+{
+    char *tail_addr, *append_addr = pkt_addr;
+    uint32_t pktlen_to_copy = pkt_len, copy_len;
+    struct rte_mbuf *new_mbuf, *last_mbuf = rte_pktmbuf_lastseg(mbuf);
+
+    /* header is only applicable for first segment */
+    if (mbuf->nb_segs > 1)
+        header_len = 0;
+
+    while (pktlen_to_copy > 0) {
+        copy_len = mss + header_len - last_mbuf->data_len;
+        header_len = 0;
+        if (pktlen_to_copy > copy_len) {
+            tail_addr = dpdk_pktmbuf_append(mbuf, last_mbuf, copy_len);
+            if (unlikely(tail_addr == NULL))
+                return -1;
+            rte_memcpy(tail_addr, append_addr, copy_len);
+            pktlen_to_copy -= copy_len;
+            append_addr += copy_len;
+            new_mbuf = rte_pktmbuf_alloc(vr_dpdk.rss_mempool);
+            if (unlikely(new_mbuf == NULL)) {
+                RTE_LOG_DP(DEBUG, VROUTER, "%s: mbuf alloc failed\n",__func__);
+                return -1;
+            }
+            last_mbuf->next = new_mbuf;
+            last_mbuf = new_mbuf;
+            mbuf->nb_segs += 1;
+        } else {
+            /* for last segment */
+            tail_addr = dpdk_pktmbuf_append(mbuf, last_mbuf, pktlen_to_copy);
+            if (unlikely(tail_addr == NULL))
+                return -1;
+            rte_memcpy(tail_addr, append_addr, pktlen_to_copy);
+            pktlen_to_copy = 0;
+        }
+    }
+    return 0;
+}
+
+struct rte_mbuf*
+dpdk_create_mss_chained_mbuf(struct rte_mbuf** m, struct vr_packet *pkt)
+{
+    struct rte_mbuf *pkt_in = *m, *curr_pkt = NULL, *next_pkt = NULL;
+    struct rte_mbuf *mbuf = NULL;
+    char *pkt_addr=NULL;
+    uint32_t inner_header_len = 0, outer_header_len = 0;
+
+    //eth + ip +udp + mpls + inner eth
+    outer_header_len = pkt_get_inner_network_header_off(pkt) -
+            pkt_head_space(pkt);
+
+    // inner ip + tcp
+    inner_header_len = pkt_in->l3_len + pkt_in->l4_len;
+
+    mbuf = rte_pktmbuf_alloc(vr_dpdk.rss_mempool);
+    if (unlikely(mbuf == NULL)) {
+        return pkt_in;
+    }
+    mbuf->tso_segsz = pkt_in->tso_segsz;
+    mbuf->ol_flags |= pkt_in->ol_flags;
+    mbuf->ol_flags |= pkt_in->ol_flags;
+    mbuf->ol_flags |= PKT_RX_GSO_TCP4 | PKT_RX_IP_CKSUM_BAD;
+    mbuf->l2_len = outer_header_len;
+    mbuf->l3_len = pkt_in->l3_len;
+    mbuf->l4_len = pkt_in->l4_len;
+    mbuf->vlan_tci = pkt_in->vlan_tci;
+    curr_pkt = pkt_in;
+    while(curr_pkt) {
+        next_pkt = curr_pkt->next;
+        curr_pkt->next = NULL;
+        curr_pkt->pkt_len = curr_pkt->data_len;
+        pkt_addr = rte_pktmbuf_mtod(curr_pkt, char*);
+        //Do not set curr_pkt->nb_segs = 1 here as it will be
+        //used by below api to determine cpylen
+        dpdk_create_mss_sized_mbuf_chain(mbuf, mbuf->tso_segsz, pkt_addr,
+            curr_pkt->pkt_len, inner_header_len + outer_header_len);
+        rte_pktmbuf_free(curr_pkt);
+        curr_pkt = next_pkt;
+    }
+    return mbuf;
 }

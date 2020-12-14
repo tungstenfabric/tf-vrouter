@@ -742,24 +742,6 @@ dpdk_virtio_get_ip_tcp_hdr_len(char *pkt_addr, uint32_t pkt_len)
     return pull_len;
 }
 
-static inline char *dpdk_pktmbuf_append(struct rte_mbuf *m, struct rte_mbuf *last, uint16_t len)
-{
-    void *tail;
-    struct rte_mbuf *m_last;
-
-    __rte_mbuf_sanity_check(m, 1);
-    __rte_mbuf_sanity_check(last, 1);
-
-    m_last = rte_pktmbuf_lastseg(last);
-    if (unlikely(len > rte_pktmbuf_tailroom(m_last)))
-        return NULL;
-
-    tail = (char *)m_last->buf_addr + m_last->data_off + m_last->data_len;
-    m_last->data_len = (uint16_t)(m_last->data_len + len);
-    m->pkt_len  = (m->pkt_len + len);
-    return (char*) tail;
-}
-
 /*
  * dpdk_virtio_from_vm_rx - receive packets from a virtio client so that
  * the packets can be handed to vrouter for forwarding. the virtio client is
