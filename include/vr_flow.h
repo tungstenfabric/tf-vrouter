@@ -564,5 +564,8 @@ unsigned int vr_flow_table_burst_time_configured(struct vrouter *);
 void vr_compute_size_oflow_table(void);
 
 int vr_flow_incr_stats(int , uint32_t , uint16_t, uint32_t, uint8_t);
+void
+update_flow_entry(vr_htable_t table __attribute__unused__, vr_hentry_t *ent ,
+        unsigned int index, void *data __attribute__unused__);
 
 #endif /* __VR_FLOW_H__ */
