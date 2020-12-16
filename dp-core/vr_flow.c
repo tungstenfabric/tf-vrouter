@@ -1401,6 +1401,7 @@ vr_flow_tcp_digest(struct vrouter *router, struct vr_flow_entry *flow_e,
     uint8_t proto = 0, hlen = 0;
     uint16_t tcp_offset_flags;
     unsigned int length = 0;
+    uint16_t flow_tcp_flags;
 
     struct vr_ip *iph;
     struct vr_ip6 *ip6h;
@@ -1504,8 +1505,17 @@ vr_flow_tcp_digest(struct vrouter *router, struct vr_flow_entry *flow_e,
                         if (ntohl(tcph->tcp_ack) == (rflow_e->fe_tcp_seq + 1)) {
                             (void)vr_sync_fetch_and_or_16u(&rflow_e->fe_tcp_flags,
                                     VR_FLOW_TCP_ESTABLISHED);
-                            (void)vr_sync_fetch_and_or_16u(&flow_e->fe_tcp_flags,
-                                     VR_FLOW_TCP_ESTABLISHED_R);
+                            flow_tcp_flags = vr_sync_fetch_and_or_16u(
+                                &flow_e->fe_tcp_flags, VR_FLOW_TCP_ESTABLISHED_R);
+                            if (!(flow_tcp_flags & VR_FLOW_TCP_ESTABLISHED_R) &&
+                                !(flow_tcp_flags & VR_FLOW_TCP_ESTABLISHED)) {
+                                // If it wasn't established or reverse established,
+                                // It is being established now. Offload both.
+                                vr_offload_flow_set(flow_e,
+                                    flow_e->fe_hentry.hentry_index, rflow_e);
+                                vr_offload_flow_set(rflow_e,
+                                    rflow_e->fe_hentry.hentry_index, flow_e);
+                            }
                         }
                     }
                 }
@@ -1530,9 +1540,13 @@ vr_flow_tcp_digest(struct vrouter *router, struct vr_flow_entry *flow_e,
              */
             if (flow_e->fe_flags & VR_RFLOW_VALID) {
                 rflow_e = vr_flow_get_entry(router, flow_e->fe_rflow);
+                /* Delete offloaded flow on TCP FIN */
+                (void)vr_offload_flow_del(flow_e);
                 if (rflow_e) {
                     (void)vr_sync_fetch_and_or_16u(&rflow_e->fe_tcp_flags,
                             VR_FLOW_TCP_FIN_R);
+                    /* Delete offloaded reverse flow on TCP FIN */
+                    (void)vr_offload_flow_del(rflow_e);
                 }
             }
         }
@@ -1573,8 +1587,17 @@ vr_flow_tcp_digest(struct vrouter *router, struct vr_flow_entry *flow_e,
                                     VR_FLOW_TCP_ESTABLISHED_R)) {
                             (void)vr_sync_fetch_and_or_16u(&rflow_e->fe_tcp_flags,
                                     VR_FLOW_TCP_ESTABLISHED);
-                            (void)vr_sync_fetch_and_or_16u(&flow_e->fe_tcp_flags,
-                                     VR_FLOW_TCP_ESTABLISHED_R);
+                            flow_tcp_flags = vr_sync_fetch_and_or_16u(
+                                &flow_e->fe_tcp_flags, VR_FLOW_TCP_ESTABLISHED_R);
+                            if (!(flow_tcp_flags & VR_FLOW_TCP_ESTABLISHED_R) &&
+                                !(flow_tcp_flags & VR_FLOW_TCP_ESTABLISHED)) {
+                                // If it wasn't established or reverse established,
+                                // It is being established now. Offload both.
+                                vr_offload_flow_set(flow_e,
+                                    flow_e->fe_hentry.hentry_index, rflow_e);
+                                vr_offload_flow_set(rflow_e,
+                                    rflow_e->fe_hentry.hentry_index, flow_e);
+                            }
                         }
                     }
                 }
@@ -2884,6 +2907,18 @@ vr_flow_table_data_get(vr_flow_table_data *ref)
     return ftable;
 }
 
+void
+update_flow_entry(vr_htable_t table __attribute__unused__, vr_hentry_t *ent ,
+        unsigned int index, void *data __attribute__unused__)
+{
+    struct vr_flow_entry *fe = (struct vr_flow_entry *)ent;
+
+    if (fe == NULL)
+        return;
+
+    vr_offload_flow_stats_update(fe);
+}
+
 /*
  * sandesh handler for vr_flow_table_data
  */
@@ -2897,6 +2932,9 @@ vr_flow_table_data_process(void *s_req)
     vr_flow_table_data *resp, *ftable = (vr_flow_table_data *)s_req;
 
     router = vrouter_get(ftable->ftable_rid);
+
+    vr_htable_trav(router->vr_flow_table, 0, update_flow_entry, NULL);
+
     resp = vr_flow_table_data_get(ftable);
     if (!resp) {
         ret = -ENOMEM;
