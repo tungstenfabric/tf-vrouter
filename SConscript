@@ -92,6 +92,9 @@ DPDK_LIB_DIR = DPDK_DST_DIR + '/lib'
 THRD_PRT_DIR = '#third_party/'
 ADDNL_OPTION = GetOption('add-opts')
 
+# Save add-opts for nested SConscripts
+env['ADD_OPTS'] = ADDNL_OPTION if ADDNL_OPTION else []
+
 # Include paths
 env.Replace(CPPPATH = '#vrouter/include')
 env.Append(CPPPATH = [env['TOP'] + '/vrouter/sandesh/gen-c'])
@@ -276,14 +279,25 @@ if sys.platform != 'darwin':
         # The list is from the rte.app.mk file
         DPDK_LIBS = [
             '-Wl,--whole-archive',
+            '-lrte_distributor',
+            '-lrte_reorder',
             '-lrte_kni',
+            '-lrte_pipeline',
+            '-lrte_table',
             '-lrte_port',
             '-lrte_timer',
             '-lrte_hash',
             '-lrte_net',
+            '-lrte_jobstats',
+            '-lrte_lpm',
+            '-lrte_power',
+            '-lrte_acl',
+            '-lrte_meter',
+            '-lrte_member',
             '-lrte_sched',
             '-lm',
             '-lrt',
+            '-lrte_vhost',
             '-lrte_cryptodev',
             '-Wl,--start-group',
             '-lrte_kvargs',
@@ -291,17 +305,22 @@ if sys.platform != 'darwin':
             '-lrte_ip_frag',
             rte_libs,
             '-lrte_mempool',
+            '-lrte_stack',
             '-lrte_ring',
             '-lrte_eal',
             '-lrte_cmdline',
+            '-lrte_cfgfile',
             "-lrte_eventdev",
             '-lrte_pmd_bond',
             '-lrte_pmd_bnxt',
+            '-lrte_bus_vmbus',
+            '-lrte_pmd_ifc',
             '-lrte_pmd_enic',
             '-lrte_pmd_i40e',
             '-lrte_pmd_ixgbe',
             '-lrte_pmd_nfp',
             '-lrte_pmd_e1000',
+            '-lrte_pmd_ring',
             '-lrte_pmd_af_packet'
         ]
         if env['OPT'] == 'coverage':
@@ -311,6 +330,14 @@ if sys.platform != 'darwin':
             DPDK_LIBS.append('-lrte_pmd_mlx5')
             DPDK_LIBS.append('-libverbs')
             DPDK_LIBS.append('-lmlx5')
+
+        if ADDNL_OPTION and 'enableN3K' in ADDNL_OPTION:
+            DPDK_LIBS += [
+                '-lrte_pmd_n3k',
+            ]
+            env.Append(CCFLAGS = '-DVR_ENABLE_N3K')
+
+        DPDK_LIBS.append('-lrte_pmd_virtio')
 
         DPDK_LIBS.append('-Wl,--end-group')
         DPDK_LIBS.append('-Wl,--no-whole-archive')
