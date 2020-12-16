@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright(c) HCL TECHNOLOGIES LTD
+# Submitted on behalf of a third-party: Intel Corporation, a
+# Delaware corporation, having its principal place of business
+# at 2200 Mission College Boulevard,
+# Santa Clara, California 95052, USA
+#
+
+Import('VRouterEnv')
+Import('dpdk_lib')
+
+env = VRouterEnv.Clone()
+
+env.Append(CPPPATH = ['#vrouter/dpdk/n3k'])
+env.Append(CCFLAGS = '-Werror')
+env.Append(CCFLAGS = '-Wall')
+env.Append(CCFLAGS = '-msse4.2')
+env.Append(LIBPATH = ['../../../../dpdk/n3k'])
+env.Append(LINKFLAGS = env['DPDK_LINKFLAGS'])
+env.Replace(LIBS = ['cmocka', 'vr_dpdk_n3k', 'pthread', 'dl'])
+
+common_tests_src = [
+    'flow_test_utils.c',
+    '../fakes/fake_rte_eal.c',
+    '../fakes/fake_rte_hash.c',
+    '../fakes/fake_vr_offloads.c',
+]
+
+common_tests_obj = [env.Object(f) for f in common_tests_src]
+for obj in common_tests_obj:
+    env.Requires(obj, dpdk_lib)
+
+unit_test_base_names = [
+    'dpdk_n3k_packet_parse',
+    'dpdk_n3k_packet_parse_vxlan',
+    'dpdk_n3k_packet_parse_mpls',
+    'dpdk_n3k_flow_convert_simple_udp',
+    'dpdk_n3k_flow_convert_simple_tcp',
+    'dpdk_n3k_flow_convert_vxlan_udp',
+    'dpdk_n3k_flow_convert_vxlan_tcp',
+    'dpdk_n3k_flow_convert_routed_udp',
+    'dpdk_n3k_flow_convert_routed_tcp',
+    'dpdk_n3k_flow_convert_nat_udp',
+    'dpdk_n3k_flow_convert_nat_tcp',
+    'dpdk_n3k_flow_convert_mirror',
+    'dpdk_n3k_flow_convert_mpls',
+]
+
+unit_tests = []
+for name in unit_test_base_names:
+    test_file = 'test_{}.c'.format(name)
+    test_name = '{}_tests'.format(name)
+
+    test_obj = env.Object(test_file)
+    env.Requires(test_obj, dpdk_lib)
+
+    test = env.UnitTest(test_name, env.Flatten([test_obj, common_tests_obj]))
+    unit_tests.append(test)
+
+vr_dpdk_n3k_unit_tests = env.TestSuite('vr-dpdk-n3k-tests', unit_tests)
