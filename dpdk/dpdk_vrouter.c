@@ -30,6 +30,7 @@
 #include "vr_dpdk.h"
 #include "vr_dpdk_usocket.h"
 #include "vr_dpdk_virtio.h"
+#include "vr_dpdk_pmd_context.h"
 #include "vr_uvhost.h"
 #include "vr_bridge.h"
 #include "vr_mem.h"
@@ -678,6 +679,10 @@ dpdk_argv_update(void)
             >= sizeof(lcores_string)) {
         return -1;
     }
+
+    (void)vr_dpdk_pmd_ctx_lcore_request(lcores_string, sizeof(lcores_string),
+        service_core_mask_ptr);
+
     /* Append lcores option. */
     if (dpdk_argv_append("--"LCORES_OPT, lcores_string) != 0)
         return -1;
@@ -825,7 +830,7 @@ dpdk_init(void)
         return -1;
     }
 
-    ret = rte_eal_init(ret, dpdk_argv);
+    ret = vr_dpdk_pmd_ctx_init(ret, dpdk_argv);
     if (ret < 0) {
         RTE_LOG(ERR, VROUTER, "Error initializing EAL\n");
         return ret;
@@ -905,6 +910,8 @@ dpdk_exit(void)
     if (pthread_mutex_destroy(&vr_dpdk.if_lock)) {
         RTE_LOG(ERR, VROUTER, "Error destroying interface lock\n");
     }
+
+    (void)vr_dpdk_pmd_ctx_exit();
 }
 
 /* Set stop flag for all lcores */
@@ -1128,6 +1135,8 @@ Usage(void)
         "    --"VR_UNCOND_CLOSE_FLOW_ON_TCP_RST_OPT" NUM Enable/Disable unconditional closure of Flow "
                                            "on TCP RST\n"
         );
+
+    (void)vr_dpdk_pmd_ctx_print_usage();
 
     exit(1);
 }
@@ -1463,6 +1472,9 @@ main(int argc, char *argv[])
 
     while ((opt = getopt_long(argc, argv, "", long_options, &option_index))
             >= 0) {
+        ret = vr_dpdk_pmd_ctx_parse_opt(argc, argv, optind, opt, optarg);
+        bool opt_parsed_by_pmd_ctx = ret == 0;
+
         switch (opt) {
         case 0:
             if (parse_no_arg_cli(option_index, optind, argv)) {
@@ -1472,6 +1484,8 @@ main(int argc, char *argv[])
 
         case '?':
         default:
+            if (opt_parsed_by_pmd_ctx)
+                break;
             RTE_LOG(ERR, VROUTER, "Invalid option %s\n", argv[optind - 1]);
             Usage();
             break;
@@ -1540,7 +1554,7 @@ main(int argc, char *argv[])
     }
 
     /* run all the lcores */
-    ret = rte_eal_mp_remote_launch(vr_dpdk_lcore_launch, NULL, CALL_MASTER);
+    ret = vr_dpdk_pmd_ctx_launch_lcores(vr_dpdk_lcore_launch);
 
     rte_eal_mp_wait_lcore();
     RTE_LCORE_FOREACH_SLAVE(lcore_id)
