@@ -18,6 +18,7 @@
 #include "vr_dpdk_netlink.h"
 #include "vr_dpdk_usocket.h"
 #include "vr_dpdk_virtio.h"
+#include "vr_dpdk_representor.h"
 
 #include <rte_errno.h>
 #include <rte_ethdev_pci.h>
@@ -32,8 +33,8 @@
 #include <net/if_arp.h>
 #include <sys/ioctl.h>
 
-static void
-dpdk_vif_queue_free(struct vr_interface *vif)
+void
+vr_dpdk_interface_queue_free(struct vr_interface *vif)
 {
     unsigned int lcore, i;
     struct vr_dpdk_lcore *lcore_p;
@@ -72,8 +73,8 @@ dpdk_vif_queue_free(struct vr_interface *vif)
     return;
 }
 
-static int
-dpdk_vif_queue_setup(struct vr_interface *vif)
+int
+vr_dpdk_interface_queue_setup(struct vr_interface *vif)
 {
     int16_t vif_max_queue = -1;
     uint16_t num_tx_queues_per_lcore;
@@ -144,7 +145,7 @@ dpdk_vif_queue_setup(struct vr_interface *vif)
     return 0;
 
 unwind:
-    dpdk_vif_queue_free(vif);
+    vr_dpdk_interface_queue_free(vif);
     return -ENOMEM;
 }
 
@@ -165,7 +166,7 @@ dpdk_virtual_if_add(struct vr_interface *vif)
     /* virtio TX is thread safe, so we assign TX queue to each lcore */
     ntxqs = (uint16_t)-1;
 
-    ret = dpdk_vif_queue_setup(vif);
+    ret = vr_dpdk_interface_queue_setup(vif);
     if (ret)
         return ret;
 
@@ -247,7 +248,7 @@ dpdk_virtual_if_del(struct vr_interface *vif)
                 vif->vif_idx, vif->vif_name);
     }
 
-    dpdk_vif_queue_free(vif);
+    vr_dpdk_interface_queue_free(vif);
 
     return ret;
 }
@@ -634,13 +635,13 @@ dpdk_af_packet_if_add(struct vr_interface *vif)
     vr_af_ethdev_conf_update(&af_ethdev_conf);
 
     /* init af_packet device */
-    ret = vr_dpdk_ethdev_init(ethdev, &af_ethdev_conf);
+    ret = vr_dpdk_ethdev_init(ethdev, &af_ethdev_conf, NULL, NULL);
     if (ret != 0)
         return ret;
 
     dpdk_vif_attach_ethdev(vif, ethdev);
 
-    ret = dpdk_vif_queue_setup(vif);
+    ret = vr_dpdk_interface_queue_setup(vif);
     if (ret < 0)
         return ret;
 
@@ -781,13 +782,13 @@ dpdk_fabric_if_add(struct vr_interface *vif)
     vr_ethdev_conf_update(&fabric_ethdev_conf);
 
     /* init eth device */
-    ret = vr_dpdk_ethdev_init(ethdev, &fabric_ethdev_conf);
+    ret = vr_dpdk_ethdev_init(ethdev, &fabric_ethdev_conf, NULL, NULL);
     if (ret != 0)
         return ret;
 
     dpdk_vif_attach_ethdev(vif, ethdev);
 
-    ret = dpdk_vif_queue_setup(vif);
+    ret = vr_dpdk_interface_queue_setup(vif);
     if (ret < 0)
         return ret;
 
@@ -870,7 +871,7 @@ dpdk_fabric_af_packet_if_del(struct vr_interface *vif)
         rte_eth_dev_close(port_id);
     }
 
-    dpdk_vif_queue_free(vif);
+    vr_dpdk_interface_queue_free(vif);
 
     /* release eth device */
     return vr_dpdk_ethdev_release(ethdev);
@@ -949,7 +950,7 @@ dpdk_vhost_if_add(struct vr_interface *vif)
                 port_id, MAC_VALUE(mac_addr.addr_bytes));
     }
 
-    ret = dpdk_vif_queue_setup(vif);
+    ret = vr_dpdk_interface_queue_setup(vif);
     if (ret < 0)
         return ret;
 
@@ -977,7 +978,7 @@ dpdk_vhost_if_del(struct vr_interface *vif)
 
     vr_dpdk_lcore_if_unschedule(vif);
 
-    dpdk_vif_queue_free(vif);
+    vr_dpdk_interface_queue_free(vif);
 
     return vr_dpdk_tapdev_release(vif);
 }
@@ -1039,7 +1040,7 @@ dpdk_monitoring_if_add(struct vr_interface *vif)
         return -EINVAL;
     }
 
-    ret = dpdk_vif_queue_setup(vif);
+    ret = vr_dpdk_interface_queue_setup(vif);
     if (ret)
         return ret;
 
@@ -1095,7 +1096,7 @@ dpdk_monitoring_if_del(struct vr_interface *vif)
 
     vr_dpdk_lcore_if_unschedule(vif);
 
-    dpdk_vif_queue_free(vif);
+    vr_dpdk_interface_queue_free(vif);
 
     /* Release TAP device. */
     return vr_dpdk_tapdev_release(vif);
@@ -1163,6 +1164,11 @@ dpdk_if_add(struct vr_interface *vif)
     if (vr_dpdk_is_stop_flag_set())
         return -EINPROGRESS;
 
+    int ret = vr_dpdk_representor_add(vif);
+    if (ret != VR_DPDK_REPRESENTOR_OP_RES_NOT_HANDLED) {
+        return ret == VR_DPDK_REPRESENTOR_OP_RES_HANDLED_OK ? 0 : -EFAULT;
+    }
+
     if (vif_is_fabric(vif)) {
         return dpdk_fabric_if_add(vif);
     } else if (vif_is_vm(vif)) {
@@ -1191,6 +1197,11 @@ dpdk_if_del(struct vr_interface *vif)
 {
     if (vr_dpdk_is_stop_flag_set())
         return -EINPROGRESS;
+
+    int ret = vr_dpdk_representor_del(vif);
+    if (ret != VR_DPDK_REPRESENTOR_OP_RES_NOT_HANDLED) {
+        return ret == VR_DPDK_REPRESENTOR_OP_RES_HANDLED_OK ? 0 : -EFAULT;
+    }
 
     if (vif_is_fabric(vif) || vif_is_namespace(vif)) {
         return dpdk_fabric_af_packet_if_del(vif);
@@ -2235,9 +2246,12 @@ dpdk_dev_stats_update(struct vr_interface *vif, unsigned lcore_id)
     struct vif_queue_dpdk_data *q_data =
         (struct vif_queue_dpdk_data *)vif->vif_queue_host_data;
     struct rte_eth_stats eth_stats;
+    bool is_representor =
+        vr_dpdk_representor_stats_update(vif) ==
+        VR_DPDK_REPRESENTOR_OP_RES_HANDLED_OK;
 
-    /* check if vif is a PMD */
-    if (!vif_is_fabric(vif) || vif->vif_os == NULL)
+    /* check if vif is a PMD or a representor */
+    if ((!is_representor && !vif_is_fabric(vif)) || vif->vif_os == NULL)
         return;
 
     port_id = ((struct vr_dpdk_ethdev *)(vif->vif_os))->ethdev_port_id;

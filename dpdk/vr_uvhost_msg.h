@@ -51,4 +51,5 @@ typedef struct vrnu_msg {
     };
 } vrnu_msg_t;
 int vr_uvh_nl_listen_handler(int fd, void *arg);
+void vr_uvh_nl_send_intf_state(int state, int intf_index, char *intf_name);
 #endif /* __VR_UVHOST_MSG_H__ */

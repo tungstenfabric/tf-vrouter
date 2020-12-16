@@ -95,7 +95,7 @@ static char *basename(char *string)
  * state 1 - up
  * Called when the VM goes down or comes up
  */
-static void
+void
 vr_uvh_nl_send_intf_state(int state, int intf_index, char *intf_name)
 {
     int nl_fd;

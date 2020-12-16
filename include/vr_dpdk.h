@@ -778,7 +778,8 @@ struct vr_dpdk_queue *
 vr_dpdk_ethdev_tx_queue_init(unsigned lcore_id, struct vr_interface *vif,
     unsigned tx_queue_id);
 /* Init ethernet device */
-int vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *, struct rte_eth_conf *);
+int vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *, struct rte_eth_conf *,
+    struct rte_eth_txconf *, struct rte_eth_rxconf *);
 /* Release ethernet device */
 int vr_dpdk_ethdev_release(struct vr_dpdk_ethdev *);
 /* Get free queue ID */
@@ -942,6 +943,7 @@ int vr_dpdk_lcore_mpls_schedule(struct vr_interface *vif, unsigned dst_ip,
     unsigned mpls_label);
 /* Returns the least used lcore or VR_MAX_CPUS_DPDK */
 unsigned vr_dpdk_lcore_least_used_get(void);
+size_t vr_dpdk_lcore_free_lcore_get(void);
 /* Flush TX queues */
 static inline void
 vr_dpdk_lcore_flush(struct vr_dpdk_lcore *lcore)
@@ -1041,6 +1043,12 @@ void vr_dpdk_init_cpuid(struct vr_cpu_type_t *cpu);
  * Get bond interface port id by drv_name
  */
 uint8_t dpdk_find_port_id_by_drv_name(void);
+
+/*
+ * vr_dpdk_interface.c
+ */
+int vr_dpdk_interface_queue_setup(struct vr_interface *vif);
+void vr_dpdk_interface_queue_free(struct vr_interface *vif);
 
 /*
  * Get DPDK info

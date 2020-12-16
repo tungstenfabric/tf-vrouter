@@ -84,7 +84,7 @@ struct rte_eth_conf ethdev_conf = {
  * on how these parameters should be set.
  */
 /* RX ring configuration */
-static const struct rte_eth_rxconf rx_queue_conf = {
+static const struct rte_eth_rxconf default_rx_queue_conf = {
     .rx_thresh = {
         .pthresh = 8,   /* Ring prefetch threshold */
         .hthresh = 8,   /* Ring host threshold */
@@ -101,7 +101,7 @@ static const struct rte_eth_rxconf rx_queue_conf = {
  * network controllers and/or network drivers.
  */
 /* TX ring configuration */
-static const struct rte_eth_txconf tx_queue_conf = {
+static const struct rte_eth_txconf default_tx_queue_conf = {
     .tx_thresh = {
         .pthresh = 32,  /* Ring prefetch threshold */
         .hthresh = 0,   /* Ring host threshold */
@@ -442,8 +442,10 @@ dpdk_ethdev_info_update(struct vr_dpdk_ethdev *ethdev, struct vr_interface *vif)
 }
 
 /* Setup ethdev hardware queues */
+/* If (tx|rx)_conf is null, default_(tx|rx)_queue_conf will be used instead */
 static int
-dpdk_ethdev_queues_setup(struct vr_dpdk_ethdev *ethdev)
+dpdk_ethdev_queues_setup(struct vr_dpdk_ethdev *ethdev,
+    struct rte_eth_txconf *tx_conf, struct rte_eth_rxconf *rx_conf)
 {
     int ret, i;
     uint8_t port_id = ethdev->ethdev_port_id;
@@ -473,7 +475,7 @@ dpdk_ethdev_queues_setup(struct vr_dpdk_ethdev *ethdev)
         }
 
         ret = rte_eth_rx_queue_setup(port_id, i, vr_rxd_sz,
-            SOCKET_ID_ANY, &rx_queue_conf, mempool);
+            SOCKET_ID_ANY, rx_conf ? rx_conf : &default_rx_queue_conf, mempool);
         if (ret < 0) {
             /* return mempool to the list */
             if (mempool != vr_dpdk.rss_mempool)
@@ -495,7 +497,7 @@ dpdk_ethdev_queues_setup(struct vr_dpdk_ethdev *ethdev)
     /* configure TX queues */
     for (i = 0; i < ethdev->ethdev_nb_tx_queues; i++) {
         ret = rte_eth_tx_queue_setup(port_id, i, vr_txd_sz,
-            SOCKET_ID_ANY, &tx_queue_conf);
+            SOCKET_ID_ANY, tx_conf ? tx_conf : &default_tx_queue_conf);
         if (ret < 0) {
             RTE_LOG(ERR, VROUTER, "    error setting up eth device %" PRIu8 " TX queue %d"
                     ": %s (%d)\n", port_id, i, rte_strerror(-ret), -ret);
@@ -921,7 +923,8 @@ vr_dpdk_bond_intf_cb_register(struct vr_dpdk_ethdev *ethdev)
 
 /* Init ethernet device */
 int
-vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf)
+vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf,
+    struct rte_eth_txconf *tx_conf, struct rte_eth_rxconf *rx_conf)
 {
     uint8_t port_id;
     int ret;
@@ -960,7 +963,7 @@ vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf
         }
     }
 
-    ret = dpdk_ethdev_queues_setup(ethdev);
+    ret = dpdk_ethdev_queues_setup(ethdev, tx_conf, rx_conf);
     if (ret < 0)
         return ret;
 
