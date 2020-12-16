@@ -69,8 +69,9 @@ extern unsigned vr_packet_sz;
 #define RTE_LOGTYPE_USOCK           RTE_LOGTYPE_USER2
 #define RTE_LOGTYPE_UVHOST          RTE_LOGTYPE_USER3
 #define RTE_LOGTYPE_DPCORE          RTE_LOGTYPE_USER4
+#define RTE_LOGTYPE_OFFLOAD_PACKET  RTE_LOGTYPE_USER5
 /* Disable the rest (undefined) logtypes */
-#define VR_DPDK_LOGTYPE_DISABLE     (RTE_LOGTYPE_USER5 | RTE_LOGTYPE_USER6 | \
+#define VR_DPDK_LOGTYPE_DISABLE     (RTE_LOGTYPE_USER6 | \
                                      RTE_LOGTYPE_USER7 | RTE_LOGTYPE_USER8)
 
 /*

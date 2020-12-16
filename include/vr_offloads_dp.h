@@ -45,6 +45,20 @@ static inline int vr_offload_soft_reset(void)
     return ret;
 }
 
+static inline int vr_offload_packet_parse(struct vr_packet *pkt)
+{
+    struct vr_offload_ops *offload;
+    int ret = 0;
+
+    vr_rcu_read_lock();
+    offload = vr_rcu_dereference(offload_ops);
+    if (offload && offload->voo_packet_parse)
+        return ret = offload->voo_packet_parse(pkt);
+    vr_rcu_read_unlock();
+
+    return ret;
+}
+
 /* Flow offload functions */
 static inline int vr_offload_flow_set(struct vr_flow_entry * fe,
                                        unsigned int fe_index,
@@ -71,6 +85,20 @@ static inline int vr_offload_flow_del(struct vr_flow_entry * fe)
     offload = vr_rcu_dereference(offload_ops);
     if (offload && offload->voo_flow_del)
         ret = offload->voo_flow_del(fe);
+    vr_rcu_read_unlock();
+
+    return ret;
+}
+
+static inline int vr_offload_flow_stats_update(struct vr_flow_entry * fe)
+{
+    struct vr_offload_ops *offload;
+    int ret = 0;
+
+    vr_rcu_read_lock();
+    offload = vr_rcu_dereference(offload_ops);
+    if (offload && offload->voo_flow_stats_update)
+        ret = offload->voo_flow_stats_update(fe);
     vr_rcu_read_unlock();
 
     return ret;
@@ -535,4 +563,5 @@ static inline int vr_offload_qos_map_get(vr_qos_map_req * req)
 
     return ret;
 }
+
 #endif /* __VR_OFFLOADS_DP_H__ */

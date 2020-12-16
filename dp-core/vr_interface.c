@@ -1230,6 +1230,8 @@ vm_rx(struct vr_interface *vif, struct vr_packet *pkt,
     stats->vis_ibytes += pkt_len(pkt);
     stats->vis_ipackets++;
 
+    vr_offload_packet_parse(pkt);
+
     return vr_virtual_input(vif->vif_vrf, vif, pkt, &fmd, vlan_id);
 }
 
@@ -1414,6 +1416,8 @@ eth_rx(struct vr_interface *vif, struct vr_packet *pkt,
         if (sub_vif)
             return sub_vif->vif_rx(sub_vif, pkt, VLAN_ID_INVALID);
     }
+
+    vr_offload_packet_parse(pkt);
 
     return vr_fabric_input(vif, pkt, &fmd, vlan_id);
 }
