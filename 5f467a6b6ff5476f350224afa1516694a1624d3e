@@ -16,6 +16,24 @@
       "revId": "5f467a6b6ff5476f350224afa1516694a1624d3e",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "65d81e66_4aa45555",
+        "filename": "utils/vr_util.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 1315,
+      "author": {
+        "id": 752
+      },
+      "writtenOn": "2020-12-17T08:51:04Z",
+      "side": 1,
+      "message": "Yes thanks. Code is updated.",
+      "parentUuid": "721c6d77_a55b1de1",
+      "revId": "5f467a6b6ff5476f350224afa1516694a1624d3e",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
