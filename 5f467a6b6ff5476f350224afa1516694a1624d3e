@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "721c6d77_a55b1de1",
+        "filename": "utils/vr_util.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 1315,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2020-12-17T07:38:13Z",
+      "side": 1,
+      "message": "req.vifr_cross_connect_idx_size should be assigned to VR_MAX_PHY_INF. right ?",
+      "revId": "5f467a6b6ff5476f350224afa1516694a1624d3e",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
