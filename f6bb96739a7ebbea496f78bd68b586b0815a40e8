@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8558e590_1667fd0e",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 5
+      },
+      "lineNbr": 1919,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-17T11:50:00Z",
+      "side": 1,
+      "message": "Instead of using vif 0, we should return error here.",
+      "revId": "f6bb96739a7ebbea496f78bd68b586b0815a40e8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
