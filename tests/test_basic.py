@@ -139,7 +139,7 @@ class TestBasic(unittest.TestCase):
 
         # get the dropstats
         drop_stats = DropStats()
-        self.assertEqual(1, drop_stats.get_vds_invalid_arp())
+        self.assertGreater(drop_stats.get_vds_invalid_arp(), 0)
 
     def test_flow_and_link_flow(self):
         # create flow1

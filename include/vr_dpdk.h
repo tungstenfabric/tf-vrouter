@@ -363,14 +363,6 @@ struct vr_dpdk_bond_member_info {
 /* Maximum number of IO lcores */
 #define VR_DPDK_MAX_IO_LORES (VR_DPDK_LAST_IO_LCORE_ID - VR_DPDK_IO_LCORE_ID + 1)
 
-/* needs to have a place holder for RX flags, to allow usuage of dpdk from upstream */
-#ifndef PKT_RX_GSO_TCP4
-#define PKT_RX_GSO_TCP4      (1ULL << 23)  /**< RX packet with TCPv4 segment offload */
-#endif /* PKT_RX_GSO_TCP4 */
-#ifndef PKT_RX_GSO_TCP6
-#define PKT_RX_GSO_TCP6      (1ULL << 24)  /**< RX packet with TCPv6 segment offload */
-#endif /* PKT_RX_GSO_TCP6 */
-
 /*
  * VRouter/DPDK Data Structures
  * ============================
@@ -414,6 +406,8 @@ struct vr_dpdk_queue {
     struct vr_interface *q_vif;
     /* Incase of multiqueue, store vring queue_id */
     uint16_t vring_queue_id;
+    /* vhost device id */
+    int      vr_vid;
 };
 
 /* We store the queue params in the separate structure to increase CPU
@@ -1023,6 +1017,8 @@ int dpdk_gro_process(struct vr_packet *pkt, struct vr_interface *vif, bool l2_pk
 int dpdk_segment_packet(struct vr_packet *pkt, struct rte_mbuf *mbuf_in,
                 struct rte_mbuf **mbuf_out, const unsigned short out_num,
                 const unsigned short mss_size, bool do_outer_ip_csum);
+struct rte_mbuf* dpdk_create_mss_chained_mbuf(struct rte_mbuf** m,
+                                              struct vr_packet* pkt);
 uint16_t dpdk_ipv4_udptcp_cksum(struct rte_mbuf *m,
                        const struct rte_ipv4_hdr *ipv4_hdr,
                        uint8_t *l4_hdr);

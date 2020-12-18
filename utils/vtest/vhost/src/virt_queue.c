@@ -119,6 +119,7 @@ virt_queue_map_vring(struct uvhost_virtq **virtq, void *base_virtq_addr) {
 int
 virt_queue_set_host_virtq(Client *client, struct set_host_virtq set_virtq) {
 
+
     if (!client) {
         return E_VIRT_QUEUE_ERR_FARG;
     }
@@ -141,6 +142,29 @@ virt_queue_set_host_virtq(Client *client, struct set_host_virtq set_virtq) {
 
     if (client_vhost_ioctl(client, VHOST_USER_SET_VRING_KICK, &(set_virtq.kick)) != E_CLIENT_OK) {
         return E_VIRT_QUEUE_ERR_HOST_VIRTQ;
+    }
+
+    return E_VIRT_QUEUE_OK;
+}
+
+int
+virt_queue_set_vring_enable(Client *client, size_t virtq_table_size) {
+
+    VIRT_QUEUE_H_RET_VAL ret_val = E_VIRT_QUEUE_OK;
+    struct set_host_virtq set_virtq_ring;
+
+    if (!client) {
+        return E_VIRT_QUEUE_ERR_FARG;
+    }
+
+    for (size_t i = 0; i < virtq_table_size; i++) {
+        set_virtq_ring.num.index = i;
+        // enable ring
+        set_virtq_ring.num.num = 1;
+
+        if (client_vhost_ioctl(client, VHOST_USER_SET_VRING_ENABLE, &(set_virtq_ring.num)) != E_CLIENT_OK) {
+            return E_VIRT_QUEUE_ERR_HOST_VIRTQ;
+        }
     }
 
     return E_VIRT_QUEUE_OK;
@@ -310,9 +334,7 @@ virt_queue_put_rx_virt_queue(struct virtq_control **virtq_control, VHOST_CLIENT_
     } else if (last_used_idx != used->idx  && avail->idx %num  == last_used_idx %num) {
         return E_VIRT_QUEUE_ERR_RECV_PACKET_SPACE;
     }
-
     init_desc_element(sizeof(struct virtio_net_hdr) + src_buf_len, &desc[last_avail_idx]);
-
     avail->ring[avail->idx % num] = last_avail_idx;
     avail->idx++;
 

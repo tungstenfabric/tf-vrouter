@@ -133,5 +133,7 @@ int virt_queue_map_mem_reqion_virtq(struct uvhost_virtq **virtq, uint64_t guest_
 
 int virt_queue_set_host_virtq_table(uvhost_virtq **virtq, size_t virtq_table_size, Client *client);
 
+int virt_queue_set_vring_enable(Client *client, size_t virtq_table_size);
+
 #endif
 
