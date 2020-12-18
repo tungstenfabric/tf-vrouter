@@ -16,6 +16,24 @@
       "revId": "f6bb96739a7ebbea496f78bd68b586b0815a40e8",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c1f45140_38ac55ff",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 5
+      },
+      "lineNbr": 1919,
+      "author": {
+        "id": 752
+      },
+      "writtenOn": "2020-12-18T11:51:11Z",
+      "side": 1,
+      "message": "Hi Anand,\nVhost interface add comes twice when vrouter comes up - \n1. Default interface creation by vrouter. This time vifr_cross_connect_idx is NULL.\n2. After vrouter soft reset. This time agent sends the correct vifr_cross_connect_idx.\n\nI tried returning EINVAL in case of point 1, but then vrouter stops and restarts again. So, it is always in point 1 state and doesn\u0027t proceed. So, I\u0027m using the vif0 which is the default behaviour in case of non-l3mh also.",
+      "parentUuid": "8558e590_1667fd0e",
+      "revId": "f6bb96739a7ebbea496f78bd68b586b0815a40e8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
