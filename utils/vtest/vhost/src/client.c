@@ -284,6 +284,7 @@ client_vhost_ioctl(Client *client, VhostUserRequest request, void *req_ptr) {
         case VHOST_USER_SET_VRING_KICK:
         case VHOST_USER_SET_VRING_CALL:
         case VHOST_USER_SET_VRING_ERR:
+        case VHOST_USER_SET_FEATURES:
             if (!req_ptr) {
                 return E_CLIENT_ERR_FARG;
             }
@@ -383,6 +384,7 @@ client_vhost_ioctl_set_send_msg(Client *client, VhostUserRequest request, void *
 
         case VHOST_USER_SET_VRING_NUM:
         case VHOST_USER_SET_VRING_BASE:
+        case VHOST_USER_SET_VRING_ENABLE:
             memcpy(&message->state, req_ptr, sizeof(sizeof_VhostUserMsg.state));
             message->size = sizeof(sizeof_VhostUserMsg.state);
             break;

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
+# Copyright (c) 2020 Juniper Networks, Inc. All rights reserved.
 #
 
 import subprocess
@@ -279,6 +279,7 @@ if sys.platform != 'darwin':
             '-lrte_port',
             '-lrte_timer',
             '-lrte_hash',
+            '-lrte_vhost',
             '-lrte_net',
             '-lrte_sched',
             '-lm',
