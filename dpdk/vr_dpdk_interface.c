@@ -1230,14 +1230,14 @@ dpdk_if_add_tap(struct vr_interface *vif)
     return 0;
 }
 
-static int
+static uint64_t
 dpdk_pkt_is_gso(struct rte_mbuf *m)
 {
     /*
      * This is only for TCP4/TCP6. UDP frag offload goes through the
      * regular dpdk_fragment_packet() path
      */
-    return (m->ol_flags & (PKT_RX_GSO_TCP4| PKT_RX_GSO_TCP6));
+    return (m->ol_flags &  PKT_TX_TCP_SEG);
 }
 
 static inline void
@@ -1604,7 +1604,6 @@ dpdk_if_tx(struct vr_interface *vif, struct vr_packet *pkt)
      */
     will_segment = vr_pkt_type_is_overlay(pkt->vp_type) && dpdk_pkt_is_gso(m) &&
         (rte_pktmbuf_pkt_len(m) > m->tso_segsz);
-
     /*
      * With DPDK pktmbufs we don't know if the checksum is incomplete,
      * i.e. there is no direct equivalent of skb->ip_summed field.
@@ -1695,6 +1694,7 @@ dpdk_if_tx(struct vr_interface *vif, struct vr_packet *pkt)
 #endif
 
     if (unlikely(will_segment)) {
+        m = dpdk_create_mss_chained_mbuf(&m, pkt);
         num_of_segs = dpdk_segment_packet(pkt, m, mbufs_segs_out,
                 VR_DPDK_FRAG_MAX_IP_SEGS, m->tso_segsz, 
                 (vif->vif_flags & VIF_FLAG_TX_CSUM_OFFLOAD));

@@ -247,7 +247,7 @@ vhost_client_run_vhost_client(Vhost_Client **vhost_cl, const char *vhost_client_
     }
 
     virt_queue_ret_val = virt_queue_map_uvhost_virtq_2_virtq_control(l_vhost_client);
-    if (virt_queue_ret_val != E_VIRT_QUEUE_OK) {
+    if (vhost_client_ret_val != E_VIRT_QUEUE_OK) {
         fprintf(stderr, "%s(): Error running vhost client: error mapping queues\n",
             __func__);
         return E_VHOST_CLIENT_ERR_MAP_VIRTQ;
@@ -258,6 +258,12 @@ vhost_client_run_vhost_client(Vhost_Client **vhost_cl, const char *vhost_client_
 
     l_vhost_client->vhost_net_app_handler.rx_func_handler = vhost_client_poll_client_rx;
     l_vhost_client->vhost_net_app_handler.tx_func_handler = vhost_client_poll_client_tx;
+    // now the ring is setup, send enable ring message
+    virt_queue_ret_val = virt_queue_set_vring_enable(&l_vhost_client->client,
+                                                 VHOST_CLIENT_VRING_MAX_VRINGS);
+    if (virt_queue_ret_val != E_VIRT_QUEUE_OK) {
+        return E_VIRT_QUEUE_ERR_HOST_VIRTQ;
+    }
 //TODO: Burst
     virt_queue_put_rx_virt_queue(l_vhost_client->virtq_control, VHOST_CLIENT_VRING_IDX_RX , ETH_MAX_MTU);
 
@@ -307,6 +313,14 @@ vhost_client_vhost_init_control_msgs(Vhost_Client *vhost_client) {
 
     client_ret_val = (client_vhost_ioctl(l_client, VHOST_USER_GET_FEATURES,
                &l_vhost_client->features));
+    if (client_ret_val != E_CLIENT_OK) {
+        return E_VHOST_CLIENT_ERR;
+    }
+
+    // disable VIRTIO_NET_F_MRG_RXBUF
+    uint64_t  set_features = 0x40001000;
+    client_ret_val = (client_vhost_ioctl(l_client, VHOST_USER_SET_FEATURES,
+               &set_features));
     if (client_ret_val != E_CLIENT_OK) {
         return E_VHOST_CLIENT_ERR;
     }
@@ -474,6 +488,7 @@ recv_packet(virtq_control *virtq_control, uint64_t *dst_buf, size_t *dst_buf_len
     struct virtq_used *used = NULL;
     struct virtq_desc *desc = NULL;
     uint16_t last_used_idx = 0;
+    int i;
     uint64_t num = 0;
     uintptr_t *data_point = NULL;
     size_t data_size = 0;
@@ -487,14 +502,12 @@ recv_packet(virtq_control *virtq_control, uint64_t *dst_buf, size_t *dst_buf_len
     num = virtq_control->virtq.num;
 
     if (last_used_idx != used->idx) {
-
-        data_point = (uintptr_t *) ((uintptr_t)desc[used->ring[last_used_idx %num].id].addr
-                + (uintptr_t)sizeof(struct virtio_net_hdr));
+        data_point =
+            (uintptr_t *) ((uintptr_t)desc[used->ring[last_used_idx %num].id].addr +
+                    (uintptr_t)sizeof(struct virtio_net_hdr));
         data_size = used->ring[last_used_idx % num].len - sizeof(struct virtio_net_hdr);
-
         memcpy((void *)(dst_buf), (void*) data_point, data_size);
         *dst_buf_len = data_size;
-
     } else {
         return E_VIRT_QUEUE_ERR_RECV_PACKET;
     }
