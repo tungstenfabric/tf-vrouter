@@ -68,6 +68,8 @@
 #define VR_INTERFACE_NAME_LEN       64
 #define VIF_MAX_MIRROR_MD_SIZE      255
 #define VR_INTERFACE_STR_BUF_LEN    512
+#define VR_VHOST_DIR_LEN            128
+#define VR_VHOST_FILENAME_LEN       32
 
 #define VIF_SRC_MACS                4
 
@@ -446,6 +448,8 @@ struct vr_interface {
     uint8_t vif_fat_flow_ipv4_exclude_plen_list[FAT_FLOW_IPV4_EXCLUDE_LIST_MAX_SIZE];
     uint8_t vif_fat_flow_ipv6_exclude_list_size;
     uint8_t vif_fat_flow_ipv4_exclude_list_size;
+    unsigned char vif_vhostsocket_dir[VR_VHOST_DIR_LEN];
+    unsigned char vif_vhostsocket_filename[VR_VHOST_FILENAME_LEN];
 };
 
 struct vr_interface_settings {

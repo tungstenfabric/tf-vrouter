@@ -522,4 +522,12 @@ vif_req_table[93].field_name = "vifr_loopback_ip"
 vif_req_table[93].ProtoField = ProtoField.uint32
 vif_req_table[93].base = base.DEC
 
+vif_req_table[94] = {}
+vif_req_table[94].field_name = "vifr_vhostsocket_dir"
+vif_req_table[94].ProtoField = ProtoField.bytes
+vif_req_table[94].base = base.SPACE
 
+vif_req_table[95] = {}
+vif_req_table[95].field_name = "vifr_vhostsocket_filename"
+vif_req_table[95].ProtoField = ProtoField.bytes
+vif_req_table[95].base = base.SPACE

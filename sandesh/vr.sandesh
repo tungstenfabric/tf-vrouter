@@ -145,6 +145,8 @@ buffer sandesh vr_interface_req {
     91: u32         vifr_vlan_tag;
     92: list<byte>  vifr_vlan_name;
     93: u32         vifr_loopback_ip;
+    94: list<byte>  vifr_vhostsocket_dir;
+    95: list<byte>  vifr_vhostsocket_filename;
 }
 
 buffer sandesh vr_vxlan_req {

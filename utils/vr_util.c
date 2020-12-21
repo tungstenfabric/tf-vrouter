@@ -1284,7 +1284,7 @@ int
 vr_send_interface_add(struct nl_client *cl, int router_id, char *vif_name,
         int os_index, int vif_index, int vif_xconnect_index, int vif_type,
         unsigned int vrf, unsigned int flags, int8_t *vif_mac, int8_t vif_transport,
-        const char *guid)
+        const char *guid, char *vhostsocket_dir, char *vhostsocket_filename)
 {
     int platform;
     vr_interface_req req;
@@ -1310,7 +1310,17 @@ vr_send_interface_add(struct nl_client *cl, int router_id, char *vif_name,
     req.vifr_type = vif_type;
     req.vifr_flags = flags;
     req.vifr_transport = vif_transport;
-
+    req.vifr_vhostuser_mode =  0;
+    if(vhostsocket_dir)
+    {
+        req.vifr_vhostsocket_dir = vhostsocket_dir;
+        req.vifr_vhostsocket_dir_size = strlen(req.vifr_vhostsocket_dir);
+    }
+    if(vhostsocket_filename)
+    {
+        req.vifr_vhostsocket_filename = vhostsocket_filename;
+        req.vifr_vhostsocket_filename_size = strlen(req.vifr_vhostsocket_filename);
+    }
     if (vif_type == VIF_TYPE_HOST) {
         req.vifr_cross_connect_idx = vif_xconnect_index;
     }

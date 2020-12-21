@@ -2419,6 +2419,16 @@ vr_interface_add(vr_interface_req *req, bool need_response)
         strncpy(vif->vif_name, req->vifr_name, sizeof(vif->vif_name) - 1);
     }
 
+    if (req->vifr_vhostsocket_filename_size && req->vifr_vhostsocket_filename) {
+        strncpy(vif->vif_vhostsocket_filename, req->vifr_vhostsocket_filename,
+                sizeof(vif->vif_vhostsocket_filename) -  1);
+    }
+
+    if (req->vifr_vhostsocket_dir_size && req->vifr_vhostsocket_dir) {
+        strncpy(vif->vif_vhostsocket_dir, req->vifr_vhostsocket_dir,
+                sizeof(vif->vif_vhostsocket_dir) - 1);
+    }
+
     if (req->vifr_hw_queues_size) {
         vif->vif_hw_queues = vr_malloc(sizeof(uint16_t) *
                 req->vifr_hw_queues_size, VR_INTERFACE_QUEUE_OBJECT);
@@ -2739,6 +2749,15 @@ __vr_interface_make_req(vr_interface_req *req, struct vr_interface *intf,
         req->vifr_pbb_mac_size = 0;
     }
     req->vifr_vhostuser_mode = intf->vif_vhostuser_mode;
+
+    if (req->vifr_vhostsocket_filename_size && req->vifr_vhostsocket_filename) {
+        strncpy(req->vifr_vhostsocket_filename, intf->vif_vhostsocket_filename,
+                sizeof(intf->vif_vhostsocket_filename));
+    }
+    if (req->vifr_vhostsocket_dir_size && req->vifr_vhostsocket_dir) {
+        strncpy(req->vifr_vhostsocket_dir, intf->vif_vhostsocket_dir,
+                sizeof(intf->vif_vhostsocket_filename));
+    }
 
     /* vif counters */
     req->vifr_ibytes = 0;
