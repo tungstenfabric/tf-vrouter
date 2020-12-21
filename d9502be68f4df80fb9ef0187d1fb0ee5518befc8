@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fa62815f_d8d8d59f",
+        "filename": "dpdk/vr_uvhost_msg.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1321,
+      "author": {
+        "id": 484
+      },
+      "writtenOn": "2020-12-21T21:08:00Z",
+      "side": 1,
+      "message": "Is vrnu_vif_vhostsocket_dir[0] always set? If yes, then why are we handling the \"vr_socket_dir\" below.",
+      "revId": "d9502be68f4df80fb9ef0187d1fb0ee5518befc8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
