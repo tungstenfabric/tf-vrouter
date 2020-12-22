@@ -34,6 +34,24 @@
       "revId": "f6bb96739a7ebbea496f78bd68b586b0815a40e8",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "816760dd_9740eb1d",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 5
+      },
+      "lineNbr": 1919,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2020-12-22T03:58:43Z",
+      "side": 1,
+      "message": "Ok.",
+      "parentUuid": "c1f45140_38ac55ff",
+      "revId": "f6bb96739a7ebbea496f78bd68b586b0815a40e8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
