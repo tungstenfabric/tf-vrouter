@@ -16,6 +16,41 @@
       "revId": "d9502be68f4df80fb9ef0187d1fb0ee5518befc8",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7113baf1_cedad719",
+        "filename": "dpdk/vr_uvhost_msg.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1321,
+      "author": {
+        "id": 484
+      },
+      "writtenOn": "2020-12-23T03:07:19Z",
+      "side": 1,
+      "message": "So this log is applicable for cases where vrnu_vif_vhostsocket_dir is set. For other case it will log null.",
+      "parentUuid": "fa62815f_d8d8d59f",
+      "revId": "d9502be68f4df80fb9ef0187d1fb0ee5518befc8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "89c7fd75_a70951a5",
+        "filename": "dpdk/vr_uvhost_msg.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1365,
+      "author": {
+        "id": 484
+      },
+      "writtenOn": "2020-12-23T03:07:19Z",
+      "side": 1,
+      "message": "During my testing I found that vrnu_vif_vhostsocket_dir string ends with \"/\" . \nWith this logic, additional \"/\" is being added to the sock file path: /var/run/vrouter/b6a50891-799c-4750-a220-15eb86ce3bf0//3dcc49947e59-net1. Can u pls take a look at it. To keep it backward compatible, vrnu_vif_vhostsocket_dir string shouldn\u0027t end with \"/\".",
+      "revId": "d9502be68f4df80fb9ef0187d1fb0ee5518befc8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
