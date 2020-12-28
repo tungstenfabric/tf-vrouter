@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "b57cc52c_ca40e3ef",
+        "filename": "dpdk/vr_uvhost_msg.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1321,
+      "author": {
+        "id": 1064
+      },
+      "writtenOn": "2020-12-28T04:46:29Z",
+      "side": 1,
+      "message": "To support unique socket directory for each pod, socket dir is received from netlink\nmessage hence it is not always set.\nI have to handle scenarios like below\n1.Backward compatibility with VMs \n2.When it is not passed by cni\n3.Vif add binary has vhostsocket dir as optional parameter.\n\nFor the log currently it logs empty strings, I will add null check for vhostsocket dir and filename separately.\nI have raised a minor bug for same(VCSR-156) and will fix after integration with upstream vhost commit.",
+      "parentUuid": "7113baf1_cedad719",
+      "revId": "d9502be68f4df80fb9ef0187d1fb0ee5518befc8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "89c7fd75_a70951a5",
         "filename": "dpdk/vr_uvhost_msg.c",
         "patchSetId": 1
@@ -48,6 +66,24 @@
       "writtenOn": "2020-12-23T03:07:19Z",
       "side": 1,
       "message": "During my testing I found that vrnu_vif_vhostsocket_dir string ends with \"/\" . \nWith this logic, additional \"/\" is being added to the sock file path: /var/run/vrouter/b6a50891-799c-4750-a220-15eb86ce3bf0//3dcc49947e59-net1. Can u pls take a look at it. To keep it backward compatible, vrnu_vif_vhostsocket_dir string shouldn\u0027t end with \"/\".",
+      "revId": "d9502be68f4df80fb9ef0187d1fb0ee5518befc8",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "85ad5a8d_b36d8484",
+        "filename": "dpdk/vr_uvhost_msg.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1365,
+      "author": {
+        "id": 1064
+      },
+      "writtenOn": "2020-12-28T04:46:29Z",
+      "side": 1,
+      "message": "As socket dir is user input for vif add with --vhostsocket-dir param and user may or may not not add \u0027/\u0027 in the end. CNI and Vtest test cases are adding \u0027/\u0027 at the end of vhost socket dir path.\nAdding an additional \u0027/\u0027 does not  create a logical issue and we have tested it.\nFor backward compatibility  where vhost socket dir not a user input(empty string) we follow the old logic.",
+      "parentUuid": "89c7fd75_a70951a5",
       "revId": "d9502be68f4df80fb9ef0187d1fb0ee5518befc8",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
