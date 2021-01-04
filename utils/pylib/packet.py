@@ -899,3 +899,52 @@ class Udpv6Packet(Ipv6Packet):
             return self.eth / self.ipv6 / self.udp
         else:
             return self.ipv6 / self.udp
+
+
+class MplsoEtherPacket(EtherPacket):
+    """
+    MplsoEtherPacket class for creating native mpls over ethernet packet
+
+    Mandatory Parameters:
+    --------------------
+    smac : str
+        Source MAC address
+    dmac : str
+        Destination MAC address
+    label_stack:
+        Stack of labels (BoS is the last label in the list)
+    inner_pkt : any other packet type
+        Inner packet
+
+    Optional Parameters:
+    -------------------
+    mpls_ttl : int
+        mpls ttl value for all the labels
+    """
+
+    def __init__(self, smac, dmac, label_stack,
+                 inner_pkt, mpls_ttl=64, **kwargs):
+        super(MplsoEtherPacket, self).__init__(
+            smac,
+            dmac,
+            ether_type=0x8847,
+            **kwargs)
+        load_contrib("mpls")
+        i = 0
+        bos = 0
+        self.mpls_labels = []
+        for label in label_stack:
+            if (i == (len(label_stack) - 1)):
+                bos = 1
+            self.mpls_labels.insert(i, MPLS(label=label, s=bos, ttl=mpls_ttl))
+            i = i + 1
+        self.inner_pkt = inner_pkt
+
+    def get_packet(self):
+        mpls_hdr = self.mpls_labels[0]
+        for i in range(len(self.mpls_labels)):
+            if (i != 0):
+                mpls_hdr = mpls_hdr / self.mpls_labels[i]
+            i = i + 1
+        pkt = self.eth / mpls_hdr / self.inner_pkt
+        return pkt

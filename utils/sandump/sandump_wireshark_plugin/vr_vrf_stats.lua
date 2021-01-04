@@ -187,3 +187,8 @@ vr_vrf_stats_table[33] = {}
 vr_vrf_stats_table[33].field_name = "vsr_udp_mpls_over_mpls_tunnels"
 vr_vrf_stats_table[33].ProtoField = ProtoField.int64
 vr_vrf_stats_table[33].base = base.DEC
+
+vr_vrf_stats_table[34] = {}
+vr_vrf_stats_table[34].field_name = "vsr_mpls_receives"
+vr_vrf_stats_table[34].ProtoField = ProtoField.int64
+vr_vrf_stats_table[34].base = base.DEC

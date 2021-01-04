@@ -39,7 +39,8 @@ extern int vr_mpls_tunnel_type(unsigned int , unsigned int, unsigned short *);
 extern struct vr_nexthop *__vrouter_get_label(struct vrouter *, unsigned int);
 extern int vr_mpls_input(struct vrouter *, struct vr_packet *,
                         struct vr_forwarding_md *);
-
+extern int vr_native_mpls_input(struct vrouter *, struct vr_packet *,
+                                struct vr_forwarding_md *);
 
 static inline bool
 vr_mpls_udp_port(unsigned short port)

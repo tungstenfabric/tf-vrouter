@@ -64,6 +64,7 @@ struct vr_vrf_stats {
     uint64_t vrf_uuc_floods;
     uint64_t vrf_pbb_tunnels;
     uint64_t vrf_udp_mpls_over_mpls_tunnels;
+    uint64_t vrf_mpls_receives;
 };
 
 struct vr_route {
