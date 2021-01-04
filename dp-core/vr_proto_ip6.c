@@ -174,7 +174,6 @@ vr_icmp6_input(struct vrouter *router, struct vr_packet *pkt,
     bool handled = true;
     struct vr_icmp *icmph;
 
-    PKT_LOG(0, pkt, 0, VR_PROTO_IP6_C, __LINE__);
     icmph = (struct vr_icmp *)pkt_data(pkt);
     switch (icmph->icmp_type) {
     case VR_ICMP6_TYPE_ROUTER_SOL:
@@ -756,10 +755,12 @@ vr_neighbor_input(struct vr_packet *pkt, struct vr_forwarding_md *fmd,
 
     case MR_TRAP_X:
         pkt_c = vr_pclone(pkt);
-        if (pkt_c)
-            vif_xconnect(pkt->vp_if, pkt_c, fmd);
-
-        vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
+        if (pkt_c) {
+            vr_trap(pkt_c, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
+            vif_xconnect(pkt->vp_if, pkt, fmd);
+        } else {
+            vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
+        }
         break;
 
     case MR_MIRROR:

@@ -989,7 +989,7 @@ dpdk_adjust_tcp_mss(struct tcphdr *tcph, unsigned short overlay_len,
     if ((tcph == NULL) || !(tcph->syn) || (router == NULL))
         return;
 
-    if (router->vr_eth_if == NULL)
+    if (router->vr_eth_if[0] == NULL)
         return;
 
     while (opt_off < (tcph->doff * 4)) {
@@ -1009,10 +1009,10 @@ dpdk_adjust_tcp_mss(struct tcphdr *tcph, unsigned short overlay_len,
                 return;
 
             pkt_mss = (opt_ptr[opt_off+2] << 8) | opt_ptr[opt_off+3];
-            if (router->vr_eth_if == NULL)
+            if (router->vr_eth_if[0] == NULL)
                 return;
 
-            port_id = (((struct vr_dpdk_ethdev *)(router->vr_eth_if->vif_os))->
+            port_id = (((struct vr_dpdk_ethdev *)(router->vr_eth_if[0]->vif_os))->
                     ethdev_port_id);
             rte_eth_dev_get_mtu(port_id, &mtu);
 
@@ -1457,8 +1457,8 @@ vhost_remove_xconnect(void)
         vif = __vrouter_get_interface(router, i);
         if (vif && (vif_is_vhost(vif))) {
             vif_remove_xconnect(vif);
-            if (vif->vif_bridge != NULL)
-                vif_remove_xconnect(vif->vif_bridge);
+            if (vif->vif_bridge[0] != NULL)
+                vif_remove_xconnect(vif->vif_bridge[0]);
         }
     }
 }
@@ -1517,6 +1517,7 @@ vr_dpdk_packet_get(struct rte_mbuf *m, struct vr_interface *vif)
     pkt->vp_type = VP_TYPE_NULL;
     pkt->vp_queue = VP_QUEUE_INVALID;
     pkt->vp_priority = VP_PRIORITY_INVALID;
+    pkt->vp_rx_pass = 0;
 
     return pkt;
 }

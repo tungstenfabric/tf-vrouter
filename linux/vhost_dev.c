@@ -211,14 +211,17 @@ void
 vhost_if_del(struct net_device *dev)
 {
     struct vhost_priv *vp;
+    int i;
 
     if (!dev)
         return;
 
     vp = netdev_priv(dev);
     vp->vp_vifp = NULL;
-    if (vp->vp_phys_dev)
-        vhost_tap_phys(dev, vp->vp_phys_dev);
+    for (i = 0; i < VR_MAX_PHY_INF; i++) {
+        if (vp->vp_phys_dev[i] == dev)
+            vhost_tap_phys(dev, vp->vp_phys_dev[i]);
+    }
 
     return;
 }
@@ -234,44 +237,45 @@ vhost_if_add(struct vr_interface *vif)
     if (vif->vif_type == VIF_TYPE_HOST) {
         dev->features |= (NETIF_F_GSO | NETIF_F_TSO |
                           NETIF_F_SG | NETIF_F_IP_CSUM);
+        for (i = 0; i < VR_MAX_PHY_INF; i++) {
+            if (vif->vif_bridge[i]) {
+                /*
+                 * If there already was an association, need to remove that
+                 */
+                if ((vp->vp_phys_dev[i]) &&
+                        (vp->vp_phys_dev[i] !=
+                        ((struct net_device *) vif->vif_bridge[i]->vif_os))) {
+                    vhost_del_tap_phys(vp->vp_phys_dev[i]);
+                }
 
-        if (vif->vif_bridge) {
-            /*
-             * if there already was an association, need to remove that
-             */
-            if ((vp->vp_phys_dev) &&
-                    (vp->vp_phys_dev !=
-                     ((struct net_device *)vif->vif_bridge->vif_os))) {
-                vhost_del_tap_phys(vp->vp_phys_dev);
+                vp->vp_phys_dev[i] =
+                    (struct net_device *) vif->vif_bridge[i]->vif_os;
+                strncpy(vp->vp_phys_name[i], vp->vp_phys_dev[i]->name,
+                        sizeof(vp->vp_phys_name[i]) - 1);
             }
+        }
+        /*
+         * Comment
+         */
+        if (vp->vp_phys_dev[0] && vp->vp_phys_dev[0]->type != ARPHRD_ETHER) {
+            dev->flags |= IFF_NOARP;
+        } else {
+            dev->flags &= ~IFF_NOARP;
+        }
+        if (vp->vp_db_index >= 0)
+            return;
+        /* ...may be a bitmap? */
+        for (i = 0; i < VHOST_MAX_INTERFACES; i++)
+            if (!vhost_priv_db[i])
+                break;
 
-            vp->vp_phys_dev =
-                (struct net_device *)vif->vif_bridge->vif_os;
-            strncpy(vp->vp_phys_name, vp->vp_phys_dev->name,
-                    sizeof(vp->vp_phys_name) - 1);
-
-            if (vp->vp_phys_dev->type != ARPHRD_ETHER) {
-                dev->flags |= IFF_NOARP;
-            } else {
-                dev->flags &= ~IFF_NOARP;
-            }
-
-            if (vp->vp_db_index >= 0)
-                return;
-
-            /* ...may be a bitmap? */
-            for (i = 0; i < VHOST_MAX_INTERFACES; i++)
-                if (!vhost_priv_db[i])
-                    break;
-
-            if (i < VHOST_MAX_INTERFACES) {
-                vp->vp_db_index = i;
-                vhost_priv_db[i] = vp;
-            } else {
-                vr_printf("%s not added to vhost database. ",
-                        vp->vp_dev->name);
-                vr_printf("Cross connect will not work\n");
-            }
+        if (i < VHOST_MAX_INTERFACES) {
+            vp->vp_db_index = i;
+            vhost_priv_db[i] = vp;
+        } else {
+            vr_printf("%s not added to vhost database. ",
+                    vp->vp_dev->name);
+            vr_printf("Cross connect will not work\n");
         }
     }
 
@@ -281,7 +285,7 @@ vhost_if_add(struct vr_interface *vif)
 void
 vhost_attach_phys(struct net_device *dev)
 {
-    int i;
+    int i, j = 0;
     struct vhost_priv *vp;
 
     if (!vhost_priv_db)
@@ -290,21 +294,21 @@ vhost_attach_phys(struct net_device *dev)
     for (i = 0; i < VHOST_MAX_INTERFACES; i++) {
         vp = vhost_priv_db[i];
         if (vp) {
-            if (!strncmp(dev->name, vp->vp_phys_name, VR_INTERFACE_NAME_LEN)) {
-                vp->vp_phys_dev = dev;
-                vhost_tap_phys(vp->vp_dev, dev);
-                break;
+            for (j = 0; j < VR_MAX_PHY_INF; j++) {
+                if (!strncmp(dev->name, vp->vp_phys_name[j], VR_INTERFACE_NAME_LEN)) {
+                    vp->vp_phys_dev[j] = dev;
+                    vhost_tap_phys(vp->vp_dev, dev);
+                    return;
+                }
             }
         }
     }
-
-    return;
 }
 
 static struct vhost_priv *
 vhost_get_priv_for_phys(struct net_device *dev)
 {
-    int i;
+    int i, j;
     struct vhost_priv *vp;
 
     if (!vhost_priv_db)
@@ -312,9 +316,12 @@ vhost_get_priv_for_phys(struct net_device *dev)
 
     for (i = 0; i < VHOST_MAX_INTERFACES; i++) {
         vp = vhost_priv_db[i];
-        if (vp)
-            if (vp->vp_phys_dev == dev)
-                return vp;
+        if (vp) {
+            for (j = 0; j < VR_MAX_PHY_INF; j++) {
+                if (vp->vp_phys_dev[j] == dev)
+                    return vp;
+            }
+        }
     }
 
     return NULL;
@@ -346,7 +353,7 @@ vhost_if_del_phys(struct net_device *dev)
 
     vp = vhost_get_priv_for_phys(dev);
     if (vp)
-        vhost_tap_phys(vp->vp_dev, vp->vp_phys_dev);
+        vhost_tap_phys(vp->vp_dev, dev);
 
     return;
 }
@@ -359,6 +366,7 @@ void
 vhost_detach_phys(struct net_device *dev)
 {
     struct vhost_priv *vp;
+    int i;
 
     vp = vhost_get_priv_for_phys(dev);
     if (vp) {
@@ -366,8 +374,12 @@ vhost_detach_phys(struct net_device *dev)
          * if vrouter was left uninited post reset and then the
          * physical interface went away, we need to detach the tap
          */
-        vhost_del_tap_phys(vp->vp_phys_dev);
-        vp->vp_phys_dev = NULL;
+        for (i = 0; i < VR_MAX_PHY_INF; i++) {
+            if (vp->vp_phys_dev[i] == dev) {
+                vhost_del_tap_phys(vp->vp_phys_dev[i]);
+                vp->vp_phys_dev[i] = NULL;
+            }
+        }
         return;
     }
 
@@ -377,7 +389,7 @@ vhost_detach_phys(struct net_device *dev)
 void
 vhost_remove_xconnect(void)
 {
-    int i;
+    int i, j;
     struct vhost_priv *vp;
     struct vr_interface *bridge;
 
@@ -395,8 +407,10 @@ vhost_remove_xconnect(void)
                         vr_printf("Hugepage request not processed by vrouter \n");
                 }
                 vif_remove_xconnect(vp->vp_vifp);
-                if ((bridge = vp->vp_vifp->vif_bridge))
-                    vif_remove_xconnect(bridge);
+                for (j = 0; j < VR_MAX_PHY_INF; j++) {
+                    if ((bridge = vp->vp_vifp->vif_bridge[j]))
+                        vif_remove_xconnect(bridge);
+                }
             }
         }
     }
@@ -407,7 +421,7 @@ vhost_remove_xconnect(void)
 void
 vhost_xconnect(void)
 {
-    int i;
+    int i, j;
     struct vhost_priv *vp;
     struct vr_interface *bridge;
 
@@ -419,8 +433,10 @@ vhost_xconnect(void)
         if (vp) {
             if (vp->vp_vifp) {
                 vif_set_xconnect(vp->vp_vifp);
-                if ((bridge = vp->vp_vifp->vif_bridge))
-                    vif_set_xconnect(bridge);
+                for (j = 0; j < VR_MAX_PHY_INF; j++) {
+                    if ((bridge = vp->vp_vifp->vif_bridge[j]))
+                        vif_set_xconnect(bridge);
+                }
             }
         }
     }
@@ -434,11 +450,16 @@ vhost_dev_xmit(struct sk_buff *skb, struct net_device *dev)
     struct vhost_priv *vp;
     struct vr_interface *vifp;
     struct net_device *pdev;
+    int i;
 
     vp = netdev_priv(dev);
     vifp = vp->vp_vifp;
     if (!vifp) {
-        if (!(pdev = vp->vp_phys_dev)) {
+        for (i = 0; i < VR_MAX_PHY_INF; i++) {
+            if ((pdev = vp->vp_phys_dev[i]))
+                break;
+        }
+        if (!pdev) { 
             (void)__sync_fetch_and_add(&dev->stats.tx_dropped, 1);
             kfree_skb(skb);
             return NETDEV_TX_OK;
@@ -511,6 +532,7 @@ vhost_dellink(struct net_device *dev, struct list_head *head)
 #endif
 {
     struct vhost_priv *vp;
+    int i;
 
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,33))
     unregister_netdevice_queue(dev, head);
@@ -525,12 +547,13 @@ vhost_dellink(struct net_device *dev, struct list_head *head)
 
         vp->vp_db_index = -1;
 
-        if (vp->vp_phys_dev) {
-            vhost_del_tap_phys(vp->vp_phys_dev);
-            vp->vp_phys_dev = NULL;
+        for (i = 0; i < VR_MAX_PHY_INF; i++) {
+            if (vp->vp_phys_dev[i]) {
+                vhost_del_tap_phys(vp->vp_phys_dev[i]);
+                vp->vp_phys_dev[i] = NULL;
+            }
+            vp->vp_phys_name[i][0] = '\0';
         }
-
-        vp->vp_phys_name[0] = '\0';
     }
 
     if (!vhost_num_interfaces)
