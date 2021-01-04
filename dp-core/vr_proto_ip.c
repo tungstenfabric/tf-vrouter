@@ -663,7 +663,7 @@ vr_ip_rcv(struct vrouter *router, struct vr_packet *pkt,
             pkt->vp_priority = qos->vfcq_dotonep_qos;
         }
 
-        if (!vif && !(vif = pkt->vp_if->vif_bridge) &&
+        if (!vif && !(vif = pkt->vp_if->vif_bridge[0]) &&
                                 !(vif = router->vr_host_if)) {
             drop_reason = VP_DROP_TRAP_NO_IF;
             PKT_LOG(drop_reason, pkt, 0, VR_PROTO_IP_C, __LINE__);
