@@ -431,6 +431,53 @@ nh_l3_rcv(struct vr_packet *pkt, struct vr_nexthop *nh,
     return NH_PROCESSING_COMPLETE;
 }
 
+/*
+ * MPLS Pop NH
+ */
+static nh_processing_t
+nh_mpls_rcv(struct vr_packet *pkt, struct vr_nexthop *nh,
+            struct vr_forwarding_md *fmd)
+{
+    unsigned int label;
+    bool bos_label = false;
+    unsigned short drop_reason;
+
+    /* get the label */
+    label = ntohl(*(unsigned int *)pkt_data(pkt));
+    if (label & VR_MPLS_LABEL_STACK_BIT_MASK) {
+        bos_label = true;
+    }
+    /*
+     * BoS label pointing to MPLS Pop NH is unsupported as of now;
+     * In contrail, the BoS label is a VMI Encap NH.
+     * This can be enhanced to do vr_foward() if required
+     * in future;
+     */
+    if (bos_label) {
+        drop_reason = VP_DROP_INVALID_NH;
+        PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
+        goto dropit;
+    }
+    label >>= VR_MPLS_LABEL_SHIFT;
+    vr_fmd_set_label(fmd, label, VR_LABEL_TYPE_MPLS);
+
+    /* pop the label */
+    if (!pkt_pull(pkt, VR_MPLS_HDR_LEN)) {
+        drop_reason = VP_DROP_PULL;
+        PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
+        goto dropit;
+    }
+
+    /* there are more labels in the stack */
+    vr_mpls_input(pkt->vp_if->vif_router, pkt, fmd);
+
+    return NH_PROCESSING_COMPLETE;
+
+dropit:
+    vr_pfree(pkt, drop_reason);
+    return NH_PROCESSING_COMPLETE;
+}
+
 static int
 nh_push_mpls_header(struct vr_packet *pkt, unsigned int label,
         struct vr_forwarding_class_qos *qos, bool is_bottom_label)
@@ -3145,7 +3192,11 @@ nh_rcv_add(struct vr_nexthop *nh, vr_nexthop_req *req)
 
 exit_add:
     if (nh->nh_dev) {
-        nh->nh_reach_nh = nh_l3_rcv;
+        if (nh->nh_family != AF_MPLS) {
+            nh->nh_reach_nh = nh_l3_rcv;
+        } else {
+            nh->nh_reach_nh = nh_mpls_rcv;
+        }
     }
 
     return ret;

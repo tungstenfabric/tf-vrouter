@@ -785,6 +785,8 @@ vr_fabric_input(struct vr_interface *vif, struct vr_packet *pkt,
         } else {
             handled = vr_l3_input(pkt, fmd);
         }
+    } else if (is_native_mpls_pkt(pkt)) {
+        handled = vr_native_mpls_input(vif->vif_router, pkt, fmd);
     }
 
     if (!handled) {

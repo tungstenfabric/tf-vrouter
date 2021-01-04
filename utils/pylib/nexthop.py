@@ -350,3 +350,32 @@ class CompositeNextHop(NextHop):
         if self.nhr_label_list is None:
             self.nhr_label_list = list()
         self.nhr_label_list.append(label)
+
+
+class MplsPopNextHop(ReceiveNextHop):
+    """
+    Class to create a MPLS Pop NH
+
+    Mandatory Parameters:
+    --------------------
+    encap_oif_id : int
+        Encap outer interface id
+
+    Optional Parameters:
+    -------------------
+    nh_idx : int
+        Nexthop id
+    """
+
+    def __init__(
+            self,
+            encap_oif_id,
+            nh_idx=1):
+        super(MplsPopNextHop, self).__init__(
+            encap_oif_id,
+            nh_idx,
+            constants.AF_MPLS,
+            0,
+            constants.NH_FLAG_VALID,
+            None,
+            None)

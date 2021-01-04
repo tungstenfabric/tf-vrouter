@@ -69,6 +69,7 @@ vrf_stats_req_process(void *s_req)
             stats->vsr_arp_virtual_proxy, stats->vsr_arp_virtual_stitch,
             stats->vsr_arp_virtual_flood, stats->vsr_arp_physical_stitch,
             stats->vsr_arp_tor_proxy, stats->vsr_arp_physical_flood);
+    printf("MPLS receives %" PRIu64 "\n", stats->vsr_mpls_receives);
 
     printf("\n");
 

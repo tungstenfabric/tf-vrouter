@@ -98,13 +98,15 @@
 #define VP_TYPE_ARP             1
 #define VP_TYPE_IP              2
 #define VP_TYPE_IP6             3
+#define VP_TYPE_MPLS_UC         4
+#define VP_TYPE_MPLS_MC         5
 
-#define VP_TYPE_IPOIP           4
-#define VP_TYPE_IP6OIP          5
+#define VP_TYPE_IPOIP           6
+#define VP_TYPE_IP6OIP          7
 
-#define VP_TYPE_AGENT           6
-#define VP_TYPE_PBB             7
-#define VP_TYPE_UNKNOWN         8
+#define VP_TYPE_AGENT           8
+#define VP_TYPE_PBB             9
+#define VP_TYPE_UNKNOWN         10
 #define VP_TYPE_MAX             VP_TYPE_UNKNOWN
 
 
@@ -286,6 +288,8 @@ struct vr_eth_hbs_md {
 #define VR_ETH_PROTO_IP6        0x86DD
 #define VR_ETH_PROTO_VLAN       0x8100
 #define VR_ETH_PROTO_PBB        0x88E7
+#define VR_ETH_PROTO_MPLS_UC    0x8847
+#define VR_ETH_PROTO_MPLS_MC    0x8848
 
 #define VR_DIAG_CSUM         0xffff
 #define VR_UDP_PORT_RANGE_START 49152
@@ -610,16 +614,15 @@ vr_mcast_mac_from_isid(uint32_t isid, uint8_t *mac)
 static inline unsigned char
 vr_eth_proto_to_pkt_type(unsigned short eth_proto)
 {
-    if (eth_proto == VR_ETH_PROTO_IP)
-        return VP_TYPE_IP;
-    else if (eth_proto == VR_ETH_PROTO_IP6)
-        return VP_TYPE_IP6;
-    else if (eth_proto == VR_ETH_PROTO_ARP)
-        return VP_TYPE_ARP;
-    else if (eth_proto == VR_ETH_PROTO_PBB)
-        return VP_TYPE_PBB;
-
-    return VP_TYPE_UNKNOWN;
+    switch (eth_proto) {
+        case VR_ETH_PROTO_IP: return VP_TYPE_IP;
+        case VR_ETH_PROTO_IP6: return VP_TYPE_IP6;
+        case VR_ETH_PROTO_ARP: return VP_TYPE_ARP;
+        case VR_ETH_PROTO_PBB: return VP_TYPE_PBB;
+        case VR_ETH_PROTO_MPLS_UC: return VP_TYPE_MPLS_UC;
+        case VR_ETH_PROTO_MPLS_MC: return VP_TYPE_MPLS_MC;
+        default: return VP_TYPE_UNKNOWN;
+    }
 }
 
 static inline bool
@@ -1572,6 +1575,13 @@ vr_pkt_is_bfd(struct vr_packet *pkt, uint8_t *bfd_state)
         }
     }
     return false;
+}
+
+static inline bool
+is_native_mpls_pkt (struct vr_packet *pkt)
+{
+    return ((pkt->vp_type == VP_TYPE_MPLS_UC) ||
+            (pkt->vp_type == VP_TYPE_MPLS_MC));
 }
 
 /* Below function logs the packet drops by getting packet information from vr_packet & vr_flow

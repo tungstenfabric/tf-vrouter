@@ -68,6 +68,10 @@
 
 #define ASSERT(x) BUG_ON(!(x));
 
+#ifndef AF_MPLS  /* Older kernels < 4.1 don't support this yet */
+#define AF_MPLS    28
+#endif
+
 #else /* __KERNEL */
 
 #include <stdio.h>
@@ -90,6 +94,10 @@ typedef unsigned short __u16;
 typedef __signed__ int __s32;
 typedef unsigned int __u32;
 
+#ifndef AF_MPLS
+#define AF_MPLS    28   /* As defined in <sys/socket.h> */
+#endif
+
 #endif /* __KERNEL__ */
 #endif /* __linux__ */
 #if defined(__FreeBSD__)
@@ -108,6 +116,10 @@ typedef unsigned int __u32;
  * vrouter code it is defined here in the same way as in LINUX
  */
 #define AF_BRIDGE    7
+
+#ifndef AF_MPLS
+#define AF_MPLS    28
+#endif
 
 #if defined(_KERNEL)
 #define vr_printf(format, arg...)   printf(format, ##arg)

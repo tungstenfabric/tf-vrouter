@@ -48,15 +48,20 @@ vr_nh_op(struct nl_client *cl, int command, int type, uint32_t nh_id,
         uint32_t if_id, uint32_t vrf_id, int8_t *dst, int8_t  *src,
         struct in_addr sip, struct in_addr dip, uint32_t flags);
 
-char *
-nh_type(uint32_t type)
+static char *
+nh_type(uint32_t type, int family)
 {
     switch (type) {
     case NH_DEAD:
         return "Dead";
 
     case NH_RCV:
-        return "Receive";
+        /* If family is MPLS, then NH_RCV is a MPLS Pop NH */
+        if (family == AF_MPLS) {
+            return "Pop";
+        } else {
+            return "Receive";
+        }
 
     case NH_L2_RCV:
         return "L2 Receive";
@@ -276,13 +281,15 @@ nexthop_req_process(void *s_req)
         strcpy(fam, "AF_INET6");
     else if (req->nhr_family == AF_BRIDGE)
         strcpy(fam, "AF_BRIDGE");
+    else if (req->nhr_family == AF_MPLS)
+        strcpy(fam, "AF_MPLS");
     else if (req->nhr_family == AF_UNSPEC)
         strcpy(fam, "AF_UNSPEC");
     else
         strcpy(fam, "N/A");
 
     printf("Id:%-9d  Type:%-13s  Fmly:%8s  Rid:%d  Ref_cnt:%-10d Vrf:%d",
-                req->nhr_id, nh_type(req->nhr_type), fam,
+                req->nhr_id, nh_type(req->nhr_type, req->nhr_family), fam,
                 req->nhr_rid, req->nhr_ref_cnt, req->nhr_vrf);
     nh_print_newline_header();
     printf("Flags:%s",
@@ -498,6 +505,7 @@ cmd_usage()
            "                       7 - VRF Translate, 8 - L2 Rcv NH] \n"
            "                [RCV_NH options]\n"
            "                    [--oif <if_id> out going interface index]\n"
+           "                    [--mpls nexthop family mpls, for MPLS pop nh]\n"
            "                [L2RCV_NH options]\n"
            "                    [--oif <if_id> out going interface index]\n"
            "                [ENCAP_NH optionsi - default L3]\n"
@@ -593,6 +601,7 @@ enum opt_index {
     HLP_OPT_IND,
     SOCK_DIR_OPT_IND,
     ECMP_OPT_IND,
+    MPLS_OPT_IND,
     MAX_OPT_IND
 };
 
@@ -650,6 +659,7 @@ static struct option long_options[] = {
     [HLP_OPT_IND]       = {"help",  no_argument,        &opt[HLP_OPT_IND],      1},
     [SOCK_DIR_OPT_IND]  = {"sock-dir", required_argument, &opt[SOCK_DIR_OPT_IND], 1},
     [ECMP_OPT_IND]      = {"ecmp", no_argument,         &opt[ECMP_OPT_IND],     1},
+    [MPLS_OPT_IND]      = {"mpls", no_argument,         &opt[MPLS_OPT_IND],     1},
     [MAX_OPT_IND]       = { NULL,   0,                  0,                      0}
 };
 
@@ -814,6 +824,10 @@ validate_options(void)
         if (type == NH_RCV) {
             if (!opt_set(OIF_OPT_IND))
                 cmd_usage();
+
+            if (opt_set(MPLS_OPT_IND)) {
+                family = AF_MPLS;
+            }
 
             if (memcmp(opt, zero_opt, sizeof(opt)))
                 cmd_usage();

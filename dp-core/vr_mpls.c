@@ -15,6 +15,8 @@
 #include "vr_btable.h"
 #include "vr_offloads_dp.h"
 
+extern struct vr_vrf_stats *(*vr_inet_vrf_stats)(unsigned short, unsigned int);
+
 unsigned int vr_mpls_labels = VR_DEF_LABELS;
 
 struct vr_nexthop *
@@ -312,9 +314,46 @@ fail:
     return -1;
 }
 
+
+int vr_mpls_non_bos_input(struct vrouter *router,
+                          struct vr_packet *pkt,
+                          struct vr_forwarding_md *fmd)
+{
+    unsigned int label;
+    unsigned short drop_reason;
+    struct vr_nexthop *nh;
+
+    label = ntohl(*(unsigned int *)pkt_data(pkt));
+    label >>= VR_MPLS_LABEL_SHIFT;
+
+    /* get the nh based on label */
+    if (!fmd->fmd_fe) {
+        nh = __vrouter_get_label(router, label);
+        if (!nh) {
+            drop_reason = VP_DROP_INVALID_LABEL;
+            PKT_LOG(drop_reason, pkt, 0, VR_MPLS_C, __LINE__);
+            goto dropit;
+        }
+    } else {
+        nh = pkt->vp_nh;
+        if (!nh) {
+            drop_reason = VP_DROP_INVALID_NH;
+            PKT_LOG(drop_reason, pkt, 0, VR_MPLS_C, __LINE__);
+            goto dropit;
+        }
+    }
+    /* do nh output */
+    return nh_output(pkt, nh, fmd);
+
+dropit:
+    vr_pfree(pkt, drop_reason);
+    return 0;
+}
+
+
 int
 vr_mpls_input(struct vrouter *router, struct vr_packet *pkt,
-        struct vr_forwarding_md *fmd)
+              struct vr_forwarding_md *fmd)
 {
     int ttl, l2_offset = 0, pull_len = 0;
     unsigned int label;
@@ -323,6 +362,7 @@ vr_mpls_input(struct vrouter *router, struct vr_packet *pkt,
     struct vr_nexthop *nh;
     struct vr_ip *ip;
     struct vr_forwarding_md c_fmd;
+    bool bos_label = false;
 
     if (!fmd) {
         vr_init_forwarding_md(&c_fmd);
@@ -330,10 +370,14 @@ vr_mpls_input(struct vrouter *router, struct vr_packet *pkt,
     }
 
     label = ntohl(*(unsigned int *)pkt_data(pkt));
+
+    if (label & VR_MPLS_LABEL_STACK_BIT_MASK) {
+        bos_label = true;
+    }
     /* if outer label is 0xFFFFF, iterpret it as no label
      * and parse packet to get inner label
      */
-    if (!(label & VR_MPLS_LABEL_STACK_BIT_MASK)
+    if (!bos_label
             && ((label >> VR_MPLS_LABEL_SHIFT) ==
                 VR_MPLS_LABEL_MASK)) {
         /* drop the top Stack label */
@@ -343,6 +387,10 @@ vr_mpls_input(struct vrouter *router, struct vr_packet *pkt,
             goto dropit;
         }
         label = ntohl(*(unsigned int *)pkt_data(pkt));
+        /* Reinit bos_label since label changed */
+        if (label & VR_MPLS_LABEL_STACK_BIT_MASK) {
+            bos_label = true;
+        }
     }
     ttl = label & 0xFF;
     label >>= VR_MPLS_LABEL_SHIFT;
@@ -358,12 +406,20 @@ vr_mpls_input(struct vrouter *router, struct vr_packet *pkt,
         goto dropit;
     }
 
-    ip = (struct vr_ip *)pkt_network_header(pkt);
-    fmd->fmd_outer_src_ip = ip->ip_saddr;
-    vr_fmd_set_label(fmd, label, VR_LABEL_TYPE_MPLS);
-
     /* Store the TTL in packet. Will be used for multicast replication */
     pkt->vp_ttl = ttl;
+
+    /* Non bottom of stack label processing */
+    if (!bos_label) {
+        return vr_mpls_non_bos_input(router, pkt, fmd);
+    }
+
+    /* Bottom of stack label processing */
+    ip = (struct vr_ip *)pkt_network_header(pkt);
+    if (!is_native_mpls_pkt(pkt) && vr_ip_is_ip4(ip)) {
+        fmd->fmd_outer_src_ip = ip->ip_saddr;
+    }
+    vr_fmd_set_label(fmd, label, VR_LABEL_TYPE_MPLS);
 
     /* drop the TOStack label */
     if (!pkt_pull(pkt, VR_MPLS_HDR_LEN)) {
@@ -467,6 +523,20 @@ vr_mpls_input(struct vrouter *router, struct vr_packet *pkt,
 dropit:
     vr_pfree(pkt, drop_reason);
     return 0;
+}
+
+int
+vr_native_mpls_input(struct vrouter *router, struct vr_packet *pkt,
+                     struct vr_forwarding_md *fmd)
+{
+    struct vr_vrf_stats *stats = NULL;
+
+    if (vr_inet_vrf_stats) {
+        stats = vr_inet_vrf_stats(fmd->fmd_dvrf, pkt->vp_cpu);
+        if (stats)
+            stats->vrf_mpls_receives++;
+    }
+    return vr_mpls_input(router, pkt, fmd);
 }
 
 void
