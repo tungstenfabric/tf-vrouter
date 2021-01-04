@@ -1306,6 +1306,8 @@ is_number(const char *nptr)
 static void
 parse_long_opts(int option_index, char *opt_arg)
 {
+    int i = 0;
+    char *sep_arg;
     errno = 0;
 
     if (!*(long_options[option_index].flag))
@@ -1446,15 +1448,19 @@ parse_long_opts(int option_index, char *opt_arg)
             break;
 
         case XCONNECT_OPT_INDEX:
-            if_xconnect_kindex[0] = if_nametoindex(opt_arg);
-            if (isdigit(opt_arg[0])) {
-                if_pmdindex = strtol(opt_arg, NULL, 0);
-            } else if (!if_xconnect_kindex[0]) {
-                printf("%s does not seem to be a valid physical interface name\n",
-                        opt_arg);
-                Usage();
+            opt_arg = strdup(opt_arg);
+            while ((sep_arg = strsep(&opt_arg, ",")) != NULL) {
+                if_xconnect_kindex[i++] = if_nametoindex(sep_arg);
+                if (isdigit(sep_arg[0])) {
+                    if_pmdindex = strtol(sep_arg, NULL, 0);
+                } else if (!if_xconnect_kindex[i]) {
+                    printf("%s does not seem to be a valid physical interface name\n",
+                           sep_arg);
+                    Usage();
+                }
+                if (if_pmdindex != -1)
+                    break;
             }
-
             break;
 
         case DHCP_OPT_INDEX:
