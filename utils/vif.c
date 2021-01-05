@@ -95,7 +95,7 @@ static int add_set, create_set, get_set, list_set;
 static int kindex_set, type_set, transport_set, help_set, set_set, vlan_set, dhcp_set;
 static int vrf_set, mac_set, delete_set, policy_set, pmd_set, vindex_set, pci_set;
 static int xconnect_set, vif_set, vhost_phys_set, core_set, rate_set, drop_set;
-static int sock_dir_set, clear_stats_set;
+static int sock_dir_set, clear_stats_set, vhostsock_dir_set, vhostsock_filename_set;
 
 static unsigned int vr_op, vr_if_type;
 static bool dump_pending = false;
@@ -112,6 +112,7 @@ static struct timeval last_time;
 
 
 static bool first_rate_iter = false;
+static char *vhostsocket_dir = NULL, *vhostsocket_filename = NULL;
 
 
 /*
@@ -1115,7 +1116,8 @@ op_retry:
             vr_ifindex = if_kindex;
 
         ret = vr_send_interface_add(cl, 0, if_name, if_kindex, vr_ifindex,
-                if_xconnect_kindex, vr_if_type, vrf, vr_ifflags, vr_ifmac, vr_transport, NULL);
+                if_xconnect_kindex, vr_if_type, vrf, vr_ifflags, vr_ifmac,
+                vr_transport, NULL, vhostsocket_dir, vhostsocket_filename);
         break;
 
     case SANDESH_OP_DEL:
@@ -1205,6 +1207,8 @@ Usage()
     printf("\t   [--set <intf_id> --vlan <vlan_id> --vrf <vrf_id>]\n");
     printf("\t   [--list][--core <core number>][--rate]\n");
     printf("\t   [--sock-dir <sock dir>]\n");
+    printf("\t   [--vhostsock-dir <sock dir>]\n");
+    printf("\t   [--vhostsock-filename <sock filename>]\n");
     printf("\t   [--clear][--id <intf_id>][--core <core_number>]\n");
     printf("\t   [--help]\n");
 
@@ -1239,6 +1243,8 @@ enum if_opt_index {
     CORE_OPT_INDEX,
     SOCK_DIR_OPT_INDEX,
     CLEAR_STATS_OPT_INDEX,
+    VHOSTSOCK_DIR_OPT_INDEX,
+    VHOSTSOCK_FILENAME_OPT_INDEX,
     MAX_OPT_INDEX
 };
 
@@ -1268,6 +1274,8 @@ static struct option long_options[] = {
     [VINDEX_OPT_INDEX]      =   {"id",          required_argument,  &vindex_set,        1},
     [CORE_OPT_INDEX]        =   {"core",        required_argument,  &core_set,          1},
     [SOCK_DIR_OPT_INDEX]    =   {"sock-dir",    required_argument,  &sock_dir_set,      1},
+    [VHOSTSOCK_DIR_OPT_INDEX]    =   {"vhostsock-dir",    required_argument,  &vhostsock_dir_set,      1},
+    [VHOSTSOCK_FILENAME_OPT_INDEX]    =   {"vhostsock-filename",    required_argument,  &vhostsock_filename_set,      1},
     [CLEAR_STATS_OPT_INDEX] =   {"clear",       no_argument,        &clear_stats_set,   1},
     [MAX_OPT_INDEX]         =   { NULL,         0,                  NULL,               0},
 };
@@ -1467,6 +1475,16 @@ parse_long_opts(int option_index, char *opt_arg)
 
         case SOCK_DIR_OPT_INDEX:
             vr_socket_dir = opt_arg;
+            break;
+
+        case VHOSTSOCK_DIR_OPT_INDEX:
+            if(vhostsock_dir_set)
+                vhostsocket_dir = opt_arg;
+            break;
+
+        case VHOSTSOCK_FILENAME_OPT_INDEX:
+            if(vhostsock_filename_set)
+                vhostsocket_filename = opt_arg;
             break;
 
         case CLEAR_STATS_OPT_INDEX:
@@ -1850,6 +1868,14 @@ main(int argc, char *argv[])
             case 's':
                 sock_dir_set = 1;
                 parse_long_opts(SOCK_DIR_OPT_INDEX, optarg);
+                break;
+            case 'S':
+                vhostsock_dir_set = 1;
+                parse_long_opts(VHOSTSOCK_DIR_OPT_INDEX, optarg);
+                break;
+            case 'F':
+                vhostsock_filename_set = 1;
+                parse_long_opts(VHOSTSOCK_FILENAME_OPT_INDEX, optarg);
                 break;
             case 0:
                 parse_long_opts(option_index, optarg);

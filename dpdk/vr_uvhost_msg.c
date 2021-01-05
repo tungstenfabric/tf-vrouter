@@ -1315,6 +1315,12 @@ vr_uvh_nl_vif_add_handler(vrnu_vif_add_t *msg)
 
     vr_uvhost_log("Adding vif %d virtual device %s\n", msg->vrnu_vif_idx,
                         msg->vrnu_vif_name);
+    vr_uvhost_log("    vhostuser_mode : %d, vhostsocket_dir : %s, \
+            vhostsocket_filename : %s \n",
+            msg->vrnu_vif_vhostuser_mode,
+            msg->vrnu_vif_vhostsocket_dir,
+            msg->vrnu_vif_vhostsocket_filename);
+
     s = socket(AF_UNIX, SOCK_STREAM, 0);
     if (s == -1) {
         vr_uvhost_log("    error creating vif %u socket: %s (%d)\n",
@@ -1339,17 +1345,34 @@ vr_uvh_nl_vif_add_handler(vrnu_vif_add_t *msg)
         vr_uvhost_log("    vif (server) %u socket %s FD is %d\n",
                             msg->vrnu_vif_idx, msg->vrnu_vif_name, s);
 
+
     memset(&sun, 0, sizeof(sun));
     sun.sun_family = AF_UNIX;
-    strncpy(sun.sun_path, vr_socket_dir, sizeof(sun.sun_path) - 1);
-    strncat(sun.sun_path, "/"VR_UVH_VIF_PFX, sizeof(sun.sun_path)
-        - strlen(sun.sun_path) - 1);
-    strncat(sun.sun_path, msg->vrnu_vif_name,
-        sizeof(sun.sun_path) - strlen(sun.sun_path) - 1);
 
-    mkdir(vr_socket_dir, VR_DEF_SOCKET_DIR_MODE);
-    /* qemu in server mode needs rw access */
-    chmod(vr_socket_dir, 0777);
+    if (msg->vrnu_vif_vhostsocket_dir[0] != '\0') {
+	    strncpy(sun.sun_path, msg->vrnu_vif_vhostsocket_dir, sizeof(sun.sun_path) - 1);
+	    mkdir(msg->vrnu_vif_vhostsocket_dir, VR_DEF_SOCKET_DIR_MODE);
+	    /* qemu in server mode needs rw access */
+	    chmod(msg->vrnu_vif_vhostsocket_dir, 0777);
+    }
+    else {
+	    strncpy(sun.sun_path, vr_socket_dir, sizeof(sun.sun_path) - 1);
+	    mkdir(vr_socket_dir, VR_DEF_SOCKET_DIR_MODE);
+	    /* qemu in server mode needs rw access */
+	    chmod(vr_socket_dir, 0777);
+    }
+    if (msg->vrnu_vif_vhostsocket_filename[0] != '\0') {
+	    strncat(sun.sun_path, "/", sizeof(sun.sun_path) - strlen(sun.sun_path) - 1);
+	    strncat(sun.sun_path, msg->vrnu_vif_vhostsocket_filename,
+                sizeof(sun.sun_path)  - strlen(sun.sun_path) - 1);
+    }
+    else {
+	    strncat(sun.sun_path, "/"VR_UVH_VIF_PFX,
+                sizeof(sun.sun_path) - strlen(sun.sun_path) - 1);
+	    strncat(sun.sun_path, msg->vrnu_vif_name,
+			    sizeof(sun.sun_path) - strlen(sun.sun_path) - 1);
+    }
+
 
     /*
      * Client mode Qemu

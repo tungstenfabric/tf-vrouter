@@ -44,6 +44,14 @@ class Common(object):
         return blist
 
     @classmethod
+    def vt_str_to_list_byte(self, str):
+        """Returns list from input string"""
+        blist = list(str)
+        for i in range(len(blist)):
+            blist[i] = ord(blist[i])
+        return blist
+
+    @classmethod
     def vt_ipv4(self, str):
         """Returns unsigned int value for corresponding ipv4 string"""
         return socket.htonl(int(ipaddress.IPv4Address(unicode(str))))

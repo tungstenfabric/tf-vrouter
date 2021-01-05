@@ -192,6 +192,9 @@ class VirtualVif(Vif):
                  flags=(constants.VIF_FLAG_POLICY_ENABLED |
                         constants.VIF_FLAG_DHCP_ENABLED),
                  h_op=constants.SANDESH_OPER_ADD,
+                 vhostuser_mode=0,
+                 vhostsocket_dir=None,
+                 vhostsocket_filename=None,
                  **kwargs):
         super(VirtualVif, self).__init__(idx, name, ipv4_str, mac_str,
                                          ipv6_str, h_op, **kwargs)
@@ -202,6 +205,13 @@ class VirtualVif(Vif):
         self.vifr_mcast_vrf = mcast_vrf
         self.vifr_mtu = mtu
         self.vifr_flags = flags
+        self.vifr_vhostuser_mode = vhostuser_mode
+        if vhostsocket_dir is not None:
+            self.vifr_vhostsocket_dir = \
+                self.vt_str_to_list_byte(vhostsocket_dir)
+        if vhostsocket_filename is not None:
+            self.vifr_vhostsocket_filename = \
+                self.vt_str_to_list_byte(vhostsocket_filename)
 
 
 class AgentVif(Vif):

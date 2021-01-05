@@ -37,6 +37,8 @@ typedef struct vrnu_vif_add {
     unsigned int vrnu_vif_ntxqs;
     unsigned int vrnu_vif_gen;
     vrnu_vhostuser_mode_type_t vrnu_vif_vhostuser_mode;
+    char vrnu_vif_vhostsocket_dir[VR_VHOST_DIR_LEN];
+    char vrnu_vif_vhostsocket_filename[VR_VHOST_FILENAME_LEN];
 } vrnu_vif_add_t;
 
 typedef struct vrnu_vif_del {

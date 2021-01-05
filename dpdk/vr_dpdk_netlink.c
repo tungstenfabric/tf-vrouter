@@ -180,7 +180,7 @@ vr_netlink_uvhost_vif_del(unsigned int vif_idx)
 
 /*
  * vr_netlink_uvhost_vif_add - sends a message to the user space vhost
- * thread when a new vif is created. The name os the vif is specified in
+ * thread when a new vif is created. The name of the vif is specified in
  * the vif_name argument.
  *
  * Returns 0 on success, -1 otherwise.
@@ -189,7 +189,9 @@ int
 vr_netlink_uvhost_vif_add(char *vif_name, unsigned int vif_idx,
                           unsigned int vif_gen, unsigned int vif_nrxqs,
                           unsigned int vif_ntxqs,
-                          unsigned char vif_vhostuser_mode)
+                          unsigned char vif_vhostuser_mode,
+                          char *vif_vhostsocket_dir,
+                          char *vif_vhostsocket_filename)
 {
     vrnu_msg_t msg;
 
@@ -202,7 +204,14 @@ vr_netlink_uvhost_vif_add(char *vif_name, unsigned int vif_idx,
     msg.vrnum_vif_add.vrnu_vif_ntxqs = vif_ntxqs;
     msg.vrnum_vif_add.vrnu_vif_gen = vif_gen;
     msg.vrnum_vif_add.vrnu_vif_vhostuser_mode = vif_vhostuser_mode;
-
+    if(vif_vhostsocket_dir[0] != '\0'){
+        strncpy(msg.vrnum_vif_add.vrnu_vif_vhostsocket_dir, vif_vhostsocket_dir,
+                sizeof(msg.vrnum_vif_add.vrnu_vif_vhostsocket_dir) - 1);
+    }
+    if(vif_vhostsocket_filename[0] != '\0'){
+        strncpy(msg.vrnum_vif_add.vrnu_vif_vhostsocket_filename, vif_vhostsocket_filename,
+                sizeof(msg.vrnum_vif_add.vrnu_vif_vhostsocket_filename) - 1);
+    }
     /*
      * This is a blocking send.
      */
