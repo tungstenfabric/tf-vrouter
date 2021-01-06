@@ -104,7 +104,9 @@
 
 #define VP_TYPE_AGENT           6
 #define VP_TYPE_PBB             7
-#define VP_TYPE_UNKNOWN         8
+#define VP_TYPE_IPOMPLS         8
+#define VP_TYPE_IP6OMPLS        9
+#define VP_TYPE_UNKNOWN         10
 #define VP_TYPE_MAX             VP_TYPE_UNKNOWN
 
 
@@ -674,7 +676,8 @@ static inline bool
 vr_pkt_is_ip(struct vr_packet *pkt)
 {
     if (pkt->vp_type == VP_TYPE_IPOIP || pkt->vp_type == VP_TYPE_IP ||
-              pkt->vp_type == VP_TYPE_IP6OIP)
+        pkt->vp_type == VP_TYPE_IP6OIP || pkt->vp_type == VP_TYPE_IPOMPLS ||
+        pkt->vp_type == VP_TYPE_IP6OMPLS)
         return true;
 
     return false;
@@ -683,7 +686,8 @@ vr_pkt_is_ip(struct vr_packet *pkt)
 static inline bool
 vr_pkt_type_is_overlay(unsigned short type)
 {
-    if (type == VP_TYPE_IPOIP || type == VP_TYPE_IP6OIP)
+    if (type == VP_TYPE_IPOIP || type == VP_TYPE_IP6OIP ||
+        type == VP_TYPE_IPOMPLS || type == VP_TYPE_IP6OMPLS)
         return true;
 
     return false;

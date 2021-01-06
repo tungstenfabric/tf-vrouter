@@ -69,11 +69,13 @@ enum nexthop_type {
 #define NH_FLAG_L3_VXLAN                    0x02000000
 #define NH_FLAG_TUNNEL_MPLS_O_MPLS          0x04000000
 #define NH_FLAG_VALIDATE_MCAST_SRC          0x08000000
+#define NH_FLAG_TUNNEL_MPLS                 0x10000000
 
 #define NH_SOURCE_INVALID                   0
 #define NH_SOURCE_VALID                     1
 #define NH_SOURCE_MISMATCH                  2
 
+#define MAX_TRANSPORT_LABELS                4
 
 #define NH_ECMP_CONFIG_HASH_BITS            5
 #define NH_ECMP_CONFIG_HASH_MASK            ((1 << NH_ECMP_CONFIG_HASH_BITS) - 1)
@@ -154,6 +156,11 @@ struct vr_nexthop {
         } nh_udp_tun6;
 
         struct {
+            uint32_t        trans_labels[MAX_TRANSPORT_LABELS];
+            uint8_t         num_labels;
+        } nh_mpls_tun;
+
+        struct {
             unsigned short cnt;
             unsigned short ecmp_cnt;
             unsigned short ecmp_config_hash;
@@ -197,6 +204,9 @@ struct vr_nexthop {
 #define nh_udp_tun6_sport       nh_u.nh_udp_tun6.tun_sport6
 #define nh_udp_tun6_dport       nh_u.nh_udp_tun6.tun_dport6
 #define nh_udp_tun6_encap_len   nh_u.nh_udp_tun6.tun_encap_len
+
+#define nh_mpls_tun_trans_labels    nh_u.nh_mpls_tun.trans_labels
+#define nh_mpls_tun_num_labels      nh_u.nh_mpls_tun.num_labels
 
 #define nh_gre_tun_encap_len    nh_u.nh_gre_tun.tun_encap_len
 

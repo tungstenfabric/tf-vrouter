@@ -180,6 +180,26 @@ class TunnelNextHopV4(NextHop):
         self.nhr_tun_dport = tun_dport
 
 
+class MplsTunnelNextHop(NextHop):
+
+    def __init__(self, encap_oif_id, encap, nh_idx=1, nh_vrf=0,
+                 nh_flags=constants.NH_FLAG_VALID, encap_family=None,
+                 nh_family=constants.AF_MPLS, num_labels=0,
+                 transport_labels=[], **kwargs):
+        super(MplsTunnelNextHop, self).__init__(
+            constants.NH_TYPE_TUNNEL,
+            nh_idx,
+            nh_family,
+            nh_vrf,
+            nh_flags,
+            encap_oif_id,
+            encap,
+            encap_family,
+            **kwargs)
+        self.nhr_num_labels = num_labels
+        self.nhr_label_list = transport_labels
+
+
 class TunnelNextHopV6(NextHop):
     """
     TunnelNextHopV6 class to create v6 tunnel nexthops
