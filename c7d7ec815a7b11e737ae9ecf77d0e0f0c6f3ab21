@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "119b0a90_ce16ea66",
+        "filename": "dpdk/vr_dpdk_host.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 1513,
+      "author": {
+        "id": 967
+      },
+      "writtenOn": "2021-01-06T18:29:10Z",
+      "side": 1,
+      "message": "PKT_RX_IP_CKSUM_BAD is deprecated and upstream code sets PKT_TX_TCP_CKSUM to indicate checksum computation should happen at NIC.\n\nIn lib/librte_mbuf/rte_mbuf_core.h:\n /** TCP cksum of TX pkt. computed by NIC. */\n#define PKT_TX_TCP_CKSUM     (1ULL \u003c\u003c 52)",
+      "parentUuid": "b6ba03bb_645d11f3",
+      "range": {
+        "startLine": 1513,
+        "startChar": 52,
+        "endLine": 1513,
+        "endChar": 68
+      },
+      "revId": "c7d7ec815a7b11e737ae9ecf77d0e0f0c6f3ab21",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "bcb21618_1712ab6d",
         "filename": "dpdk/vr_dpdk_interface.c",
         "patchSetId": 3
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "dd024d1d_bb488dd2",
+        "filename": "dpdk/vr_dpdk_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 1697,
+      "author": {
+        "id": 967
+      },
+      "writtenOn": "2021-01-06T18:29:10Z",
+      "side": 1,
+      "message": "Will add comment",
+      "parentUuid": "bcb21618_1712ab6d",
+      "range": {
+        "startLine": 1697,
+        "startChar": 12,
+        "endLine": 1697,
+        "endChar": 40
+      },
+      "revId": "c7d7ec815a7b11e737ae9ecf77d0e0f0c6f3ab21",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "318f34ae_cb1a4643",
         "filename": "dpdk/vr_uvhost_msg.c",
         "patchSetId": 3
@@ -68,6 +116,30 @@
       "revId": "c7d7ec815a7b11e737ae9ecf77d0e0f0c6f3ab21",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "18b4b3c7_bd315e12",
+        "filename": "dpdk/vr_uvhost_msg.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 967
+      },
+      "writtenOn": "2021-01-06T18:29:10Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "318f34ae_cb1a4643",
+      "range": {
+        "startLine": 151,
+        "startChar": 3,
+        "endLine": 158,
+        "endChar": 6
+      },
+      "revId": "c7d7ec815a7b11e737ae9ecf77d0e0f0c6f3ab21",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
     }
   ]
 }
