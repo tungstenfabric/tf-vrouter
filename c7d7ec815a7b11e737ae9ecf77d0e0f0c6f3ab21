@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b6ba03bb_645d11f3",
+        "filename": "dpdk/vr_dpdk_host.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 1513,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2021-01-06T14:16:00Z",
+      "side": 1,
+      "message": "Why was this change done?",
+      "range": {
+        "startLine": 1513,
+        "startChar": 52,
+        "endLine": 1513,
+        "endChar": 68
+      },
+      "revId": "c7d7ec815a7b11e737ae9ecf77d0e0f0c6f3ab21",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bcb21618_1712ab6d",
+        "filename": "dpdk/vr_dpdk_interface.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 1697,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2021-01-06T14:16:00Z",
+      "side": 1,
+      "message": "Pl put a comment before calling this as to why this is needed?\nGuess this is because we get a 64K packet here from the upstream driver instead of a chained one rite?",
+      "range": {
+        "startLine": 1697,
+        "startChar": 12,
+        "endLine": 1697,
+        "endChar": 40
+      },
+      "revId": "c7d7ec815a7b11e737ae9ecf77d0e0f0c6f3ab21",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "318f34ae_cb1a4643",
+        "filename": "dpdk/vr_uvhost_msg.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2021-01-06T14:16:00Z",
+      "side": 1,
+      "message": "Remove this if not needed",
+      "range": {
+        "startLine": 151,
+        "startChar": 3,
+        "endLine": 158,
+        "endChar": 6
+      },
+      "revId": "c7d7ec815a7b11e737ae9ecf77d0e0f0c6f3ab21",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5b5244a1_6c88fdec",
+        "filename": "dpdk/vr_dpdk_virtio.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 1083,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2021-01-06T14:16:00Z",
+      "side": 0,
+      "message": "How are we displaying this now?",
+      "range": {
+        "startLine": 1083,
+        "startChar": 15,
+        "endLine": 1083,
+        "endChar": 26
+      },
+      "revId": "17b58c11a54582d01c33edd311fd4c91b51cb750",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "23a95cdb_8f89ae7e",
+        "filename": "dpdk/vr_dpdk_virtio.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 1091,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2021-01-06T14:16:00Z",
+      "side": 0,
+      "message": "How are we doing stats now? All these are not required? Will proper stats be displaying in vif --list based on rte_eth_devices[]?",
+      "range": {
+        "startLine": 1091,
+        "startChar": 4,
+        "endLine": 1091,
+        "endChar": 40
+      },
+      "revId": "17b58c11a54582d01c33edd311fd4c91b51cb750",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9f4fdf0e_ba8cd373",
+        "filename": "dpdk/vr_uvhost_msg.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 541,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2021-01-06T14:16:00Z",
+      "side": 0,
+      "message": "what is the below logic for?",
+      "revId": "17b58c11a54582d01c33edd311fd4c91b51cb750",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
