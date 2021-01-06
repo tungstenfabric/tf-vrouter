@@ -134,6 +134,27 @@ de:ad:be:ef::1/128    128                       -             38
 
 class TestVmToFabricIntraVn(VmToFabricIntraVn):
 
+    def get_ipv6_nd_packet(self, s_mac, d_mac, s_addr, d_addr, nd_type,
+                           tgt_addr=''):
+        ether = Ether(src=s_mac, dst=d_mac, type=0x86dd)
+        ipv6 = IPv6(src=s_addr, dst=d_addr)
+        if (nd_type == 'NS'):
+            icmp = ICMPv6ND_NS(tgt=tgt_addr)
+        elif (nd_type == 'NA'):
+            icmp = ICMPv6ND_NA(tgt=tgt_addr, R=0, S=1)
+        elif (nd_type == 'UNA'):
+            icmp = ICMPv6ND_NA(tgt=tgt_addr, R=0, S=0)
+        elif (nd_type == 'RS'):
+            icmp = ICMPv6ND_RS()
+        elif (nd_type == 'RA'):
+            icmp = ICMPv6ND_RA()
+        else:
+            return None
+        src_ll_addr = ICMPv6NDOptSrcLLAddr(lladdr=s_mac)
+        packet = ether/ipv6/icmp/src_ll_addr
+        packet.show()
+        return packet
+
     # program inet route and bridge route, so that packet not trapped to agent.
     def test_macip_learning_send_fabric_arp(self):
         self.tenant_vif.reload()
@@ -414,11 +435,11 @@ class TestVmToFabricIntraVn(VmToFabricIntraVn):
         self.vif_nh.delete()
         # Invalid encap data, so trap packet to agent
         self.vif_nh = EncapNextHop(
-                encap_oif_id=self.tenant_vif.idx(),
-                encap="02 c2 23 4c d0 55 00 00 5e 00 01 00 08 00",
-                nh_idx=38,
-                nh_vrf=0,
-                nh_flags=constants.NH_FLAG_POLICY_ENABLED)
+            encap_oif_id=self.tenant_vif.idx(),
+            encap="02 c2 23 4c d0 55 00 00 5e 00 01 00 08 00",
+            nh_idx=38,
+            nh_vrf=0,
+            nh_flags=constants.NH_FLAG_POLICY_ENABLED)
         self.vif_nh.sync()
 
         # add inet route
@@ -432,27 +453,27 @@ class TestVmToFabricIntraVn(VmToFabricIntraVn):
         self.f_flow.delete()
         self.r_flow.delete()
         self.f_flow_1 = InetFlow(
-                   sip='1.0.0.3',
-                   dip='1.0.0.5',
-                   sport=4145,
-                   dport=0,
-                   proto=constants.VR_IP_PROTO_ICMP,
-                   flow_nh_idx=38,
-                   src_nh_idx=38,
-                   flow_vrf=0,
-                   rflow_nh_idx=21)
+            sip='1.0.0.3',
+            dip='1.0.0.5',
+            sport=4145,
+            dport=0,
+            proto=constants.VR_IP_PROTO_ICMP,
+            flow_nh_idx=38,
+            src_nh_idx=38,
+            flow_vrf=0,
+            rflow_nh_idx=21)
 
         self.r_flow_1 = InetFlow(
-                   sip='1.0.0.5',
-                   dip='1.0.0.3',
-                   sport=4145,
-                   dport=0,
-                   proto=constants.VR_IP_PROTO_ICMP,
-                   flags=constants.VR_RFLOW_VALID,
-                   flow_nh_idx=38,
-                   src_nh_idx=21,
-                   flow_vrf=0,
-                   rflow_nh_idx=21)
+            sip='1.0.0.5',
+            dip='1.0.0.3',
+            sport=4145,
+            dport=0,
+            proto=constants.VR_IP_PROTO_ICMP,
+            flags=constants.VR_RFLOW_VALID,
+            flow_nh_idx=38,
+            src_nh_idx=21,
+            flow_vrf=0,
+            rflow_nh_idx=21)
         self.f_flow_1.sync_and_link_flow(self.r_flow_1)
 
         # send ARP request from vif3
@@ -469,6 +490,7 @@ class TestVmToFabricIntraVn(VmToFabricIntraVn):
 
         self.tenant_vif.reload()
         self.fabric_vif.reload()
+
         # Check if the packet was sent to agent vif
         self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
         self.assertEqual(1, self.fabric_vif.get_vif_opackets())
@@ -476,11 +498,252 @@ class TestVmToFabricIntraVn(VmToFabricIntraVn):
         self.vif_nh.reload()
         # Invalid encap data, so trap packet to agent
         self.vif_nh = EncapNextHop(
-                encap_oif_id=self.tenant_vif.idx(),
-                encap="03 c2 23 4c d0 55 00 00 5e 00 01 00 08 00",
-                nh_idx=38,
-                nh_vrf=0,
-                nh_flags=constants.NH_FLAG_POLICY_ENABLED)
+            encap_oif_id=self.tenant_vif.idx(),
+            encap="03 c2 23 4c d0 55 00 00 5e 00 01 00 08 00",
+            nh_idx=38,
+            nh_vrf=0,
+            nh_flags=constants.NH_FLAG_POLICY_ENABLED)
+        self.vif_nh.sync()
+
+        self.tenant_vif.clear()
+        # send packet
+        self.tenant_vif.send_packet(pkt)
+
+        self.tenant_vif.reload()
+        self.agent_vif.reload()
+        # Check if the packet was sent to agent vif
+        self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
+        self.assertEqual(1, self.agent_vif.get_vif_opackets())
+
+
+    # For IPV6 cases
+    def test_macip_learning_send_fabric_v6(self):
+        self.tenant_vif.reload()
+        self.tenant_vif = VirtualVif(
+            name="tapc2234cd0-55",
+            ipv4_str="1.0.0.3",
+            ipv6_str="de:ad:be:ef::1",
+            mac_str="00:00:5e:00:01:00",
+            idx=5,
+            vrf=5,
+            nh_idx=38,
+            flags=constants.VIF_FLAG_POLICY_ENABLED |
+            constants.VIF_FLAG_MAC_IP_LEARNING)
+        self.tenant_vif.sync()
+
+        # add bridge route
+        self.bridge_rt = BridgeRoute(
+            vrf=5,
+            mac_str="02:c2:23:4c:d0:55",
+            nh_idx=38)
+        # add inet route
+        self.inet_rt = Inet6Route(
+            vrf=5,
+            prefix="de:ad:be:ef::2",
+            prefix_len=128,
+            mac_str="02:c2:23:4c:d0:55",
+            nh_idx=38)
+        # sync all objects
+        ObjectBase.sync_all()
+
+        pkt = self.get_ipv6_nd_packet(
+            s_mac='02:c2:23:4c:d0:55',
+            d_mac='02:e7:03:ea:67:f1',
+            s_addr='de:ad:be:ef::2',
+            d_addr='de:ad:be:ef::1',
+            nd_type='NA',
+            tgt_addr='de:ad:be:ef::2')
+        # send packet
+        self.tenant_vif.send_packet(pkt)
+
+        self.tenant_vif.reload()
+        self.agent_vif.reload()
+
+        # Check if the packet was sent to agent vif
+        self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
+        self.assertEqual(0, self.agent_vif.get_vif_opackets())
+        self.assertEqual(1, self.fabric_vif.get_vif_opackets())
+
+
+    def test_macip_learning_trap_agent_v6(self):
+        self.tenant_vif.reload()
+        self.tenant_vif = VirtualVif(
+            name="tapc2234cd0-55",
+            ipv6_str="de:ad:be:ef::1",
+            ipv4_str="1.0.0.3",
+            mac_str="00:00:5e:00:01:00",
+            idx=5,
+            vrf=5,
+            nh_idx=38,
+            flags=constants.VIF_FLAG_POLICY_ENABLED |
+            constants.VIF_FLAG_MAC_IP_LEARNING)
+        self.tenant_vif.sync()
+
+        pkt = self.get_ipv6_nd_packet(
+            s_mac='00:00:5e:00:01:00',
+            d_mac='33:33:ff:00:00:02',
+            s_addr='de:ad:be:ef::1',
+            d_addr='ff02::1:ff00:2',
+            nd_type='NS',
+            tgt_addr='de:ad:be:ef::2')
+
+        # send packet
+        self.tenant_vif.send_packet(pkt)
+
+        self.tenant_vif.reload()
+        self.agent_vif.reload()
+
+        # Check if the packet was sent to agent vif
+        self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
+        self.assertEqual(1, self.agent_vif.get_vif_opackets())
+
+
+    def test_macip_learning_verify_stitched_mac_v6(self):
+        self.tenant_vif.reload()
+        self.tenant_vif = VirtualVif(
+            name="tapc2234cd0-55",
+            ipv4_str="1.0.0.3",
+            ipv6_str="de:ad:be:ef::1",
+            mac_str="00:00:5e:00:01:00",
+            idx=5,
+            vrf=5,
+            nh_idx=38,
+            flags=constants.VIF_FLAG_POLICY_ENABLED |
+            constants.VIF_FLAG_MAC_IP_LEARNING)
+        self.tenant_vif.sync()
+
+        # add bridge route
+        bridge_rt = BridgeRoute(
+            vrf=5,
+            mac_str="02:c2:23:4c:d0:56",
+            nh_idx=38)
+
+        # add inet route
+        inet_rt = Inet6Route(
+            vrf=5,
+            prefix="de:ad:be:ef::2",
+            prefix_len=128,
+            mac_str="02:c2:23:4c:d0:56",
+            nh_idx=38)
+
+        # sync all objects
+        ObjectBase.sync_all()
+        pkt = self.get_ipv6_nd_packet(
+            s_mac='02:c2:23:4c:d0:55',
+            d_mac='02:e7:03:ea:67:f1',
+            s_addr='de:ad:be:ef::2',
+            d_addr='de:ad:be:ef::1',
+            nd_type='NA',
+            tgt_addr='de:ad:be:ef::2')
+        # send packet
+        self.tenant_vif.send_packet(pkt)
+
+        self.tenant_vif.reload()
+        self.agent_vif.reload()
+        # Check if the packet was sent to agent vif
+        self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
+        self.assertEqual(1, self.agent_vif.get_vif_opackets())
+
+    def test_macip_learning_verify_gwless_fwd_v6(self):
+        # Add bridge Route
+        self.bridge_route.delete()
+        self.bridge_route = BridgeRoute(
+            vrf=0,
+            mac_str="02:e7:03:ea:67:f1",
+            nh_idx=21,
+            rtr_label_flags=constants.VR_RT_LABEL_VALID_FLAG |
+            constants.VR_RT_ARP_PROXY_FLAG |
+            constants.VR_BE_FLOOD_DHCP_FLAG,
+            rtr_label=144)
+        self.bridge_route.sync()
+        self.tenant_vif.delete()
+        self.tenant_vif = VirtualVif(
+            name="tapc2234cd0-55",
+            ipv4_str="1.0.0.3",
+            ipv6_str="de:ad:be:ef::1",
+            mac_str="00:00:5e:00:01:00",
+            idx=5,
+            vrf=0,
+            nh_idx=38,
+            flags=constants.VIF_FLAG_POLICY_ENABLED |
+            constants.VIF_FLAG_MAC_IP_LEARNING)
+        self.tenant_vif.sync()
+
+        self.vif_nh.delete()
+        # Invalid encap data, so trap packet to agent
+        self.vif_nh = EncapNextHop(
+            encap_oif_id=self.tenant_vif.idx(),
+            encap="02 c2 23 4c d0 55 00 00 5e 00 01 00 08 00",
+            nh_idx=38,
+            nh_vrf=0,
+            nh_flags=constants.NH_FLAG_POLICY_ENABLED)
+        self.vif_nh.sync()
+
+        # add inet route
+        self.inet_rt = Inet6Route(
+            vrf=0,
+            prefix="de:ad:be:ef::2",
+            prefix_len=128,
+            nh_idx=38)
+
+        self.inet_rt.sync()
+
+        self.f_flow.delete()
+        self.r_flow.delete()
+
+        # Add Flow
+        inet6flow = Inet6Flow(
+            sip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0001",
+            dip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0002",
+            sport=4145,
+            dport=0,
+            proto=constants.VR_IP_PROTO_ICMP,
+            flow_nh_idx=38,
+            src_nh_idx=38,
+            flow_vrf=0,
+            rflow_nh_idx=21)
+
+        r_inet6flow = Inet6Flow(
+            sip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0002",
+            dip6_str="00DE:00AD:00BE:00EF:0000:0000:0000:0001",
+            sport=4145,
+            dport=0,
+            proto=constants.VR_IP_PROTO_ICMP,
+            flags=constants.VR_RFLOW_VALID,
+            flow_nh_idx=38,
+            src_nh_idx=21,
+            flow_vrf=0,
+            rflow_nh_idx=21)
+        inet6flow.sync_and_link_flow(r_inet6flow)
+        self.assertGreater(inet6flow.get_fr_index(), 0)
+
+        pkt = self.get_ipv6_nd_packet(
+            s_mac='02:c2:23:4c:d0:55',
+            d_mac='02:e7:03:ea:67:f1',
+            s_addr='de:ad:be:ef::2',
+            d_addr='de:ad:be:ef::1',
+            nd_type='NA',
+            tgt_addr='de:ad:be:ef::2')
+
+        # send packet
+        self.tenant_vif.send_packet(pkt)
+
+        self.tenant_vif.reload()
+        self.fabric_vif.reload()
+
+        # Check if the packet was sent to agent vif
+        self.assertEqual(1, self.tenant_vif.get_vif_ipackets())
+        self.assertEqual(0, self.agent_vif.get_vif_opackets())
+        self.assertEqual(1, self.fabric_vif.get_vif_opackets())
+
+        self.vif_nh.reload()
+        # Invalid encap data, so trap packet to agent
+        self.vif_nh = EncapNextHop(
+            encap_oif_id=self.tenant_vif.idx(),
+            encap="03 c2 23 4c d0 55 00 00 5e 00 01 00 08 00",
+            nh_idx=38,
+            nh_vrf=0,
+            nh_flags=constants.NH_FLAG_POLICY_ENABLED)
         self.vif_nh.sync()
 
         self.tenant_vif.clear()
