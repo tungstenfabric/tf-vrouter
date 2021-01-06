@@ -2346,6 +2346,117 @@ nh_vxlan_tunnel_validate_src(struct vr_packet *pkt, struct vr_nexthop *nh,
     return NH_SOURCE_INVALID;
 }
 
+static int
+nh_mpls_tunnel_validate_src(struct vr_packet *pkt, struct vr_nexthop *nh,
+                            struct vr_forwarding_md *fmd, void *ret_data)
+{
+    if (pkt->vp_if->vif_idx == nh->nh_dev->vif_idx)
+        return NH_SOURCE_VALID;
+
+    return NH_SOURCE_INVALID;
+}
+
+/*
+ * nh_mpls_tunnel - tunnel packet with added transport labels.
+ */
+static nh_processing_t
+nh_mpls_tunnel(struct vr_packet *pkt, struct vr_nexthop *nh,
+               struct vr_forwarding_md *fmd)
+{
+    uint16_t encap_size;
+    unsigned short reason = VP_DROP_PUSH;
+    unsigned int header_len;
+
+    struct vr_forwarding_class_qos *qos;
+    int tun_encap_rewrite, i;
+    struct vr_interface *vif;
+    struct vr_vrf_stats *stats = NULL;
+    struct vr_packet *tmp_pkt;
+    struct vr_df_trap_arg trap_arg;
+    unsigned int label_count = 0;
+    uint32_t transport_label[MAX_TRANSPORT_LABELS] = {0};
+
+    encap_size = nh->nh_data_size;
+    memcpy(transport_label, nh->nh_mpls_tun_trans_labels,
+           sizeof(int)*MAX_TRANSPORT_LABELS);
+    label_count = nh->nh_mpls_tun_num_labels;
+
+    if (vr_inet_vrf_stats) {
+        stats = vr_inet_vrf_stats(fmd->fmd_dvrf, pkt->vp_cpu);
+        if (stats) {
+            stats->vrf_mpls_tunnels++;
+        }
+    }
+
+    if (!fmd || fmd->fmd_label < 0) {
+        vr_forward(nh->nh_router, pkt, fmd);
+        return NH_PROCESSING_COMPLETE;
+    }
+
+    vr_fmd_update_label_type(fmd, VR_LABEL_TYPE_MPLS);
+
+    // Including service label length in the header
+    header_len = ((label_count + 1) * VR_MPLS_HDR_LEN);
+
+    if ((pkt->vp_type == VP_TYPE_IP) || (pkt->vp_type == VP_TYPE_IP6)) {
+        if (vr_has_to_fragment(nh->nh_dev, pkt, header_len) &&
+                vr_ip_dont_fragment_set(pkt)) {
+            if (pkt->vp_flags & VP_FLAG_MULTICAST) {
+                reason = VP_DROP_MCAST_DF_BIT;
+                PKT_LOG(reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
+                goto send_fail;
+            }
+            trap_arg.df_mtu = vif_get_mtu(nh->nh_dev) -
+                (header_len + pkt_get_network_header_off(pkt) - pkt->vp_data);
+            trap_arg.df_flow_index = fmd->fmd_flow_index;
+            vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_HANDLE_DF, (void *)&trap_arg);
+            return NH_PROCESSING_COMPLETE;
+        }
+    }
+
+    header_len += encap_size;
+
+    if (pkt_head_space(pkt) < header_len) {
+        tmp_pkt = vr_pexpand_head(pkt, header_len - pkt_head_space(pkt));
+        if (!tmp_pkt)
+            goto send_fail;
+        pkt = tmp_pkt;
+    }
+
+    qos = vr_qos_get_forwarding_class(nh->nh_router, pkt, fmd);
+    if (nh_push_mpls_header(pkt, fmd->fmd_label, qos, true) < 0)
+        goto send_fail;
+    for (i=0; i<label_count; i++) {
+        if (nh_push_mpls_header(pkt, transport_label[i], qos, false) < 0)
+            goto send_fail;
+    }
+
+    /*
+     * Change the packet type
+     */
+    if (pkt->vp_type == VP_TYPE_IP6)
+        pkt->vp_type = VP_TYPE_IP6OMPLS;
+    else if (pkt->vp_type == VP_TYPE_IP)
+        pkt->vp_type = VP_TYPE_IPOMPLS;
+
+    pkt_set_network_header(pkt, pkt->vp_data);
+
+    /* slap l2 header */
+    vif = nh->nh_dev;
+    tun_encap_rewrite = vif->vif_set_rewrite(vif, &pkt, fmd,
+            nh->nh_data, encap_size);
+    if (tun_encap_rewrite < 0) {
+        goto send_fail;
+    }
+    vif->vif_tx(vif, pkt, fmd);
+
+    return NH_PROCESSING_COMPLETE;
+
+send_fail:
+    vr_pfree(pkt, reason);
+    return NH_PROCESSING_COMPLETE;
+
+}
 
 /*
  * nh_mpls_udp_tunnel - tunnel packet with MPLS label in UDP.
@@ -3402,6 +3513,10 @@ nh_tunnel_set_reach_nh(struct vr_nexthop *nh)
         if (dev) {
             nh->nh_reach_nh = nh_mpls_udp_tunnel;
         }
+    } else if (nh->nh_flags & NH_FLAG_TUNNEL_MPLS) {
+        if (dev) {
+            nh->nh_reach_nh = nh_mpls_tunnel;
+        }
     } else if (nh->nh_flags & NH_FLAG_TUNNEL_VXLAN) {
         if (dev) {
             nh->nh_reach_nh = nh_vxlan_tunnel;
@@ -3508,6 +3623,16 @@ nh_tunnel_add(struct vr_nexthop *nh, vr_nexthop_req *req)
         if (nh->nh_flags & NH_FLAG_TUNNEL_MPLS_O_MPLS) {
             nh->nh_udp_tun_label = req->nhr_transport_label;
         }
+    } else if (nh->nh_flags & NH_FLAG_TUNNEL_MPLS) {
+        if (!vif) {
+            ret = -ENODEV;
+            goto exit_add;
+        }
+        nh->nh_dev = vif;
+        nh->nh_validate_src = nh_mpls_tunnel_validate_src;
+        nh->nh_mpls_tun_num_labels = req->nhr_num_labels;
+        memcpy(nh->nh_mpls_tun_trans_labels, req->nhr_label_list,
+               sizeof(uint16_t)*MAX_TRANSPORT_LABELS);
     } else if (nh->nh_flags & NH_FLAG_TUNNEL_VXLAN) {
         if (!vif) {
             ret = -ENODEV;
@@ -4068,6 +4193,15 @@ vr_nexthop_make_req(vr_nexthop_req *req, struct vr_nexthop *nh)
             if (!req->nhr_pbb_mac)
                 return -ENOMEM;
             VR_MAC_COPY(req->nhr_pbb_mac, nh->nh_pbb_mac);
+        } else if (nh->nh_flags & NH_FLAG_TUNNEL_MPLS) {
+            req->nhr_encap_size = nh->nh_data_size;
+            if (req->nhr_encap_size)
+                encap = nh->nh_data;
+            if (nh->nh_dev)
+                req->nhr_encap_oif_id = nh->nh_dev->vif_idx;
+            req->nhr_num_labels = nh->nh_mpls_tun_num_labels;
+            memcpy(req->nhr_label_list, nh->nh_mpls_tun_trans_labels,
+                   req->nhr_label_list_size);
         }
 
         break;
@@ -4111,6 +4245,13 @@ vr_nexthop_req_get(struct vr_nexthop *nh)
         if (!nhr->nhr_tun_dip6)
             goto fail;
         nhr->nhr_tun_dip6_size = VR_IP6_ADDRESS_LEN;
+    } else if ((nh->nh_type == NH_TUNNEL) &&
+                    (nh->nh_flags & NH_FLAG_TUNNEL_MPLS)) {
+        nhr->nhr_label_list_size = sizeof(uint16_t)*MAX_TRANSPORT_LABELS;
+        nhr->nhr_label_list = vr_malloc(nhr->nhr_label_list_size,
+                                             VR_NEXTHOP_REQ_ENCAP_OBJECT);
+        if (!nhr->nhr_label_list)
+            goto fail;
     }
 
     return nhr;

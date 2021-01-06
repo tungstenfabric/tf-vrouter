@@ -1895,7 +1895,8 @@ int
 vr_send_nexthop_encap_tunnel_add(struct nl_client *cl, unsigned int router_id,
         unsigned int type, int nh_index, unsigned int flags, int vrf_index,
         int vif_index, int8_t *smac, int8_t *dmac, struct in_addr sip,
-        struct in_addr dip, int sport, int dport, int8_t *l3_vxlan_mac, int family)
+        struct in_addr dip, int sport, int dport, int8_t num_labels,
+        uint16_t *transport_labels, int8_t *l3_vxlan_mac, int family)
 {
     vr_nexthop_req req;
 
@@ -1924,16 +1925,28 @@ vr_send_nexthop_encap_tunnel_add(struct nl_client *cl, unsigned int router_id,
 #endif
 
     if (type == NH_TUNNEL) {
-        req.nhr_tun_sip = sip.s_addr;
-        req.nhr_tun_dip = dip.s_addr;
-        if ((sport >= 0) && (dport >= 0)) {
-            req.nhr_tun_sport = htons(sport);
-            req.nhr_tun_dport = htons(dport);
-        }
-        if (flags & NH_FLAG_L3_VXLAN) {
-            req.nhr_rw_dst_mac_size = 6;
-            req.nhr_rw_dst_mac = malloc(req.nhr_rw_dst_mac_size);
-            memcpy(req.nhr_rw_dst_mac, l3_vxlan_mac, 6);
+        if (flags & NH_FLAG_TUNNEL_MPLS) {
+            req.nhr_family = family;
+            req.nhr_num_labels = num_labels;
+            req.nhr_label_list_size = sizeof(uint16_t) * 4;
+            req.nhr_label_list = malloc(req.nhr_label_list_size);
+            if (!req.nhr_label_list)
+                return -ENOMEM;
+            memcpy(req.nhr_label_list, transport_labels,
+                   req.nhr_label_list_size);
+            *(uint16_t *)(&req.nhr_encap[12]) = htons(0x8847);
+        } else {
+            req.nhr_tun_sip = sip.s_addr;
+            req.nhr_tun_dip = dip.s_addr;
+            if ((sport >= 0) && (dport >= 0)) {
+                req.nhr_tun_sport = htons(sport);
+                req.nhr_tun_dport = htons(dport);
+            }
+            if (flags & NH_FLAG_L3_VXLAN) {
+                req.nhr_rw_dst_mac_size = 6;
+                req.nhr_rw_dst_mac = malloc(req.nhr_rw_dst_mac_size);
+                memcpy(req.nhr_rw_dst_mac, l3_vxlan_mac, 6);
+            }
         }
     }
 
@@ -2084,7 +2097,6 @@ vr_send_route_common(struct nl_client *cl, unsigned int op,
         int label, uint8_t *mac, uint32_t replace_len, unsigned int flags)
 {
     vr_route_req req;
-
     memset(&req, 0, sizeof(req));
     req.h_op = op;
     req.rtr_rid = router_id;
@@ -2111,7 +2123,6 @@ vr_send_route_common(struct nl_client *cl, unsigned int op,
         req.rtr_label_flags |= VR_RT_LABEL_VALID_FLAG;
 
     req.rtr_nh_id = nh_index;
-
     return vr_sendmsg(cl, &req, "vr_route_req");
 }
 

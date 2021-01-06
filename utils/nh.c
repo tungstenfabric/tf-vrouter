@@ -36,6 +36,9 @@ static uint32_t nh_id, if_id, vrf_id, flags;
 static int nh_set, command, type, dump_marker = -1;
 static int family = AF_INET;
 
+static uint16_t transport_labels[4] = {0};
+static int8_t num_labels = 0;
+
 static bool dump_pending = false;
 static int comp_nh[32], lbl[32];
 static int comp_nh_ind = 0, lbl_ind = 0;
@@ -46,7 +49,8 @@ static struct nl_client *cl;
 static int
 vr_nh_op(struct nl_client *cl, int command, int type, uint32_t nh_id,
         uint32_t if_id, uint32_t vrf_id, int8_t *dst, int8_t  *src,
-        struct in_addr sip, struct in_addr dip, uint32_t flags);
+        struct in_addr sip, struct in_addr dip, int8_t num_labels,
+        uint16_t *transport_labels, uint32_t flags);
 
 char *
 nh_type(uint32_t type)
@@ -170,6 +174,11 @@ nh_flags(uint32_t flags, uint8_t type, char *ptr)
             }
             break;
 
+        case NH_FLAG_TUNNEL_MPLS:
+            if (type == NH_TUNNEL)
+                strcat(ptr, "MPLS,");
+            break;
+
         case NH_FLAG_TUNNEL_UDP:
             if (type == NH_TUNNEL)
                 strcat(ptr, "Udp, ");
@@ -276,6 +285,8 @@ nexthop_req_process(void *s_req)
         strcpy(fam, "AF_INET6");
     else if (req->nhr_family == AF_BRIDGE)
         strcpy(fam, "AF_BRIDGE");
+    else if (req->nhr_family == AF_MPLS)
+        strcpy(fam, "AF_MPLS");
     else if (req->nhr_family == AF_UNSPEC)
         strcpy(fam, "AF_UNSPEC");
     else
@@ -353,10 +364,20 @@ nexthop_req_process(void *s_req)
         if(req->nhr_flags & NH_FLAG_TUNNEL_MPLS_O_MPLS) {
             printf(" Transport Label:%u", req->nhr_transport_label);
         }
+        if (req->nhr_flags & NH_FLAG_TUNNEL_MPLS) {
+            printf("Number of Labels:%d", req->nhr_num_labels);
+            if (req->nhr_num_labels) {
+                printf(" Transport Labels:");
+                for (i=0; i<req->nhr_num_labels; i++) {
+                    printf("%u, ", req->nhr_label_list[i]);
+                }
+                printf("\n");
+            }
+        }
         if (req->nhr_encap_crypt_oif_id != (int)-1 &&
             req->nhr_encap_crypt_oif_id != 0) {
             nh_print_newline_header();
-            printf("CryptOif:%d\n", req->nhr_encap_crypt_oif_id);            
+            printf("CryptOif:%d\n", req->nhr_encap_crypt_oif_id);
         }
     } else if (req->nhr_type == NH_VRF_TRANSLATE) {
         nh_print_newline_header();
@@ -401,13 +422,15 @@ nexthop_req_process(void *s_req)
                 if (req->nhr_nh_list[i] == -1)
                     continue;
                 vr_nh_op(cl, command, type, req->nhr_nh_list[i], if_id, vrf_id,
-                            dst_mac, src_mac, sip, dip, flags);
+                            dst_mac, src_mac, sip, dip, num_labels, transport_labels,
+                            flags);
             }
         }
 
         if ((req->nhr_flags & NH_FLAG_INDIRECT) && (req->nhr_nh_list_size)) {
             vr_nh_op(cl, command, type, req->nhr_nh_list[0], if_id, vrf_id,
-                         dst_mac, src_mac, sip, dip, flags);
+                         dst_mac, src_mac, sip, dip, num_labels, transport_labels,
+                         flags);
         }
     }
 }
@@ -429,7 +452,8 @@ nh_fill_nl_callbacks()
 static int
 vr_nh_op(struct nl_client *cl, int command, int type, uint32_t nh_id,
         uint32_t if_id, uint32_t vrf_id, int8_t *dst, int8_t  *src,
-        struct in_addr sip, struct in_addr dip, uint32_t flags)
+        struct in_addr sip, struct in_addr dip, int8_t num_labels,
+        uint16_t *transport_labels, uint32_t flags)
 {
     int ret;
     bool dump = false;
@@ -442,7 +466,8 @@ op_retry:
                     vrf_id, dst, comp_nh[0], lbl[0]);
         } else if ((type == NH_ENCAP) || (type == NH_TUNNEL)) {
             ret = vr_send_nexthop_encap_tunnel_add(cl, 0, type, nh_id,
-                    flags, vrf_id, if_id, src, dst, sip, dip, sport, dport, l3_vxlan_mac, family);
+                    flags, vrf_id, if_id, src, dst, sip, dip, sport, dport,
+                    num_labels, transport_labels, l3_vxlan_mac, family);
         } else if (type == NH_COMPOSITE) {
             ret = vr_send_nexthop_composite_add(cl, 0, nh_id, flags, vrf_id,
                     comp_nh_ind, comp_nh, lbl, family);
@@ -523,6 +548,9 @@ cmd_usage()
            "                        [--sport <port> source port of vxlan tunnel]\n"
            "                        [--dport <port> destination port of vxlan tunnel]\n"
            "                        [--l3_vxlan <xx:xx:xx:xx:xx:xx> Remote EVPN-5 vRouter mac]\n"
+           "                    [--mpls MPLS Tunnel]\n"
+           "                        [--numlabels <num_labels> Number of MPLS label headers]\n"
+           "                        [--translabels <l_1,l_2,..,l_numlabels> Values of Transport labels]\n"
            "                [RESOLVE_NH options]\n"
            "                [DISCARD_NH options]\n"
            "                [COMPOSITE_NH options]\n"
@@ -561,6 +589,9 @@ enum opt_index {
     DMAC_OPT_IND,
     VRF_OPT_IND,
     TYPE_OPT_IND,
+    MPLS_OPT_IND,
+    NLABEL_OPT_IND,
+    TLABEL_OPT_IND,
     SIP_OPT_IND,
     DIP_OPT_IND,
     POL_OPT_IND,
@@ -618,6 +649,9 @@ static struct option long_options[] = {
     [DMAC_OPT_IND]      = {"dmac",  required_argument,  &opt[DMAC_OPT_IND],     1},
     [VRF_OPT_IND]       = {"vrf",   required_argument,  &opt[VRF_OPT_IND],      1},
     [TYPE_OPT_IND]      = {"type",  required_argument,  &opt[TYPE_OPT_IND],     1},
+    [MPLS_OPT_IND]      = {"mpls",  no_argument,        &opt[MPLS_OPT_IND],     1},
+    [NLABEL_OPT_IND]    = {"numlabel", required_argument, &opt[NLABEL_OPT_IND], 1},
+    [TLABEL_OPT_IND]    = {"translabel", required_argument, &opt[TLABEL_OPT_IND], 1},
     [SIP_OPT_IND]       = {"sip",   required_argument,  &opt[SIP_OPT_IND],      1},
     [DIP_OPT_IND]       = {"dip",   required_argument,  &opt[DIP_OPT_IND],      1},
     [POL_OPT_IND]       = {"pol",   no_argument,        &opt[POL_OPT_IND],      1},
@@ -656,7 +690,8 @@ static struct option long_options[] = {
 static void
 parse_long_opts(int ind, char *opt_arg)
 {
-    int errno;
+    int errno, i;
+    char *sep_arg;
     struct ether_addr *mac;
 
     errno = 0;
@@ -726,6 +761,24 @@ parse_long_opts(int ind, char *opt_arg)
             usage();
         break;
 
+    case NLABEL_OPT_IND:
+        num_labels = strtoul(opt_arg, NULL, 0);
+        if (errno)
+            usage();
+        break;
+
+    case TLABEL_OPT_IND:
+        i = 0;
+        if (num_labels == 0)
+            break;
+        opt_arg = strdup(opt_arg);
+        while ((sep_arg = strsep(&opt_arg, ",")) != NULL) {
+            transport_labels[i++] = strtoul(sep_arg, NULL, 0);
+            if (i == num_labels)
+                break;
+        }
+        break;
+
     case CNI_OPT_IND:
         comp_nh[comp_nh_ind++] = strtoul(opt_arg, NULL, 0);
         if (errno)
@@ -777,15 +830,18 @@ validate_options(void)
 
     switch (command) {
     case SANDESH_OP_ADD:
-        if (!nh_set)
+        if (!nh_set) {
             cmd_usage();
+        }
 
         flags |= NH_FLAG_VALID;
-        if (!opt_set(TYPE_OPT_IND))
+        if (!opt_set(TYPE_OPT_IND)) {
             cmd_usage();
+        }
 
-         if(!opt_set(VRF_OPT_IND))
+         if(!opt_set(VRF_OPT_IND)) {
             cmd_usage();
+         }
 
         if (opt_set(MC_OPT_IND))
             flags |= NH_FLAG_MCAST;
@@ -836,7 +892,6 @@ validate_options(void)
             }
 
         } else if (type == NH_TUNNEL) {
-
             if (opt_set(PBB_OPT_IND)) {
                 if (!opt_set(CNI_OPT_IND)) {
                     cmd_usage();
@@ -850,6 +905,13 @@ validate_options(void)
 
                 flags |= NH_FLAG_TUNNEL_PBB;
 
+            } else if (opt_set(MPLS_OPT_IND)) {
+                if (!opt_set(OIF_OPT_IND) || !opt_set(SMAC_OPT_IND) ||
+                    !opt_set(DMAC_OPT_IND)) {
+                    cmd_usage();
+                }
+                flags |= NH_FLAG_TUNNEL_MPLS;
+                family = AF_MPLS;
             } else if (!opt_set(OIF_OPT_IND) || !opt_set(SMAC_OPT_IND) ||
                     !opt_set(DMAC_OPT_IND) || !opt_set(SIP_OPT_IND) ||
                     !opt_set(DIP_OPT_IND)) {
@@ -870,7 +932,8 @@ validate_options(void)
             }
 
             if (!(flags & (NH_FLAG_TUNNEL_UDP_MPLS | NH_FLAG_TUNNEL_UDP |
-                        NH_FLAG_TUNNEL_VXLAN | NH_FLAG_TUNNEL_PBB)))
+                        NH_FLAG_TUNNEL_VXLAN | NH_FLAG_TUNNEL_PBB |
+                        NH_FLAG_TUNNEL_MPLS)))
                 flags |= NH_FLAG_TUNNEL_GRE;
 
             if (memcmp(opt, zero_opt, sizeof(opt)))
@@ -974,7 +1037,7 @@ main(int argc, char *argv[])
     }
 
     vr_nh_op(cl, command, type, nh_id, if_id, vrf_id, dst_mac,
-            src_mac, sip, dip, flags);
+            src_mac, sip, dip, num_labels, transport_labels, flags);
 
     return 0;
 }

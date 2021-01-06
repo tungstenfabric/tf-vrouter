@@ -219,3 +219,10 @@ nh_req_table[29] = {}
 nh_req_table[29].field_name = "nhr_transport_label"
 nh_req_table[29].ProtoField = ProtoField.uint32
 nh_req_table[29].base = base.DEC
+
+nh_req_table[30] = {}
+nh_req_table[30].field_name = "nhr_num_labels"
+nh_req_table[30].ProtoField = ProtoField.int8
+nh_req_table[30].base = base.DEC
+
+

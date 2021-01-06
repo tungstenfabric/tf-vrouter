@@ -49,6 +49,7 @@ struct vr_vrf_stats {
     uint64_t vrf_multi_proto_composites;
     uint64_t vrf_udp_tunnels;
     uint64_t vrf_udp_mpls_tunnels;
+    uint64_t vrf_mpls_tunnels;
     uint64_t vrf_gre_mpls_tunnels;
     uint64_t vrf_l2_encaps;
     uint64_t vrf_encaps;
