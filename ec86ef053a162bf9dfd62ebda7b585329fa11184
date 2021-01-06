@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "16661384_70852c14",
+        "filename": "dpdk/vr_uvhost_msg.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1351,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2021-01-06T14:21:14Z",
+      "side": 1,
+      "message": "Pl check if these changes will conflict with the upstream vhost changes.",
+      "revId": "ec86ef053a162bf9dfd62ebda7b585329fa11184",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9a8b09a6_17101f57",
+        "filename": "utils/vr_util.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1316,
+      "author": {
+        "id": 232
+      },
+      "writtenOn": "2021-01-06T14:21:14Z",
+      "side": 1,
+      "message": "Minor nit: Pl follow the bracket style as rest of the code\nif () {\n}",
+      "range": {
+        "startLine": 1316,
+        "startChar": 4,
+        "endLine": 1316,
+        "endChar": 5
+      },
+      "revId": "ec86ef053a162bf9dfd62ebda7b585329fa11184",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
