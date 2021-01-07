@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "c21b7a9d_625f2479",
+        "filename": "dpdk/vr_uvhost_msg.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1351,
+      "author": {
+        "id": 1064
+      },
+      "writtenOn": "2021-01-07T16:44:20Z",
+      "side": 1,
+      "message": "naren has integrated this patch with upstream vhost changes and looks to be fine, no conflict.",
+      "parentUuid": "16661384_70852c14",
+      "revId": "ec86ef053a162bf9dfd62ebda7b585329fa11184",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9a8b09a6_17101f57",
         "filename": "utils/vr_util.c",
         "patchSetId": 1
