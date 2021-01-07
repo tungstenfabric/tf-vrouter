@@ -2,6 +2,40 @@
   "comments": [
     {
       "key": {
+        "uuid": "4f3061bc_50f3fa7c",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 2427,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T16:56:32Z",
+      "side": 1,
+      "message": "What if the socket filename len is greater than the VR_VHOST_FILENAME_LEN?\nI think you should bail out with an error since the vif is pretty much useless without the vhost setup.",
+      "revId": "ec86ef053a162bf9dfd62ebda7b585329fa11184",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0421ee8c_5d11d28d",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 2432,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T16:56:32Z",
+      "side": 1,
+      "message": "Same as earlier comment. Bail out with error if directory len is \u003e VR_VHOST_DIR_LEN.",
+      "revId": "ec86ef053a162bf9dfd62ebda7b585329fa11184",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "16661384_70852c14",
         "filename": "dpdk/vr_uvhost_msg.c",
         "patchSetId": 1
@@ -34,6 +68,40 @@
       "revId": "ec86ef053a162bf9dfd62ebda7b585329fa11184",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d1e3cd08_280f72c9",
+        "filename": "tests/test_basic_vhost.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T16:56:32Z",
+      "side": 1,
+      "message": "Can you name it as TestVhost or something like that? TestBasic is already present.",
+      "revId": "ec86ef053a162bf9dfd62ebda7b585329fa11184",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "28521890_11594022",
+        "filename": "tests/test_basic_vhost.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T16:56:32Z",
+      "side": 1,
+      "message": "Maybe you can also have a testcase without socket dir and filename passed.\nIn that case it should use default ones right?",
+      "revId": "ec86ef053a162bf9dfd62ebda7b585329fa11184",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     },
     {
       "key": {
