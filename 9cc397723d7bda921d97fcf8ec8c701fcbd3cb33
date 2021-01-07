@@ -1,0 +1,282 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ffe9da9b_e5fc450e",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 2351,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "Can you delete these unused variables?",
+      "range": {
+        "startLine": 2351,
+        "startChar": 28,
+        "endLine": 2351,
+        "endChar": 72
+      },
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7f230504_c991b7e1",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 2380,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "Can we avoid this memcpy()? It will increase the performance. We can directly read the labels from nh.",
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6f965c35_9e7403aa",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 2387,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "vrfstats cli changes are required to display this. Don\u0027t see that in the changeset.",
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e2a2197e_740510b1",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 2398,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "To be consistent, can you please use /* */ style comments?",
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1056b75a_4cf634e8",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 2410,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "Can you explain this calculation?",
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ae849b05_f6aacd0a",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 2422,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "Can you add a PKT_LOG before going to send_fail?",
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a07c5137_c8c1d164",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 2428,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "Please add PKT_LOG()",
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "84c90973_526f82da",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 2431,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "Please add PKT_LOG()",
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "440d5042_f2f95c5f",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 2442,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "Shouldn\u0027t this point to the IP hdr instead of MPLS label?\nAlso should we need to set the inner_network_header ?",
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3cf96651_7c28442d",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 3631,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "Can you reject the request if family is not AF_MPLS?",
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "771332d2_d45e45fc",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 3633,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "Let us reject the request if we get \u003e 4 transport labels.",
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "30b171bd_9f83b6a6",
+        "filename": "dp-core/vr_nexthop.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 3686,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "Agent will send the proto with 0x8847 here right? 0x8847 is the eth proto type for MPLS",
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "71fe5030_905a3415",
+        "filename": "include/vr_os.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "Assuming my changes go in first. You can remove this file from the diff and add a dependency to my review.",
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b3b76085_046f9b6d",
+        "filename": "tests/test_mpls_ingress.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "Just to be consistent, can you rename this file to test_sr_mpls_ingress.py?",
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0803a10f_8cb3a38c",
+        "filename": "tests/test_mpls_ingress.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "The MPLS tunnel NH will always be used for VM to fabric traffic. Hence you should have testcases for those scenarios rather than VM to VM.\nSame comment for the next TC as well.",
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d2c4a2ef_3e1f2313",
+        "filename": "utils/nh.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 652,
+      "author": {
+        "id": 631
+      },
+      "writtenOn": "2021-01-07T12:32:58Z",
+      "side": 1,
+      "message": "There may be some conflict in this file due to my changes since I have also added --mpls option in NH CLI. Can you please update based on my review and add dependency to my review.",
+      "revId": "9cc397723d7bda921d97fcf8ec8c701fcbd3cb33",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
