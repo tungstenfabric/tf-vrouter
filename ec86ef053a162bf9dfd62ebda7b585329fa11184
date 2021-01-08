@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "87b9dea2_38e43854",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 2427,
+      "author": {
+        "id": 1064
+      },
+      "writtenOn": "2021-01-08T05:49:19Z",
+      "side": 1,
+      "message": "Socket name is derived with the first 12 chars of containerID and interface name.\nFrom the CNI it will not exceed 32 bytes.\nAs there is no check for size in UT framework, i will add a check here.",
+      "parentUuid": "4f3061bc_50f3fa7c",
+      "revId": "ec86ef053a162bf9dfd62ebda7b585329fa11184",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "0421ee8c_5d11d28d",
         "filename": "dp-core/vr_interface.c",
         "patchSetId": 1
@@ -30,6 +48,24 @@
       "writtenOn": "2021-01-07T16:56:32Z",
       "side": 1,
       "message": "Same as earlier comment. Bail out with error if directory len is \u003e VR_VHOST_DIR_LEN.",
+      "revId": "ec86ef053a162bf9dfd62ebda7b585329fa11184",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1a9d4f21_7ab47ce3",
+        "filename": "dp-core/vr_interface.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 2432,
+      "author": {
+        "id": 1064
+      },
+      "writtenOn": "2021-01-08T05:49:19Z",
+      "side": 1,
+      "message": "CNI will fill the unique socket DIR path with /var/run/vrouter/\u003cPOD_UID\u003e/.\nPOD_UUID is 44 char max. \nThere is no check in UT,I will add a check here.",
+      "parentUuid": "0421ee8c_5d11d28d",
       "revId": "ec86ef053a162bf9dfd62ebda7b585329fa11184",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
@@ -88,6 +124,24 @@
     },
     {
       "key": {
+        "uuid": "aa801011_20198eeb",
+        "filename": "tests/test_basic_vhost.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1064
+      },
+      "writtenOn": "2021-01-08T05:49:19Z",
+      "side": 1,
+      "message": "Sure, I will change the name.",
+      "parentUuid": "d1e3cd08_280f72c9",
+      "revId": "ec86ef053a162bf9dfd62ebda7b585329fa11184",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "28521890_11594022",
         "filename": "tests/test_basic_vhost.py",
         "patchSetId": 1
@@ -105,6 +159,24 @@
     },
     {
       "key": {
+        "uuid": "505fb193_5534e4e0",
+        "filename": "tests/test_basic_vhost.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1064
+      },
+      "writtenOn": "2021-01-08T05:49:19Z",
+      "side": 1,
+      "message": "All existing vif related testcases are passing where there will be no socket dir and socket file name passed. we use existing default logic so this case is covered.",
+      "parentUuid": "28521890_11594022",
+      "revId": "ec86ef053a162bf9dfd62ebda7b585329fa11184",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9a8b09a6_17101f57",
         "filename": "utils/vr_util.c",
         "patchSetId": 1
@@ -116,6 +188,30 @@
       "writtenOn": "2021-01-06T14:21:14Z",
       "side": 1,
       "message": "Minor nit: Pl follow the bracket style as rest of the code\nif () {\n}",
+      "range": {
+        "startLine": 1316,
+        "startChar": 4,
+        "endLine": 1316,
+        "endChar": 5
+      },
+      "revId": "ec86ef053a162bf9dfd62ebda7b585329fa11184",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "43cf16f4_1e90e7a5",
+        "filename": "utils/vr_util.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 1316,
+      "author": {
+        "id": 1064
+      },
+      "writtenOn": "2021-01-08T05:49:19Z",
+      "side": 1,
+      "message": "Noted. Thanks, i will update.",
+      "parentUuid": "9a8b09a6_17101f57",
       "range": {
         "startLine": 1316,
         "startChar": 4,
