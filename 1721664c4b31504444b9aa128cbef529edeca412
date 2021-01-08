@@ -22,6 +22,30 @@
       "revId": "1721664c4b31504444b9aa128cbef529edeca412",
       "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "eca3216a_de2106c7",
+        "filename": "test_review.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1053
+      },
+      "writtenOn": "2021-01-08T12:29:16Z",
+      "side": 1,
+      "message": "ok",
+      "parentUuid": "3432ae03_d4992959",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 1,
+        "endChar": 9
+      },
+      "revId": "1721664c4b31504444b9aa128cbef529edeca412",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
     }
   ]
 }
