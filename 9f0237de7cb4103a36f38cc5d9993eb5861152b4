@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f3907397_ac118fb4",
+        "filename": "dp-core/vr_datapath.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 756,
+      "author": {
+        "id": 643
+      },
+      "writtenOn": "2021-01-11T14:04:25Z",
+      "side": 1,
+      "message": "This piece of code is common for Ipv4 and IPv6 except prefix_len, Can you please combine both with if condition.",
+      "range": {
+        "startLine": 737,
+        "startChar": 24,
+        "endLine": 756,
+        "endChar": 26
+      },
+      "revId": "9f0237de7cb4103a36f38cc5d9993eb5861152b4",
+      "serverId": "c72cd27d-1743-4a55-84a4-cd13b8400c52",
+      "unresolved": true
+    }
+  ]
+}
