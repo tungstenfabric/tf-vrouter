@@ -169,7 +169,7 @@ class Flow(ObjectBase, vr_flow_req):
         Queries vrouter and returns fresp_gen_id value from the response xml\
         file
         """
-        return int(self.get('fresp_gen_id'))
+        return int(self.get('fresp_gen_id'), 16)
 
     def delete(self):
         """Deletes flow"""
