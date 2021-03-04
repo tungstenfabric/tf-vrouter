@@ -411,7 +411,6 @@ nh_l3_rcv(struct vr_packet *pkt, struct vr_nexthop *nh,
           struct vr_forwarding_md *fmd)
 {
     struct vr_vrf_stats *stats = NULL;
-    struct vr_ip *ip = NULL;
 
     if (vr_inet_vrf_stats) {
         stats = vr_inet_vrf_stats(fmd->fmd_dvrf, pkt->vp_cpu);
@@ -419,12 +418,9 @@ nh_l3_rcv(struct vr_packet *pkt, struct vr_nexthop *nh,
             stats->vrf_receives++;
     }
 
-    ip = (struct vr_ip *)pkt_network_header(pkt);
-    if (vr_ip_is_ip4(ip)) {
+    if (nh->nh_family == AF_INET)
         return vr_ip_rcv(nh->nh_router, pkt, fmd);
-    } else if (vr_ip_is_ip6(ip)) {
-        return vr_ipv6_rcv(nh->nh_router, pkt, fmd);
-    } else {
+    else {
         PKT_LOG(VP_DROP_INVALID_PROTOCOL, pkt, 0, VR_NEXTHOP_C, __LINE__);
         vr_pfree(pkt, VP_DROP_INVALID_PROTOCOL);
     }
