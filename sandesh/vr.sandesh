@@ -33,7 +33,7 @@ buffer sandesh vr_nexthop_req {
     3:  byte        nhr_family;
     4:  i32         nhr_id;
     5:  i32         nhr_rid;
-    6:  i32         nhr_encap_oif_id;
+    6:  list<i32>   nhr_encap_oif_id;
     7:  i32         nhr_encap_len;
     8:  i32         nhr_encap_family;
     9:  i32         nhr_vrf;
@@ -57,6 +57,7 @@ buffer sandesh vr_nexthop_req {
     27: i32         nhr_crypt_path_available;
     28: list<byte>  nhr_rw_dst_mac;
     29: u32         nhr_transport_label;
+    30: list<i32>   nhr_encap_valid;
 }
 
 buffer sandesh vr_interface_req {
@@ -503,6 +504,7 @@ buffer sandesh vr_drop_stats_req {
     55: i64             vds_no_frag_entry;
     56: i64             vds_icmp_error;
     57: i64             vds_clone_fail;
+    58: i64             vds_invalid_underlay_ecmp;
 }
 
 buffer sandesh vr_qos_map_req {

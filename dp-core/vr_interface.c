@@ -132,7 +132,6 @@ vif_drop_pkt(struct vr_interface *vif, struct vr_packet *pkt, bool input)
     return;
 }
 
-
 /*
  * in the rewrite case, we will assume the positive case of caller
  * passing us valid rewrite ptr and len and will not check for those

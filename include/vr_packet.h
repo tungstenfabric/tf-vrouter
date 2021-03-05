@@ -15,6 +15,7 @@
 #include "vr_mirror.h"
 #include "vr_os.h"
 #include "vr_pkt_droplog.h"
+#include "vr_hash.h"
 
 /* ethernet header */
 #define VR_ETHER_DMAC_OFF       0
@@ -195,7 +196,8 @@
 #define VP_DROP_NO_FRAG_ENTRY               50
 #define VP_DROP_ICMP_ERROR                  51
 #define VP_DROP_CLONE_FAIL                  52
-#define VP_DROP_MAX                         53
+#define VP_DROP_INVALID_UNDERLAY_ECMP       53
+#define VP_DROP_MAX                         54
 
 
 /*
@@ -230,6 +232,7 @@ extern struct vr_packet *pkt_copy(struct vr_packet *, unsigned short,
         unsigned short);
 extern struct vr_packet *pkt_cow(struct vr_packet *, unsigned short);
 extern int vr_myip(struct vr_interface *, unsigned int);
+extern unsigned int vr_get_pkt_hash(struct vr_packet *);
 
 typedef enum {
     L4_TYPE_UNKNOWN,
@@ -1641,4 +1644,5 @@ static inline void vr_pkt_drop_log_func(unsigned short drop_reason, struct vr_pa
         vr_pkt_drop->vr_pkt_drop_log_buffer_index[cpu] = ((++buf_idx) % vr_pkt_droplog_bufsz);
     }
 }
+
 #endif /* __VR_PACKET_H__ */

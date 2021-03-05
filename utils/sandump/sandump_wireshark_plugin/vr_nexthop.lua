@@ -39,6 +39,7 @@ nhr_flags["0x01000000"] = "NH_FLAG_CRYPT_TRAFFIC"
 nhr_flags["0x02000000"] = "NH_FLAG_L3_VXLAN"
 nhr_flags["0x04000000"] = "NH_FLAG_TUNNEL_MPLS_O_MPLS"
 nhr_flags["0x08000000"] = "NH_FLAG_VALIDATE_MCAST_SRC"
+nhr_flags["0x10000000"] = "NH_FLAG_TUNNEL_UNDERLAY_ECMP"
 
 
 nh_req_table = {}
@@ -103,9 +104,8 @@ nh_req_table[5].base = base.DEC
 
 nh_req_table[6] = {}
 nh_req_table[6].field_name = "nhr_encap_oif_id"
-nh_req_table[6].ProtoField = ProtoField.int32
-nh_req_table[6].base = base.DEC
-nh_req_table[6].show_when_zero = true
+nh_req_table[6].ProtoField = ProtoField.bytes
+nh_req_table[6].base = base.SPACE
 
 nh_req_table[7] = {}
 nh_req_table[7].field_name = "nhr_encap_len"
@@ -219,3 +219,8 @@ nh_req_table[29] = {}
 nh_req_table[29].field_name = "nhr_transport_label"
 nh_req_table[29].ProtoField = ProtoField.uint32
 nh_req_table[29].base = base.DEC
+
+nh_req_table[30] = {}
+nh_req_table[30].field_name = "nhr_encap_valid"
+nh_req_table[30].ProtoField = ProtoField.bytes
+nh_req_table[30].base = base.SPACE

@@ -30,11 +30,11 @@
 #include "nl_util.h"
 #include "ini_parser.h"
 
-static int8_t src_mac[6], dst_mac[6], l3_vxlan_mac[6];
+static int8_t src_mac[3][6], dst_mac[3][6], l3_vxlan_mac[6];
 static uint16_t sport, dport;
-static uint32_t nh_id, if_id, vrf_id, flags;
+static uint32_t nh_id, if_id[3] = {-1}, vrf_id, flags;
 static int nh_set, command, type, dump_marker = -1;
-static int family = AF_INET;
+static int family = AF_INET, count = 0;
 
 static bool dump_pending = false;
 static int comp_nh[32], lbl[32];
@@ -45,7 +45,7 @@ static struct nl_client *cl;
 
 static int
 vr_nh_op(struct nl_client *cl, int command, int type, uint32_t nh_id,
-        uint32_t if_id, uint32_t vrf_id, int8_t *dst, int8_t  *src,
+        uint32_t *if_id, uint32_t vrf_id, int8_t dst[][6], int8_t src[][6],
         struct in_addr sip, struct in_addr dip, uint32_t flags);
 
 char *
@@ -246,6 +246,10 @@ nh_flags(uint32_t flags, uint8_t type, char *ptr)
         case NH_FLAG_CRYPT_TRAFFIC:
             strcat(ptr, "Encrypt Traffic, ");
             break;
+
+        case NH_FLAG_TUNNEL_UNDERLAY_ECMP:
+            strcat(ptr, "Underlay Ecmp, ");
+            break;
         }
     }
 
@@ -262,7 +266,7 @@ nh_print_newline_header(void)
 static void
 nexthop_req_process(void *s_req)
 {
-    unsigned int i, printed = 0;
+    unsigned int i, j, printed = 0;
     struct in_addr a;
     char flags_mem[500];
     char fam[100];
@@ -298,11 +302,11 @@ nexthop_req_process(void *s_req)
 
     if (req->nhr_type == NH_RCV) {
         nh_print_newline_header();
-        printf("Oif:%d", req->nhr_encap_oif_id);
+        printf("Oif:%d", req->nhr_encap_oif_id[0]);
     } else if (req->nhr_type == NH_ENCAP) {
         nh_print_newline_header();
-        printf("EncapFmly:%04x Oif:%d Len:%d",
-                req->nhr_encap_family, req->nhr_encap_oif_id, req->nhr_encap_size);
+        printf("EncapFmly:%04x Oif:%d Len:%d", req->nhr_encap_family,
+                req->nhr_encap_oif_id[0], req->nhr_encap_size);
         nh_print_newline_header();
         printf("Encap Data: ");
         for (i = 0; i< req->nhr_encap_size; i++) {
@@ -311,11 +315,28 @@ nexthop_req_process(void *s_req)
     } else if (req->nhr_type == NH_TUNNEL) {
         nh_print_newline_header();
         if (!(req->nhr_flags & NH_FLAG_TUNNEL_PBB)) {
-            printf("Oif:%d Len:%d Data:", req->nhr_encap_oif_id, req->nhr_encap_size);
-            for (i = 0; i< req->nhr_encap_size; i++) {
-                printf("%02x ", (unsigned char)req->nhr_encap[i]);
+            if (req->nhr_flags & NH_FLAG_TUNNEL_UNDERLAY_ECMP) {
+                for (i = 0; i < req->nhr_encap_oif_id_size; i++) {
+                    printf("Oif:%d EncapValid:%d ",
+                            req->nhr_encap_oif_id[i], req->nhr_encap_valid[i]);
+                    if (req->nhr_encap_valid[i]) {
+                        printf("Len:%d Data:", req->nhr_encap_len);
+                        for (j = 0; j < req->nhr_encap_len; j++) {
+                            printf("%02x ",
+                        (unsigned char)req->nhr_encap[i*req->nhr_encap_len+j]);
+                        }
+                    } else
+                        printf("Len:0 Data:NULL");
+                    nh_print_newline_header();
+                }
+            } else {
+                printf("Oif:%d Len:%d Data:",
+                        req->nhr_encap_oif_id[0], req->nhr_encap_size);
+                for (i = 0; i< req->nhr_encap_size; i++) {
+                    printf("%02x ", (unsigned char)req->nhr_encap[i]);
+                }
+                nh_print_newline_header();
             }
-            nh_print_newline_header();
         }
         if (!(req->nhr_flags & NH_FLAG_TUNNEL_PBB)) {
             if (req->nhr_family == AF_INET) {
@@ -356,7 +377,7 @@ nexthop_req_process(void *s_req)
         if (req->nhr_encap_crypt_oif_id != (int)-1 &&
             req->nhr_encap_crypt_oif_id != 0) {
             nh_print_newline_header();
-            printf("CryptOif:%d\n", req->nhr_encap_crypt_oif_id);            
+            printf("CryptOif:%d\n", req->nhr_encap_crypt_oif_id);
         }
     } else if (req->nhr_type == NH_VRF_TRANSLATE) {
         nh_print_newline_header();
@@ -401,7 +422,7 @@ nexthop_req_process(void *s_req)
                 if (req->nhr_nh_list[i] == -1)
                     continue;
                 vr_nh_op(cl, command, type, req->nhr_nh_list[i], if_id, vrf_id,
-                            dst_mac, src_mac, sip, dip, flags);
+                             dst_mac, src_mac, sip, dip, flags);
             }
         }
 
@@ -428,7 +449,7 @@ nh_fill_nl_callbacks()
 
 static int
 vr_nh_op(struct nl_client *cl, int command, int type, uint32_t nh_id,
-        uint32_t if_id, uint32_t vrf_id, int8_t *dst, int8_t  *src,
+        uint32_t *if_id, uint32_t vrf_id, int8_t dst[][6], int8_t src[][6],
         struct in_addr sip, struct in_addr dip, uint32_t flags)
 {
     int ret;
@@ -439,15 +460,15 @@ op_retry:
     case SANDESH_OP_ADD:
         if (flags & NH_FLAG_TUNNEL_PBB) {
             ret = vr_send_pbb_tunnel_add(cl, 0, nh_id, flags,
-                    vrf_id, dst, comp_nh[0], lbl[0]);
+                    vrf_id, dst[0], comp_nh[0], lbl[0]);
         } else if ((type == NH_ENCAP) || (type == NH_TUNNEL)) {
             ret = vr_send_nexthop_encap_tunnel_add(cl, 0, type, nh_id,
-                    flags, vrf_id, if_id, src, dst, sip, dip, sport, dport, l3_vxlan_mac, family);
+                    flags, vrf_id, if_id, src, dst, sip, dip, sport, dport, l3_vxlan_mac, family, count);
         } else if (type == NH_COMPOSITE) {
             ret = vr_send_nexthop_composite_add(cl, 0, nh_id, flags, vrf_id,
                     comp_nh_ind, comp_nh, lbl, family);
         } else {
-            ret = vr_send_nexthop_add(cl, 0, type, nh_id, flags, vrf_id, if_id);
+            ret = vr_send_nexthop_add(cl, 0, type, nh_id, flags, vrf_id, if_id, family);
         }
 
         break;
@@ -511,9 +532,9 @@ cmd_usage()
            "                        [--lbl <lbl> Evpn label for PBB tunnel]\n"
            "                        [--dmac <xx:xx:xx:xx:xx:xx> destination Bmac]\n"
            "                        [--ind indirect flag]\n"
-           "                    [--oif <if_id> out going interface index]\n"
-           "                    [--smac <xx:xx:xx:xx:xx:xx> source mac ]\n"
-           "                    [--dmac <xx:xx:xx:xx:xx:xx> destination mac ]\n"
+           "                    [--oif <if_id1,if_id2,...> comma seperated list of out going interface indices(max 3 in case of L3 multihoming)]\n"
+           "                    [--smac <xx:xx:xx:xx:xx:xx,xx:xx:xx:xx:xx:xx,...> comma seperated list of source mac(max 3 in case of L3 multihoming)]\n"
+           "                    [--dmac <xx:xx:xx:xx:xx:xx,xx:xx:xx:xx:xx:xx,...> comma seperated list of destination mac(max 3 in case of L3 multihoming)]\n"
            "                    [--sip <x.x.x.x> source ip of tunnel] \n"
            "                    [--dip <x.x.x.x> destination ip of tunnel ]\n"
            "                    [--udp Udptunnel ]\n"
@@ -656,7 +677,8 @@ static struct option long_options[] = {
 static void
 parse_long_opts(int ind, char *opt_arg)
 {
-    int errno;
+    int errno, i;
+    char *c;
     struct ether_addr *mac;
 
     errno = 0;
@@ -679,25 +701,48 @@ parse_long_opts(int ind, char *opt_arg)
         break;
 
     case OIF_OPT_IND:
-        if_id = strtoul(opt_arg, NULL, 0);
+        count = 0;
+        i = 0;
+        c = strtok(opt_arg, ",");
+        while (c != NULL) {
+            if_id[i++] = atoi(c);
+            c = strtok(NULL, ",");
+        }
+        count = i;
         if (errno)
             usage();
         break;
 
     case SMAC_OPT_IND:
-        mac = ether_aton(opt_arg);
-        if (mac)
-            memcpy(src_mac, mac, sizeof(src_mac));
-        else
-            cmd_usage();
+        c = NULL;
+        i = 0;
+        c = strtok(opt_arg, ",");
+        while (c != NULL) {
+            mac = ether_aton(c);
+            if (mac)
+                memcpy(src_mac[i], mac, sizeof(src_mac[i]));
+            else
+                cmd_usage();
+            c = strtok(NULL, ",");
+            i++;
+            mac = NULL;
+        }
         break;
 
     case DMAC_OPT_IND:
-        mac = ether_aton(opt_arg);
-        if (mac)
-            memcpy(dst_mac, mac, sizeof(dst_mac));
-        else
-            cmd_usage();
+        c = NULL;
+        i = 0;
+        c = strtok(opt_arg, ",");
+        while (c != NULL) {
+            mac = ether_aton(c);
+            if (mac)
+                memcpy(dst_mac[i], mac, sizeof(dst_mac[i]));
+            else
+                cmd_usage();
+            c = strtok(NULL, ",");
+            i++;
+            mac = NULL;
+        }
         break;
 
     case VRF_OPT_IND:
@@ -836,6 +881,9 @@ validate_options(void)
             }
 
         } else if (type == NH_TUNNEL) {
+
+            if (count > 1)
+                flags |= NH_FLAG_TUNNEL_UNDERLAY_ECMP;
 
             if (opt_set(PBB_OPT_IND)) {
                 if (!opt_set(CNI_OPT_IND)) {

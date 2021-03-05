@@ -559,3 +559,89 @@ vr_adjust_tcp_mss(struct vr_tcp *tcph, uint16_t len_overhead, uint16_t *old_mss,
 
     return __vr_adjust_tcp_mss(tcph, len_overhead, eth_mtu, old_mss, new_mss);
 }
+
+/*
+ * calculate a 5 tuple hash for ipv4 and ipv6 packets
+ * and smac, dmac and proto based hash for other packets
+ */
+unsigned int vr_get_pkt_hash(struct vr_packet * pkt)
+{
+    struct vr_tcp *tcp;
+    struct vr_udp *udp;
+    unsigned short sport, dport;
+    int proto, flag = 0;
+    struct vr_eth *eth = NULL;
+    struct vr_ip *ip = NULL;
+    struct vr_ip6 *ip6 = NULL;
+    char *hdr = NULL;
+    char key[38];
+    uint32_t hash;
+
+    if (!pkt)
+        return 0;
+
+    if (pkt->vp_type == VP_TYPE_IP6) {
+        ip6 = (struct vr_ip6 *) pkt_network_header(pkt);
+        hdr = (char *) ip6;
+        if (vr_ip6_fragment(ip6)) {
+            flag = 1;
+            sport = dport = 0;
+            proto = 0;
+        } else
+            proto = ip6->ip6_nxt;
+    } else if(pkt->vp_type == VP_TYPE_IP) {
+        ip = (struct vr_ip *) pkt_network_header(pkt);
+        hdr = (char *) ip;
+        if (vr_ip_fragment(ip)) {
+            flag = 1;
+            sport = dport = 0;
+        }
+        proto = ip->ip_proto;
+    } else {
+        eth = (struct vr_eth *) pkt_data(pkt);
+        proto = -1;
+    }
+
+    if (flag == 0) {
+        if (proto == VR_IP_PROTO_TCP) {
+            if (pkt->vp_type == VP_TYPE_IP6)
+                tcp = (struct vr_tcp *) (hdr + sizeof(*ip6));
+            else
+                tcp = (struct vr_tcp *) (hdr + ip->ip_hl*4);
+            sport = ntohs(tcp->tcp_sport);
+            dport = ntohs(tcp->tcp_dport);
+        } else if (proto == VR_IP_PROTO_UDP) {
+            if (pkt->vp_type == VP_TYPE_IP6)
+                udp = (struct vr_udp *) (hdr + sizeof(*ip6));
+            else
+                udp = (struct vr_udp *) (hdr + ip->ip_hl*4);
+            sport = ntohs(udp->udp_sport);
+            dport = ntohs(udp->udp_dport);
+        } else {
+            sport = dport = 0;
+        }
+    }
+
+    if (pkt->vp_type == VP_TYPE_IP6) {
+        memcpy(key, &ip6->ip6_src, 16);
+        memcpy(key+16, &ip6->ip6_dst, 16);
+        memcpy(key+32, &proto, 1);
+        memcpy(key+33, &sport, 2);
+        memcpy(key+35, &dport, 2);
+        hash = vr_hash(key, 37, 0);
+    } else if (pkt->vp_type == VP_TYPE_IP) {
+        memcpy(key, &ip->ip_saddr, 4);
+        memcpy(key+4, &ip->ip_daddr, 4);
+        memcpy(key+8, &proto, 1);
+        memcpy(key+9, &sport, 2);
+        memcpy(key+11, &dport, 2);
+        hash = vr_hash(key, 13, 0);
+    } else {
+        memcpy(key, &eth->eth_smac, 6);
+        memcpy(key+6, &eth->eth_dmac, 6);
+        memcpy(key+12, &eth->eth_proto, 1);
+        hash = vr_hash(key, 13, 0);
+    }
+
+    return hash;
+}

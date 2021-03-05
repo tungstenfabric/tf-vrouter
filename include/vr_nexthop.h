@@ -14,6 +14,7 @@ extern "C" {
 
 #include "vr_os.h"
 #include "vr_types.h"
+#include "vr_interface.h"
 
 #define VR_DEF_NEXTHOPS                 524288
 #define NH_TABLE_ENTRIES                VR_DEF_NEXTHOPS
@@ -69,6 +70,7 @@ enum nexthop_type {
 #define NH_FLAG_L3_VXLAN                    0x02000000
 #define NH_FLAG_TUNNEL_MPLS_O_MPLS          0x04000000
 #define NH_FLAG_VALIDATE_MCAST_SRC          0x08000000
+#define NH_FLAG_TUNNEL_UNDERLAY_ECMP        0x10000000
 
 #define NH_SOURCE_INVALID                   0
 #define NH_SOURCE_VALID                     1
@@ -107,6 +109,7 @@ struct vr_nexthop {
      * nexthops
      */
     uint8_t         nh_family;
+    /* nh_data_size = encap_size * number of physical interfaces */
     uint16_t        nh_data_size;
     uint32_t        nh_flags;
     int             nh_vrf;
@@ -172,12 +175,16 @@ struct vr_nexthop {
     nh_processing_t     (*nh_reach_nh)(struct vr_packet *,
                                        struct vr_nexthop *,
                                        struct vr_forwarding_md *);
-    struct vr_interface *nh_dev;
     struct vr_interface *nh_crypt_dev;
     void                (*nh_destructor)(struct vr_nexthop *);
+    struct vr_interface *nh_dev_arr[VR_MAX_PHY_INF];
+    uint8_t             nh_encap_valid[VR_MAX_PHY_INF];
+    struct vr_interface *nh_valid_underlay_dev[VR_MAX_PHY_INF];
+    int                 nh_valid_underlay_dev_count;
     uint8_t             nh_data[0];
 };
 
+#define nh_dev                  nh_dev_arr[0]
 #define nh_encap_family         nh_u.nh_encap.encap_family
 #define nh_encap_len            nh_u.nh_encap.encap_len
 

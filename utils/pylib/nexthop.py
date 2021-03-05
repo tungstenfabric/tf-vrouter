@@ -26,9 +26,14 @@ class NextHop(ObjectBase, vr_nexthop_req):
         self.nhr_type = nh_type
         self.nhr_vrf = nh_vrf
         self.nhr_flags = constants.NH_FLAG_VALID | nh_flags
-        self.nhr_encap_oif_id = encap_oif_id
+        if encap_oif_id is None:
+            self.nhr_encap_oif_id = [-1, -1, -1]
+        else:
+            self.nhr_encap_oif_id = self.vt_oif_id(str(encap_oif_id))
+        self.nhr_encap_valid = self.vt_encap_valid(self.nhr_encap_oif_id)
         if encap is not None:
             self.nhr_encap = self.vt_encap(encap)
+            self.nhr_encap_len = 14
         self.nhr_encap_family = encap_family
         self.sreq_class = vr_nexthop_req.__name__
 
@@ -206,7 +211,7 @@ class TunnelNextHopV6(NextHop):
         super(TunnelNextHopV6, self).__init__(
             constants.NH_TYPE_TUNNEL,
             constants.AF_INET6,
-            encap_oif,
+            encap_oif_id,
             encap,
             **kwargs)
         self.nhr_tun_sip6 = tun_sip6

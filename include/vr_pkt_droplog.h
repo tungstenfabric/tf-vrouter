@@ -301,6 +301,7 @@ extern "C" {
     X(VP_DROP_NO_FRAG_ENTRY) \
     X(VP_DROP_ICMP_ERROR) \
     X(VP_DROP_CLONE_FAIL) \
+    X(VP_DROP_INVALID_UNDERLAY_ECMP) \
     X(VP_DROP_MAX)
 
 #define enum_t(X) X,

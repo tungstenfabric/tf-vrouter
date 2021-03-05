@@ -301,3 +301,9 @@ vr_drop_stats_table[57] = {}
 vr_drop_stats_table[57].field_name = "vds_clone_fail"
 vr_drop_stats_table[57].ProtoField = ProtoField.int64
 vr_drop_stats_table[57].base = base.DEC
+
+
+vr_drop_stats_table[58] = {}
+vr_drop_stats_table[58].field_name = "vds_invalid_underlay_ecmp"
+vr_drop_stats_table[58].ProtoField = ProtoField.int64
+vr_drop_stats_table[58].base = base.DEC

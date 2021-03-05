@@ -72,3 +72,24 @@ class Common(object):
         for i in ipv6_sp:
             ipv6_dec.append(struct.unpack('<B', i)[0])
         return ipv6_dec
+
+    @classmethod
+    def vt_oif_id(self, str):
+        """Returns oif_id list from corrosponding oif_id string"""
+        oif_id = [-1, -1, -1]
+        if str != "":
+            oif_str_list = str.split(",")
+        else:
+            oif_str_list = []
+        for i in range(len(oif_str_list)):
+            oif_id[i] = int(oif_str_list[i])
+        return oif_id
+
+    @classmethod
+    def vt_encap_valid(self, list):
+        """Returns encap_valid list from oif_id list"""
+        encap_valid = [0, 0, 0]
+        for i in range(len(list)):
+            if list[i] > -1:
+                encap_valid[i] = 1
+        return encap_valid

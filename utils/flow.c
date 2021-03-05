@@ -995,7 +995,7 @@ flow_get_routes(struct vr_flow_entry *fe)
         src_l3_nh = flow_get_nexthop(src_l3_rt->rtr_nh_id);
         if (src_l3_nh) {
             if (vr_nexthop_req_has_vif(src_l3_nh)) {
-                src_l3_vif = flow_get_vif(src_l3_nh->nhr_encap_oif_id);
+                src_l3_vif = flow_get_vif(src_l3_nh->nhr_encap_oif_id[0]);
                 if_indextoname(src_l3_vif->vifr_os_idx, src_l3_vif_name);
             }
         }
@@ -1005,7 +1005,7 @@ flow_get_routes(struct vr_flow_entry *fe)
             if (src_l2_rt) {
                 src_l2_nh = flow_get_nexthop(src_l2_rt->rtr_nh_id);
                 if (vr_nexthop_req_has_vif(src_l2_nh)) {
-                    src_l2_vif = flow_get_vif(src_l2_nh->nhr_encap_oif_id);
+                    src_l2_vif = flow_get_vif(src_l2_nh->nhr_encap_oif_id[0]);
                     if_indextoname(src_l2_vif->vifr_os_idx, src_l2_vif_name);
                 }
             }
@@ -1026,7 +1026,7 @@ flow_get_routes(struct vr_flow_entry *fe)
         dst_l3_nh = flow_get_nexthop(dst_l3_rt->rtr_nh_id);
         if (dst_l3_nh) {
             if (vr_nexthop_req_has_vif(dst_l3_nh)) {
-                dst_l3_vif = flow_get_vif(dst_l3_nh->nhr_encap_oif_id);
+                dst_l3_vif = flow_get_vif(dst_l3_nh->nhr_encap_oif_id[0]);
                 if_indextoname(dst_l3_vif->vifr_os_idx, dst_l3_vif_name);
             }
         }
@@ -1036,7 +1036,7 @@ flow_get_routes(struct vr_flow_entry *fe)
             if (dst_l2_rt) {
                 dst_l2_nh = flow_get_nexthop(dst_l2_rt->rtr_nh_id);
                 if (vr_nexthop_req_has_vif(dst_l2_nh)) {
-                    dst_l2_vif = flow_get_vif(dst_l2_nh->nhr_encap_oif_id);
+                    dst_l2_vif = flow_get_vif(dst_l2_nh->nhr_encap_oif_id[0]);
                     if_indextoname(dst_l2_vif->vifr_os_idx, dst_l2_vif_name);
                 }
             }
@@ -1056,10 +1056,17 @@ flow_get_source(struct vr_flow_entry *fe)
         src_nh = flow_get_nexthop(fe->fe_src_nh_index);
         if (src_nh) {
             switch (src_nh->nhr_type) {
-            case NH_ENCAP:
             case NH_TUNNEL:
+                if (fe->fe_underlay_ecmp_index >= 0)
+                    src_vif = flow_get_vif(fe->fe_underlay_ecmp_index);
+                else
+                    src_vif = flow_get_vif(src_nh->nhr_encap_oif_id[0]);
+                if (src_vif->vifr_os_idx > 0)
+                    if_indextoname(src_vif->vifr_os_idx, src_vif_name);
+                break;
+            case NH_ENCAP:
             case NH_RCV:
-                src_vif = flow_get_vif(src_nh->nhr_encap_oif_id);
+                src_vif = flow_get_vif(src_nh->nhr_encap_oif_id[0]);
                 if (src_vif->vifr_os_idx > 0)
                     if_indextoname(src_vif->vifr_os_idx, src_vif_name);
                 break;

@@ -602,6 +602,8 @@ vr_print_drop_stats(vr_drop_stats_req *stats, int core)
             stats->vds_icmp_error);
     printf("Clone Failures                %" PRIu64 "\n",
             stats->vds_clone_fail);
+    printf("Invalid Underlay ECMP         %" PRIu64 "\n",
+            stats->vds_invalid_underlay_ecmp);
     printf("\n");
     if (platform == DPDK_PLATFORM) {
         printf("VLAN fwd intf failed TX       %" PRIu64 "\n",
@@ -801,6 +803,7 @@ vr_sum_drop_stats(vr_drop_stats_req *req)
     sum += req->vds_trap_original;
     sum += req->vds_pkt_loop;
     sum += req->vds_no_crypt_path;
+    sum += req->vds_invalid_underlay_ecmp;
 
     return sum;
 }
@@ -1628,6 +1631,7 @@ vr_nexthop_req_destroy(vr_nexthop_req *req)
         free(req->nhr_encap);
         req->nhr_encap = NULL;
         req->nhr_encap_size = 0;
+        req->nhr_encap_len = 0;
     }
 
     if (req->nhr_nh_list_size && req->nhr_nh_list) {
@@ -1652,6 +1656,18 @@ vr_nexthop_req_destroy(vr_nexthop_req *req)
         free(req->nhr_tun_dip6);
         req->nhr_tun_dip6 = NULL;
         req->nhr_tun_dip6_size = 0;
+    }
+
+    if (req->nhr_encap_oif_id_size && req->nhr_encap_oif_id) {
+        free(req->nhr_encap_oif_id);
+        req->nhr_encap_oif_id = NULL;
+        req->nhr_encap_oif_id_size = 0;
+    }
+
+    if (req->nhr_encap_valid_size && req->nhr_encap_valid) {
+        free(req->nhr_encap_valid);
+        req->nhr_encap_valid = NULL;
+        req->nhr_encap_valid_size = 0;
     }
 
     free(req);
@@ -1681,6 +1697,10 @@ vr_nexthop_req_get_copy(vr_nexthop_req *src)
     dst->nhr_tun_sip6_size = 0;
     dst->nhr_tun_dip6 = NULL;
     dst->nhr_tun_dip6_size = 0;
+    dst->nhr_encap_oif_id = NULL;
+    dst->nhr_encap_oif_id_size = 0;
+    dst->nhr_encap_valid = NULL;
+    dst->nhr_encap_valid_size = 0;
 
     /* ...and then the list elements */
     if (src->nhr_encap_size && src->nhr_encap) {
@@ -1727,6 +1747,27 @@ vr_nexthop_req_get_copy(vr_nexthop_req *src)
             goto free_nh;
         memcpy(dst->nhr_tun_dip6, src->nhr_tun_dip6, src->nhr_tun_dip6_size);
         dst->nhr_tun_dip6_size = src->nhr_tun_dip6_size;
+    }
+
+    /* encap oif id list */
+    if (src->nhr_encap_oif_id_size && src->nhr_encap_oif_id) {
+        dst->nhr_encap_oif_id = malloc(src->nhr_encap_oif_id_size * sizeof(int32_t));
+        if (!src->nhr_encap_oif_id)
+            goto free_nh;
+        memcpy(dst->nhr_encap_oif_id, src->nhr_encap_oif_id,
+                src->nhr_encap_oif_id_size * sizeof(int32_t));
+        dst->nhr_encap_oif_id_size = src->nhr_encap_oif_id_size;
+    }
+
+    /* encap valid list */
+    if (src->nhr_encap_valid_size && src->nhr_encap_valid &&
+            (src->nhr_flags & NH_FLAG_TUNNEL_UNDERLAY_ECMP)) {
+        dst->nhr_encap_valid = malloc(src->nhr_encap_valid_size * sizeof(int32_t));
+        if (!src->nhr_encap_valid)
+            goto free_nh;
+        memcpy(dst->nhr_encap_valid, src->nhr_encap_valid,
+                src->nhr_encap_valid_size * sizeof(int32_t));
+        dst->nhr_encap_valid_size = src->nhr_encap_valid_size;
     }
 
     return dst;
@@ -1895,10 +1936,12 @@ fail:
 int
 vr_send_nexthop_encap_tunnel_add(struct nl_client *cl, unsigned int router_id,
         unsigned int type, int nh_index, unsigned int flags, int vrf_index,
-        int vif_index, int8_t *smac, int8_t *dmac, struct in_addr sip,
-        struct in_addr dip, int sport, int dport, int8_t *l3_vxlan_mac, int family)
+        int *vif_index, int8_t smac[][6], int8_t dmac[][6], struct in_addr sip,
+        struct in_addr dip, int sport, int dport, int8_t *l3_vxlan_mac, int family,
+        int count)
 {
     vr_nexthop_req req;
+    int i;
 
     memset(&req, 0, sizeof(req));
 
@@ -1908,15 +1951,38 @@ vr_send_nexthop_encap_tunnel_add(struct nl_client *cl, unsigned int router_id,
     req.nhr_id = nh_index;
     req.nhr_flags = flags;
     req.nhr_type = type;
-
-    req.nhr_encap_oif_id = vif_index;
-    req.nhr_encap_size = 14;
+    if (req.nhr_flags & NH_FLAG_TUNNEL_UNDERLAY_ECMP) {
+        req.nhr_encap_oif_id_size = VR_MAX_PHY_INF;
+        req.nhr_encap_valid_size = VR_MAX_PHY_INF;
+        req.nhr_encap_valid = malloc(req.nhr_encap_valid_size * sizeof(unsigned int));
+    } else {
+        req.nhr_encap_oif_id_size = 1;
+        req.nhr_encap_valid_size = 0;
+        req.nhr_encap_valid = NULL;
+    }
+    req.nhr_encap_oif_id = malloc(req.nhr_encap_oif_id_size * sizeof(unsigned int));
+    if (flags & NH_FLAG_TUNNEL_UNDERLAY_ECMP) {
+        for (i = 0; i < VR_MAX_PHY_INF; i++) {
+            if (vif_index[i] < 0)
+                req.nhr_encap_valid[i] = 0;
+            else
+                req.nhr_encap_valid[i] = 1;
+            req.nhr_encap_oif_id[i] = vif_index[i];
+        }
+    }
+    else
+        req.nhr_encap_oif_id[0] = vif_index[0];
+    if (count)
+        req.nhr_encap_len = 14;
+    req.nhr_encap_size = 14 * count;
     req.nhr_encap = malloc(req.nhr_encap_size);
     if (!req.nhr_encap)
         return -ENOMEM;
-    memcpy(req.nhr_encap, dmac, 6);
-    memcpy(req.nhr_encap + 6, smac, 6);
-    *(uint16_t *)(&req.nhr_encap[12]) = htons(0x0800);
+    for (i = 0; i < count; i++) {
+        memcpy(req.nhr_encap + i*14, dmac, 6);
+        memcpy(req.nhr_encap + i*14 + 6, smac, 6);
+        *(uint16_t *)(&req.nhr_encap[12 + i*14]) = htons(0x0800);
+    }
 
 #if defined(__linux__)
     req.nhr_encap_family = ETH_P_ARP;
@@ -1947,7 +2013,7 @@ vr_send_nexthop_encap_tunnel_add(struct nl_client *cl, unsigned int router_id,
 int
 vr_send_nexthop_add(struct nl_client *cl, unsigned int router_id,
         unsigned int type, int nh_index, unsigned int flags, int vrf_index,
-        int vif_index)
+        int *vif_index, int family)
 {
     vr_nexthop_req req;
 
@@ -1959,7 +2025,13 @@ vr_send_nexthop_add(struct nl_client *cl, unsigned int router_id,
     req.nhr_id = nh_index;
     req.nhr_flags = flags;
     req.nhr_type = type;
-    req.nhr_encap_oif_id = vif_index;
+    req.nhr_family = family;
+    req.nhr_encap_oif_id_size = 1;
+    req.nhr_encap_valid_size = 0;
+    req.nhr_encap_valid = NULL;
+    req.nhr_encap_oif_id = malloc(req.nhr_encap_oif_id_size * sizeof(unsigned int));
+    req.nhr_encap_len = 14;
+    req.nhr_encap_oif_id[0] = vif_index[0];
 
     return vr_sendmsg(cl, &req, "vr_nexthop_req");
 }
