@@ -7,6 +7,7 @@
 #include <linux/version.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/inetdevice.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <linux/ethtool.h>
@@ -15,6 +16,8 @@
 #include <linux/ip.h>
 #include <linux/jhash.h>
 #include <linux/pkt_sched.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter_ipv4.h>
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,39))
 #include <linux/if_bridge.h>
@@ -55,8 +58,21 @@ extern rx_handler_result_t vhost_rx_handler(struct sk_buff **);
 struct vr_interface vr_reset_interface;
 #endif
 
+int vr_nf_hook_init(void);
+void vr_nf_hook_exit(void);
+unsigned int vr_nf_hook(unsigned int hooknum,
+                        struct sk_buff *skb,
+                        const struct net_device *in,
+                        const struct net_device *out,
+                        int (*okfn)(struct sk_buff *));
+
 extern volatile bool agent_alive;
 static struct cpumask noht_cpumask[VR_MAX_CPUS];
+
+/*
+ * vr_l3mh_loip - Loopback IP for L3 Multihoming.
+ */
+static unsigned int vr_l3mh_loip;
 
 /*
  * Structure to store information required to be sent across CPU cores
@@ -970,6 +986,7 @@ linux_get_packet(struct sk_buff *skb, struct vr_interface *vif)
     pkt->vp_type = VP_TYPE_NULL;
     pkt->vp_queue = VP_QUEUE_INVALID;
     pkt->vp_priority = VP_PRIORITY_INVALID;
+    pkt->vp_rx_pass = 0;
 
     return pkt;
 
@@ -1174,7 +1191,7 @@ linux_rx_handler(struct sk_buff **pskb)
         if (router == NULL) {
             goto error;
         }
-            
+
         vif = __vrouter_get_interface(router,
                   ((vr_rps_t *)skb->cb)->vif_idx);
         if (vif && (vif->vif_type == VIF_TYPE_PHYSICAL) && vif->vif_os) {
@@ -1266,6 +1283,11 @@ linux_rx_handler(struct sk_buff **pskb)
     if (!ret)
         ret = RX_HANDLER_CONSUMED;
 
+    if (pkt->vp_rx_pass) {
+        ret = RX_HANDLER_PASS;
+        pkt->vp_rx_pass = 0;
+    }
+
     return ret;
 
 error:
@@ -1315,7 +1337,7 @@ vr_do_rps_outer(struct sk_buff *skb, struct vr_interface *vif)
  * vr_get_vif_ptr - gets a pointer to the vif structure from the netdevice
  * structure depending on whether vrouter uses the bridge or OVS hook.
  */
-static struct vr_interface *
+struct vr_interface *
 vr_get_vif_ptr(struct net_device *dev)
 {
     struct vr_interface *vif;
@@ -1734,8 +1756,11 @@ linux_if_del(struct vr_interface *vif)
     if (vif_needs_dev(vif) && !vif->vif_os_idx)
         return 0;
 
-    if (vif_is_vhost(vif))
+    if (vif_is_vhost(vif)) {
+        /* Unregister netfilter hook for lo */
+        vr_nf_hook_exit();
         vhost_if_del((struct net_device *)vif->vif_os);
+    }
     else if (vif->vif_type == VIF_TYPE_PHYSICAL)
         vhost_if_del_phys((struct net_device *)vif->vif_os);
     else if (vif_is_virtual(vif)) {
@@ -1767,6 +1792,9 @@ linux_if_del(struct vr_interface *vif)
 
     vif->vif_os = NULL;
     vif->vif_os_idx = 0;
+    vif->vif_l3mh_loip = 0;
+    vr_l3mh_loip = 0;
+
 
     return 0;
 }
@@ -1781,7 +1809,6 @@ linux_if_add(struct vr_interface *vif)
             return -ENODEV;
         }
     }
-
     if (vif->vif_os_idx) {
         dev = dev_get_by_index(&init_net, vif->vif_os_idx);
         if (!dev) {
@@ -1799,8 +1826,13 @@ linux_if_add(struct vr_interface *vif)
             dev->ml_priv = (void *)vif;
     }
 
-    if (vif_is_vhost(vif))
+    if (vif_is_vhost(vif)) {
         vhost_if_add(vif);
+        /* Init netfilter hook for lo */
+        vr_nf_hook_init();
+        if(vif->vif_l3mh_loip)
+            vr_l3mh_loip = vif->vif_l3mh_loip;
+    }
 
     if (vif_is_virtual(vif)) {
         skb_queue_head_init(&vif->vr_skb_inputq);
@@ -2368,6 +2400,70 @@ vr_napi_poll(struct napi_struct *napi, int budget)
     return budget;
 }
 
+static int
+linux_get_host_ip_mask(struct vr_interface *vif, unsigned int *ip,
+                       unsigned int *mask)
+{
+    struct net_device *dev = (struct net_device *)vif->vif_os;
+    struct in_device *in_dev = rcu_dereference(dev->ip_ptr);
+    struct in_ifaddr *ifa;
+
+    if (!in_dev)
+        return -1;
+
+    ifa = in_dev->ifa_list;
+    if (ifa) {
+        *ip = ifa->ifa_address;
+        *mask = ifa->ifa_mask;
+    }
+
+    return 0;
+}
+
+static int
+linux_get_host_mac_addr(struct vr_interface *vif, unsigned char **mac)
+{
+    struct net_device *dev = (struct net_device *)vif->vif_os;
+    *mac = dev->perm_addr;
+    return 0;
+}
+
+static void
+linux_pkt_dump (struct vr_packet *pkt)
+{
+    struct sk_buff *skb = vp_os_packet(pkt);
+
+    vr_printf("%s: skb->head %p skb->data %p net_hdr %p\n", __FUNCTION__,
+              skb->head, skb->data, skb_network_header(skb));
+
+    vr_printf("%s: skb->proto %x pkt %p\n", __FUNCTION__,  ntohs(skb->protocol), pkt);
+    vr_printf("pkt %p: %x %x %x %x %x %x %x %x %x %x %x %x %x %x\n",
+               pkt, skb->data[0], skb->data[1], skb->data[2], skb->data[3], skb->data[4],
+               skb->data[5], skb->data[6], skb->data[7], skb->data[8], skb->data[9],
+               skb->data[10], skb->data[11], skb->data[12], skb->data[13]);
+}
+
+static int
+linux_if_rx_pass(struct vr_interface *vif, struct vr_packet *pkt)
+{
+    struct net_device *dev = (struct net_device *)vif->vif_os;
+    struct sk_buff *skb = vp_os_packet(pkt);
+
+    skb->data = pkt->vp_head + pkt->vp_data;
+    skb->len = pkt_len(pkt);
+    skb_set_tail_pointer(skb, pkt_head_len(pkt));
+
+    skb->queue_mapping = pkt->vp_queue;
+    skb->priority = pkt->vp_priority;
+
+    skb->protocol = eth_type_trans(skb, dev);
+    skb->pkt_type = PACKET_HOST;
+    // Pass the pkt to upper protocol layers of linux
+    pkt->vp_rx_pass = 1;
+    return RX_HANDLER_PASS;
+}
+
+
 struct vr_host_interface_ops vr_linux_interface_ops = {
     .hif_lock           =       linux_if_lock,
     .hif_unlock         =       linux_if_unlock,
@@ -2382,6 +2478,10 @@ struct vr_host_interface_ops vr_linux_interface_ops = {
     .hif_get_vlan_info  =       NULL,
     .hif_get_mtu        =       linux_if_get_mtu,
     .hif_get_encap      =       linux_if_get_encap,
+    .hif_get_host_ip_mask =     linux_get_host_ip_mask,
+    .hif_get_host_mac_addr =    linux_get_host_mac_addr,
+    .hif_rx_pass        =       linux_if_rx_pass,
+    .hif_pkt_dump       =       linux_pkt_dump,
 };
 
 static int
@@ -2414,6 +2514,9 @@ linux_if_notifier(struct notifier_block * __unused,
         return NOTIFY_DONE;
 
     agent_if = router->vr_agent_if;
+
+    vr_printf("%s: dev %p event %s\n", __FUNCTION__, dev,
+            (event == NETDEV_REGISTER)? "REGISTER": "UNREGISTER");
 
     if (event == NETDEV_UNREGISTER) {
         if (agent_if) {
@@ -2544,3 +2647,70 @@ vr_host_interface_init(void)
 
     return &vr_linux_interface_ops;
 }
+
+unsigned int
+vr_nf_hook(unsigned int hooknum,
+           struct sk_buff *skb,
+           const struct net_device *in,
+           const struct net_device *out,
+           int (*okfn)(struct sk_buff *))
+{
+    struct iphdr *iph;
+    struct ethhdr *eth;
+    struct vr_interface *vif;
+    unsigned int lo_ip = vr_l3mh_loip;
+    struct vrouter *router = vrouter_get(0);
+
+    if (!skb)
+        return NF_ACCEPT;
+
+    iph = ip_hdr(skb);
+
+    if (iph->saddr != lo_ip) {
+        return NF_ACCEPT;
+    }
+
+    if (!is_vrouter_multihomed(router)) {
+        return NF_ACCEPT;
+    }
+
+    vif = vrouter_get_vhost_interface(router);
+    if (!vif || !vif_is_vhost(vif)) {
+        return NF_ACCEPT;
+    }
+    /* The pkt we are interested in, give it to vhost0 intf */
+    /* Add eth hdr as vhost code expects it */
+    skb_push(skb, ETH_HLEN);
+    eth = (struct ethhdr *)skb->data;
+    memcpy(eth->h_dest, vif->vif_mac, ETH_ALEN);
+    memcpy(eth->h_source, vif->vif_mac, ETH_ALEN);
+    eth->h_proto = htons(ETH_P_IP);
+    linux_to_vr(vif, skb);
+    return NF_STOLEN;
+}
+
+static struct nf_hook_ops vr_nf_hk_ops = {
+      .hook        = (nf_hookfn *)vr_nf_hook,
+      .hooknum     = NF_INET_POST_ROUTING,
+      .pf          = PF_INET,
+      .priority    = NF_IP_PRI_FIRST
+};
+
+int vr_nf_hook_init(void)
+{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,13,0)
+    return nf_register_net_hook(&init_net, &vr_nf_hk_ops);
+#else
+    return nf_register_hook(&vr_nf_hk_ops);
+#endif
+}
+
+void vr_nf_hook_exit(void)
+{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,13,0)
+    nf_unregister_net_hook(&init_net, &vr_nf_hk_ops);
+#else
+    nf_unregister_hook(&vr_nf_hk_ops);
+#endif
+}
+

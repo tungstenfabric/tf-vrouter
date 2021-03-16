@@ -1289,7 +1289,7 @@ vr_send_interface_add(struct nl_client *cl, int router_id, char *vif_name,
         unsigned int vrf, unsigned int flags, int8_t *vif_mac, int8_t vif_transport,
         const char *guid)
 {
-    int platform;
+    int platform, i = 0;
     vr_interface_req req;
 
     platform = get_platform();

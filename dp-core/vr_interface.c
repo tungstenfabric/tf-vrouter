@@ -17,6 +17,7 @@
 #include "vr_route.h"
 #include "vr_ip_mtrie.h"
 #include "vr_offloads_dp.h"
+#include "vr_hash.h"
 
 unsigned int vr_interfaces = VR_MAX_INTERFACES;
 
@@ -260,16 +261,162 @@ vif_remove_xconnect(struct vr_interface *vif)
     return;
 }
 
+static void vr_pkt_dump(struct vr_packet *pkt)
+{
+    pkt_dump(pkt);
+    if (hif_ops->hif_pkt_dump) {
+        hif_ops->hif_pkt_dump(pkt);
+    }
+}
+
+static struct vr_interface *
+vr_get_arp_xconnect_interface_mh (struct vr_interface *vif, struct vr_packet *pkt)
+{
+    struct vr_arp *arp = NULL;
+    struct vrouter *router = vrouter_get(0);
+    unsigned int addr, mask, i;
+    unsigned char *mac;
+
+    if(!is_vrouter_multihomed(router)) {
+        /* Not multi-homed */
+        return NULL;
+    }
+
+    arp = (struct vr_arp *) pkt_data(pkt);
+    if (vif_is_vhost(vif)) {
+
+        for (i = 0; i < VR_MAX_PHY_INF; i++) {
+            if (vif->vif_bridge[i]) {
+                if (hif_ops->hif_get_host_mac_addr) {
+                    hif_ops->hif_get_host_mac_addr(vif->vif_bridge[i], &mac);
+
+                    if (!memcmp(arp->arp_sha, mac, 6)) {
+                        if(vif->vif_bridge[i]) {
+                             return vif->vif_bridge[i];
+                        } else {
+                            vr_printf("%s: vif->vif_bridge[%d] is NULL\n",
+                                    __func__, i);
+                            return NULL;
+                        }
+                    }
+                }
+
+                /* select the interface based on dst ip being queried */
+                if (hif_ops->hif_get_host_ip_mask) {
+                    hif_ops->hif_get_host_ip_mask(vif->vif_bridge[i], &addr, &mask);
+
+                    if ((arp->arp_dpa & mask) == (addr & mask)) {
+                        if(vif->vif_bridge[i]) {
+                            return vif->vif_bridge[i];
+                        } else {
+                            vr_printf("%s: vif->vif_bridge[%d] is NULL\n",
+                                    __func__, i);
+                            return NULL;
+                        }
+                    }
+                }
+            }
+        }
+
+        vr_printf("Unable to select int for arp pkt %p\n", pkt);
+        return NULL;
+    } else if (vif_is_fabric(vif)) {
+        /* send it to host using same fabric interface */
+        vr_pkt_dump(pkt);
+        return vif;
+    }
+    return NULL;
+}
+
+static struct vr_interface *
+vr_get_ip_xconnect_interface_mh (struct vr_interface *vif, struct vr_packet *pkt)
+{
+    /* calculate 5 tuple hash of the ip pkt and send it to one of
+       the interfaces */
+    uint32_t hash, i, count = 0;
+    struct vrouter *router = vrouter_get(0);
+
+    if (vif_is_vhost(vif)) {
+        hash = vr_get_pkt_hash(pkt);
+        hash = hash % router->vr_num_phy_interfaces;
+        if(hash < VR_MAX_PHY_INF) {
+            for(i = 0; i < VR_MAX_PHY_INF; i++) {
+                if((router->vr_l3mh_intf_bitpos >> i) & 0x1) {
+                    if(count == hash) {
+                        return __vrouter_get_interface(router, i);
+                    }
+                    count++;
+                }
+            }
+            vr_printf("%s L3MH: Interface bitposition is invalid %d \n", __func__,
+                        router->vr_l3mh_intf_bitpos);
+        } else {
+            vr_printf("%s: Invalid hash value: %d\n", __func__, hash);
+            return NULL;
+        }
+    }
+    return NULL;
+}
+
+static int
+vr_deliver_os_interface(struct vr_interface *vif, struct vr_packet *pkt,
+                        struct vr_forwarding_md *fmd)
+{
+    return hif_ops->hif_rx_pass ? hif_ops->hif_rx_pass(vif, pkt) : 0;
+}
+/*
+ * NOTE: This API can return RX_HANDLER_PASS which means the same pkt
+ *       needs to be passed up the linux kernel stack (pkt->vp_rx_pass = 1).
+ *       Care should be taken in cloned pkt cases, such that this pkt
+ *       which can be marked with rx_pass is sent to the rx handler
+ *       instead of the cloned pkt (which won't have the rx_pass flag
+ *       set). As a rule of thumb, if this API is called with a pkt,
+ *       the same pkt should always be sent back to the rx_handler.
+ */
+
 int
 vif_xconnect(struct vr_interface *vif, struct vr_packet *pkt,
         struct vr_forwarding_md *fmd)
 {
     struct vr_interface *bridge;
+    struct vrouter *router = vrouter_get(0);
+    int ret;
 
     if (!vif)
         goto free_pkt;
 
-    bridge = vif->vif_bridge;
+    if (is_vrouter_multihomed(router)) {
+        if (vr_pkt_type(pkt, 0, fmd) < 0) {
+            vif_drop_pkt(vif, pkt, 1);
+            return 0;
+        }
+        if (pkt->vp_type == VP_TYPE_ARP) {
+            bridge = vr_get_arp_xconnect_interface_mh(vif, pkt);
+            if (bridge && (bridge == vif)) {
+                /* pkts received from fabric, xconnect to same interface */
+                vr_preset(pkt);
+                ret = vr_deliver_os_interface(bridge, pkt, fmd);
+                if(ret)
+                    return ret;
+                bridge = vif->vif_bridge[0];
+            }
+            if (!bridge) {
+                bridge = vif->vif_bridge[0];
+            }
+        } else if ((pkt->vp_type == VP_TYPE_IP) ||
+                (pkt->vp_type == VP_TYPE_IP6)) {
+            bridge = vr_get_ip_xconnect_interface_mh(vif, pkt);
+            if (!bridge) {
+                bridge = vif->vif_bridge[0];
+            }
+        } else {
+            /* other pkt type, send via phy_int_1 (for now) */
+            bridge = vif->vif_bridge[0];
+        }
+    } else {
+        bridge = vif->vif_bridge[0];
+    }
+
     if (bridge) {
         vr_preset(pkt);
         return bridge->vif_tx(bridge, pkt, fmd);
@@ -850,9 +997,9 @@ vhost_drv_del(struct vr_interface *vif)
 
 static int
 vhost_drv_add(struct vr_interface *vif,
-        vr_interface_req *vifr __attribute__unused__)
+        vr_interface_req *vifr)
 {
-    int ret = 0;
+    int ret = 0, i;
 
     if (!vif->vif_mtu)
         vif->vif_mtu = 1514;
@@ -861,6 +1008,7 @@ vhost_drv_add(struct vr_interface *vif,
     vif->vif_tx = vhost_tx;
     vif->vif_rx = vhost_rx;
     vif->vif_mac_request = vhost_mac_request;
+    vif->vif_l3mh_loip = vifr->vifr_loopback_ip;
 
     ret = hif_ops->hif_add(vif);
     if (ret)
@@ -869,11 +1017,13 @@ vhost_drv_add(struct vr_interface *vif,
      * add tap to the corresponding physical interface, now
      * that vhost is functional
      */
-    if (vif->vif_bridge) {
-        ret = hif_ops->hif_add_tap(vif->vif_bridge);
-        if (ret)
-            return ret;
+    for (i = 0; i < VR_MAX_PHY_INF; i++) {
+        if (vif->vif_bridge[i]) {
+            ret = hif_ops->hif_add_tap(vif->vif_bridge[i]);
+        }
     }
+    if (ret)
+        return ret;
 
     return 0;
 }
@@ -1291,7 +1441,14 @@ ipsec_rx(struct vr_interface *vif, struct vr_packet *pkt,
         unsigned short vlan_id)
 {
     struct vrouter *router = vrouter_get(0);
-    pkt->vp_if = router->vr_eth_if;
+    int i;
+    for (i = 0; i < VR_MAX_PHY_INF; i++) {
+        if (router->vr_eth_if[i] &&
+            (memcmp(vif->vif_mac, router->vr_eth_if[i]->vif_mac, VR_ETHER_ALEN) == 0)) {
+            pkt->vp_if = router->vr_eth_if[i];
+            break;
+        }
+    }
     return eth_rx(vif, pkt, vlan_id);
 }
 
@@ -1569,7 +1726,7 @@ eth_drv_add(struct vr_interface *vif,
       * RX of the decrypted packet is handled.
       */
     if ((!(vif->vif_flags & VIF_FLAG_VHOST_PHYS)) ||
-            (vif->vif_bridge) || (hif_ops->hif_get_encap(vif) == VIF_ENCAP_TYPE_L3_DECRYPT)) {
+            (vif->vif_bridge[0]) || (hif_ops->hif_get_encap(vif) == VIF_ENCAP_TYPE_L3_DECRYPT)) {
         ret = hif_ops->hif_add_tap(vif);
         if (ret)
             hif_ops->hif_del(vif);
@@ -1755,6 +1912,18 @@ __vrouter_get_interface(struct vrouter *router, unsigned int idx)
     return router->vr_interfaces[idx];
 }
 
+struct vr_interface *vrouter_get_vhost_interface(struct vrouter *router)
+{
+    struct vr_interface *vif;
+
+    vif = router->vr_host_if;
+    if (vif && vif_is_vhost(vif)) {
+        return vif;
+    }
+
+    return NULL;
+
+}
 struct vr_interface *
 __vrouter_get_interface_os(struct vrouter *router, unsigned int os_idx)
 {
@@ -1788,6 +1957,7 @@ static void
 vrouter_del_interface(struct vr_interface *vif)
 {
     struct vrouter *router;
+    int i;
 
     if (!vif || !(router = vrouter_get(vif->vif_rid)))
         return;
@@ -1803,26 +1973,37 @@ vrouter_del_interface(struct vr_interface *vif)
     switch (vif->vif_type) {
     case VIF_TYPE_AGENT:
         router->vr_agent_if = NULL;
+        agent_alive = false;
         break;
 
     case VIF_TYPE_HOST:
         router->vr_host_if = NULL;
-        if (vif->vif_bridge) {
-            vif->vif_bridge->vif_bridge = NULL;
-            vif->vif_bridge = NULL;
+        for (i = 0; i < VR_MAX_PHY_INF; i++) {
+            if (vif->vif_bridge[i]) {
+                vif->vif_bridge[i]->vif_bridge[0] = NULL;
+                vif->vif_bridge[i] = NULL;
+            }
         }
 
         break;
 
     case VIF_TYPE_PHYSICAL:
-        if (vif->vif_bridge) {
-            vif->vif_bridge->vif_bridge = NULL;
-            vif->vif_bridge = NULL;
+        if (vif->vif_bridge[0]) {
+            for (i = 0; i < VR_MAX_PHY_INF; i++) {
+                if (vif->vif_bridge[0]->vif_bridge[i] == vif) {
+                    vif->vif_bridge[0]->vif_bridge[i] = NULL;
+                    break;
+                }
+            }
+            vif->vif_bridge[0] = NULL;
         }
 
-        if (router->vr_eth_if == vif)
-            router->vr_eth_if = NULL;
-
+        for (i = 0; i < VR_MAX_PHY_INF; i++) {
+            if (router->vr_eth_if[i] == vif)
+                router->vr_eth_if[i] = NULL;
+        }
+        router->vr_num_phy_interfaces--;
+        router->vr_l3mh_intf_bitpos &= ~(1 << vif->vif_idx);
         break;
 
     case VIF_TYPE_VIRTUAL:
@@ -1843,6 +2024,7 @@ vrouter_del_interface(struct vr_interface *vif)
 static void
 vrouter_setup_vif(struct vr_interface *vif)
 {
+    int i;
     switch (vif->vif_type) {
     case VIF_TYPE_AGENT:
         agent_alive = true;
@@ -1852,12 +2034,16 @@ vrouter_setup_vif(struct vr_interface *vif)
     case VIF_TYPE_HOST:
         if (!agent_alive) {
             vif_set_xconnect(vif);
-            if (vif->vif_bridge)
-                vif_set_xconnect(vif->vif_bridge);
+            for (i = 0; i < VR_MAX_PHY_INF; i++) {
+                if (vif->vif_bridge[i])
+                    vif_set_xconnect(vif->vif_bridge[i]);
+            }
         } else {
             vif_remove_xconnect(vif);
-            if (vif->vif_bridge)
-                vif_remove_xconnect(vif->vif_bridge);
+            for (i = 0; i < VR_MAX_PHY_INF; i++) {
+                if (vif->vif_bridge[i])
+                    vif_remove_xconnect(vif->vif_bridge[i]);
+            }
         }
 
         break;
@@ -1900,7 +2086,8 @@ static int
 vrouter_add_interface(struct vr_interface *vif, vr_interface_req *vifr)
 {
     struct vrouter *router = vrouter_get(vif->vif_rid);
-    struct vr_interface *eth_vif = NULL;
+    struct vr_interface *eth_vif[VR_MAX_PHY_INF] = {NULL};
+    int i;
 
     if (!router)
         return -ENODEV;
@@ -1909,16 +2096,28 @@ vrouter_add_interface(struct vr_interface *vif, vr_interface_req *vifr)
         return -EEXIST;
 
     if (vif->vif_type == VIF_TYPE_HOST) {
-        if (vifr->vifr_cross_connect_idx) {
-            if (vifr->vifr_cross_connect_idx[0] < 0) {
-                return -EINVAL;
+        if (vifr->vifr_cross_connect_idx && is_vrouter_multihomed(router)){
+            for (i = 0; i < vifr->vifr_cross_connect_idx_size; i++) {
+                if (vifr->vifr_cross_connect_idx[i] < 0) {
+                    return -EINVAL;
+                }
+                eth_vif[i] = __vrouter_get_interface_os(router,
+                        vifr->vifr_cross_connect_idx[i]);
+                if(!eth_vif[i]) {
+                    vr_printf("%s vifr_cross_connect_idx eth_vif[%d]is NULL\n",
+                            __func__, i);
+                    return -ENODEV;
+                }
             }
-            eth_vif = __vrouter_get_interface_os(router, vifr->vifr_cross_connect_idx[0]);
         } else {
-            eth_vif = __vrouter_get_interface_os(router, 0);
+            eth_vif[0] = __vrouter_get_interface_os(router,
+                    vifr->vifr_cross_connect_idx[0]);
+            if (!eth_vif[0]){
+                vr_printf("%s eth_vif[0] is NULL cross_idx: %d\n", __func__,
+                        vifr->vifr_cross_connect_idx[0]);
+                return -ENODEV;
+            }
         }
-        if (!eth_vif)
-            return -ENODEV;
     }
 
     vif->vif_router = router;
@@ -1933,10 +2132,19 @@ vrouter_add_interface(struct vr_interface *vif, vr_interface_req *vifr)
 
     case VIF_TYPE_HOST:
         router->vr_host_if = vif;
-        router->vr_eth_if = eth_vif;
-        vif->vif_bridge = eth_vif;
-        eth_vif->vif_bridge = vif;
+        for (i = 0; i < VR_MAX_PHY_INF; i++) {
+            if (eth_vif[i]) {
+                router->vr_eth_if[i] = eth_vif[i];
+                vif->vif_bridge[i] = eth_vif[i];
+                eth_vif[i]->vif_bridge[0] = vif;
+            }
+        }
+        break;
 
+    case VIF_TYPE_PHYSICAL:
+        router->vr_num_phy_interfaces++;
+        router->vr_l3mh_intf_bitpos |= (1 << vif->vif_idx);
+        vr_printf("Num phy interfaces %d\n", router->vr_num_phy_interfaces);
         break;
 
     default:
@@ -2291,7 +2499,7 @@ vr_interface_add(vr_interface_req *req, bool need_response)
 {
     int i, ret = 0;
     uint64_t *ip6;
-    struct vr_interface *vif = NULL;
+    struct vr_interface *vif = NULL, *eth_vif = NULL;
     struct vrouter *router = vrouter_get(req->vifr_rid);
 
     if (!router || ((unsigned int)req->vifr_idx >= router->vr_max_interfaces)) {
@@ -2307,6 +2515,36 @@ vr_interface_add(vr_interface_req *req, bool need_response)
 
     vif = __vrouter_get_interface(router, req->vifr_idx);
     if (vif) {
+
+        if (vif_is_vhost(vif)) {
+            vr_printf("%s: vhost interface change \n", __FUNCTION__);
+
+            if (is_vrouter_multihomed(router)) {
+
+                for (i = 0; i < VR_MAX_PHY_INF; i++) {
+                    if(router->vr_eth_if[i]) {
+                        if (hif_ops->hif_lock)
+                            hif_ops->hif_lock();
+
+                        ret = hif_ops->hif_add_tap(__vrouter_get_interface(router, i));
+
+                        if (hif_ops->hif_lock)
+                            hif_ops->hif_unlock();
+
+                        if(!ret)
+                            hif_ops->hif_del(__vrouter_get_interface(router, i));
+
+                        eth_vif = __vrouter_get_interface(router, i);
+                        if (eth_vif) {
+                            vr_printf("%s Setting vif->vif_bridge for vif %d\n",
+                                    __func__, eth_vif->vif_idx);
+                            eth_vif->vif_bridge[0] = vif;
+                        }
+                    }
+                }
+            }
+        }
+
         ret = vr_interface_change(vif, req);
         /* notify hw offload of change, if enabled */
         if (!ret)
