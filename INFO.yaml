@@ -1,0 +1,58 @@
+---
+project: 'tf-vrouter'
+project_creation_date: '2020-06-08'
+project_category: ''
+lifecycle_state: 'Incubation'
+project_lead: &tungstenfabric_tf-vrouter_ptl
+    name: 'Sukhdev Kapur'
+    email: 'sukhdevkapur@gmail.com'
+    id: 'sukhdevkapur'
+    company: ''
+    timezone: 'America/Los_Angeles'
+primary_contact: *tungstenfabric_tf-vrouter_ptl
+issue_tracking:
+    type: 'jira'
+    url: 'https://jira.tungsten.io/projects/'
+    key: 'TC'
+mailing_list:
+    type: 'groups.io'
+    url: ''
+    tag: '[]'
+realtime_discussion:
+    type: ''
+    server: ''
+    channel: ''
+meetings:
+    - type: ''
+      agenda: ''
+      url: ''
+      server: ''
+      channel: ''
+      repeats: ''
+      time: ''
+repositories:
+    - tungstenfabric/tf-vrouter
+committers:
+    - <<: *tungstenfabric_tf-vrouter_ptl
+    - name: 'Sachchidanand Vaidya'
+      email: 'vaidyasd@juniper.net'
+      company: 'Juniper'
+      id: 'vaidyasd'
+      timezone: 'America/Los_Angeles'
+    - name: 'Anand Rao'
+      email: 'anandrao@juniper.net'
+      company: 'Juniper'
+      id: 'anandrao'
+      timezone: 'Asia/Kolkata'
+    - name: 'Kiran KN'
+      email: 'kiran.kn80@gmail.com'
+      company: ''
+      id: 'kirankn'
+      timezone: 'Asia/Kolkata'  
+tsc:
+    # yamllint disable rule:line-length
+    approval: 'https://wiki.tungsten.io/display/TUN/Projects'
+    changes:
+        - type: 'initial approval'
+          name: ''
+          link: ''
