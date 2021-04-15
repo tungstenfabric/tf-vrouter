@@ -195,6 +195,8 @@ extern vr_drop_stats_req *vr_drop_stats_req_get_copy(vr_drop_stats_req *);
 extern int vr_send_drop_stats_get(struct nl_client *, unsigned int,
         short);
 extern int vr_drop_stats_reset(struct nl_client *);
+extern int vr_drop_type_set(struct nl_client *, uint8_t);
+extern int vr_min_log_enable(struct nl_client *, bool);
 extern int vr_send_interface_dump(struct nl_client *, unsigned int, int, int);
 extern int vr_send_interface_get(struct nl_client *, unsigned int,
                 int, int, int, int);
@@ -314,7 +316,8 @@ extern int vr_send_info_dump(struct nl_client *cl, unsigned int router_id,
         uint8_t *vr_info_inbuf);
 
 extern void vr_print_drop_dbg_stats(vr_drop_stats_req *, int);
-extern void vr_print_pkt_drop_log(vr_pkt_drop_log_req *);
+extern void vr_print_pkt_drop_log_header(vr_pkt_drop_log_req *);
+extern void vr_print_pkt_drop_log(vr_pkt_drop_log_req *, uint8_t);
 extern int vr_pkt_drop_log_request(struct nl_client *, unsigned int, unsigned int, int);
 
 extern int vr_send_qos_map_delete(struct nl_client *, unsigned int, unsigned int);
