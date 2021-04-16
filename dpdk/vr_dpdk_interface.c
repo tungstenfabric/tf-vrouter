@@ -1900,7 +1900,11 @@ dpdk_if_get_vlan_info(struct vr_interface *vif,
     memset(vlan_info, 0, sizeof(*vlan_info));
     if(vr_dpdk.vlan_tag != VLAN_ID_INVALID && vr_dpdk.vlan_name != NULL) {
         vlan_info->vlan_id = vr_dpdk.vlan_tag;
-        strcpy(vlan_info->vlan_name, vr_dpdk.vlan_name);
+        /* Ignoring copy of default vlan fwd name vfw0 */
+        if (strncmp(vr_dpdk.vlan_name, VR_DPDK_VLAN_FWD_DEF_NAME,
+                    strlen(VR_DPDK_VLAN_FWD_DEF_NAME))) {
+            strcpy(vlan_info->vlan_name, vr_dpdk.vlan_name);
+        }
     } else
         return -1;
 

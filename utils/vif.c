@@ -472,8 +472,10 @@ vr_interface_vlan_info(vr_interface_req *req)
 
     if(req->vifr_vlan_tag != VLAN_ID_INVALID && req->vifr_vlan_name != NULL ) {
         vr_interface_print_head_space();
-        printf("Vlan Id: %d  VLAN fwd Interface: %s\n",
-                req->vifr_vlan_tag, req->vifr_vlan_name);
+        printf("Vlan Id: %d",req->vifr_vlan_tag);
+        if(strlen(req->vifr_vlan_name))
+            printf(" VLAN fwd Interface: %s",req->vifr_vlan_name);
+        printf("\n");
     }
 }
 
