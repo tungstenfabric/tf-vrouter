@@ -330,7 +330,7 @@ extern int vr_send_vrouter_set_runtime_opts(struct nl_client *, unsigned int,
         int, int, int, int,
         unsigned int, int);
 
-extern int vr_send_ddp_req(struct nl_client *, vr_info_msg_en );
+extern int vr_send_ddp_req(struct nl_client *, vr_info_msg_en, uint8_t * );
 
 #ifdef __cplusplus
 }

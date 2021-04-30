@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <stdint.h>
 #include <getopt.h>
@@ -109,6 +110,8 @@ enum vr_opt_index {
     VR_DPDK_TX_RING_SZ_OPT_INDEX,
 #define VR_DPDK_YIELD_OPT           "yield_option"
     VR_DPDK_YIELD_OPT_INDEX,
+#define VR_DPDK_LOG_LEVEL        "log-level"
+    VR_DPDK_LOG_OPT_INDEX,
 #define VR_SERVICE_CORE_MASK_OPT    "service_core_mask"
     VR_SERVICE_CORE_MASK_OPT_INDEX,
 #define VR_DPDK_CTRL_THREAD_MASK_OPT "dpdk_ctrl_thread_mask"
@@ -144,6 +147,8 @@ char service_core_mask_str[VR_DPDK_STR_BUF_SZ];
 char dpdk_ctrl_thread_mask_str[VR_DPDK_STR_BUF_SZ];
 char *service_core_mask_ptr = NULL;
 char *dpdk_ctrl_thread_mask_ptr = NULL;
+char *dpdk_log_level = NULL;
+static char log_string[VR_DPDK_STR_BUF_SZ];
 
 static int no_daemon_set;
 static int no_gro_set = 0;
@@ -665,7 +670,7 @@ dpdk_argv_update(void)
     }
     if (dpdk_ctrl_thread_mask_ptr) {
         if (dpdk_argv_append("-C", dpdk_ctrl_thread_mask_ptr) != 0)
-	        return -1;
+            return -1;
     }
 
     /* lcores order: service, IO, lcores with TX queues, forwaridng lcores */
@@ -681,6 +686,20 @@ dpdk_argv_update(void)
     /* Append lcores option. */
     if (dpdk_argv_append("--"LCORES_OPT, lcores_string) != 0)
         return -1;
+    if ((dpdk_log_level != NULL) && (dpdk_log_level[0] != '\0')) {
+        if (isdigit(dpdk_log_level[0]) && strlen(dpdk_log_level) == 1) {
+            snprintf(log_string, sizeof(log_string), "*:%d", atoi(dpdk_log_level));
+            if (dpdk_argv_append("--"VR_DPDK_LOG_LEVEL, log_string) != 0) {
+                return -1;
+            }
+        }
+        else {
+            RTE_LOG(INFO, VROUTER, "\nAppending string : %s\n",dpdk_log_level);
+            if (dpdk_argv_append("--"VR_DPDK_LOG_LEVEL, dpdk_log_level) != 0) {
+                return -1;
+            }
+        }
+    }
 
     /* Append no huge option. */
     if (no_huge_set && dpdk_argv_append("--"NO_HUGE_OPT, NULL) != 0)
@@ -721,6 +740,8 @@ dpdk_argv_update(void)
                 vr_dpdk_tx_ring_sz);
     RTE_LOG(INFO, VROUTER, "VR_DPDK_YIELD_OPTION:        %" PRIu32 "\n",
                 vr_dpdk_yield_option);
+    RTE_LOG(INFO, VROUTER, "VR_DPDK_LOG_LEVEL:           %s\n",
+                dpdk_log_level);
     RTE_LOG(INFO, VROUTER, "VR_SERVICE_CORE_MASK:        0x%x\n",
                 vr_service_core_mask);
     RTE_LOG(INFO, VROUTER, "VR_DPDK_CTRL_THREAD_MASK:    0x%x\n",
@@ -741,7 +762,6 @@ dpdk_argv_update(void)
                 dpdk_argv[i], dpdk_argv[i + 1]);
         }
     }
-
     return i;
 }
 
@@ -818,7 +838,7 @@ dpdk_init(void)
             rte_strerror(-ret), -ret);
         return ret;
     }
-
+    //converting it into dpdk understandable arguments
     ret = dpdk_argv_update();
     if (ret == -1) {
         RTE_LOG(ERR, VROUTER, "Error updating EAL arguments\n");
@@ -1064,6 +1084,8 @@ static struct option long_options[] = {
                                                     NULL,                   0},
     [VR_DPDK_YIELD_OPT_INDEX]       =   {VR_DPDK_YIELD_OPT, required_argument,
                                                     NULL,                   0},
+    [VR_DPDK_LOG_OPT_INDEX]       =   {VR_DPDK_LOG_LEVEL, required_argument,
+                                                    NULL,                   0},
     [VR_SERVICE_CORE_MASK_OPT_INDEX]=   {VR_SERVICE_CORE_MASK_OPT, required_argument,
                                                     NULL,                   0},
     [VR_DPDK_CTRL_THREAD_MASK_OPT_INDEX] = {VR_DPDK_CTRL_THREAD_MASK_OPT, required_argument,
@@ -1117,6 +1139,7 @@ Usage(void)
         "    --"VR_DPDK_RX_RING_SZ_OPT" NUM Configure vr_dpdk_rx_ring_sz value\n"
         "    --"VR_DPDK_TX_RING_SZ_OPT" NUM Configure vr_dpd_tx_ring_sz value\n"
         "    --"VR_DPDK_YIELD_OPT" NUM      Configurable parameter to disable yield\n"
+        "    --"VR_DPDK_LOG_LEVEL" NUM  Set log level\n"
         "    --"VR_NO_LOAD_BALANCE_OPT"    Disable s/w load-balancing\n"
         "    --"VR_DPDK_DDP_OPT"        Enable DDP feature\n"
         "    --"VR_SERVICE_CORE_MASK_OPT" NUM LIST OR HEXADECIMAL BITMASK "
@@ -1298,6 +1321,13 @@ parse_long_opts(int opt_flow_index, char *optarg)
         }
         break;
 
+    case VR_DPDK_LOG_OPT_INDEX:
+        dpdk_log_level = optarg;
+        if (errno != 0) {
+            dpdk_log_level = NULL;
+        }
+        break;
+
     case VR_SERVICE_CORE_MASK_OPT_INDEX:
 	if (validate_mask_str(optarg)) {
             service_core_mask_ptr = optarg;
@@ -1422,6 +1452,7 @@ parse_no_arg_cli(int opt_flow_index, int optind, char *argv[])
         opt_flow_index == MEMORY_ALLOC_CHECKS_OPT_INDEX ||
         opt_flow_index == VERSION_OPT_INDEX ||
         opt_flow_index == VTEST_VLAN_OPT_INDEX ||
+        opt_flow_index == VR_DPDK_LOG_OPT_INDEX ||
         opt_flow_index == VR_DPDK_DDP_OPT_INDEX ||
         opt_flow_index == VR_NO_LOAD_BALANCE_OPT_INDEX) {
             if(argv[optind] && argv[optind][0] != '-') {

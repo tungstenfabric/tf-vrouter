@@ -15,6 +15,7 @@
 #include <ctype.h>
 #include <time.h>
 
+
 #include "vr_os.h"
 
 #include <sys/types.h>
@@ -56,9 +57,12 @@ static struct nl_client *cl;
 static vr_info_msg_en msginfo;
 static int sock_dir_set;
 static bool dump_pending = false;
+static char log_send[512];
+static uint8_t *vr_info_inbuf;
 
 enum opt_index {
     CONF_OPT_INDEX,
+    LOG_OPT_INDEX,
     HELP_OPT_INDEX,
     SOCK_DIR_OPT_INDEX,
     MAX_OPT_INDEX
@@ -66,6 +70,7 @@ enum opt_index {
 
 static struct option long_options[] = {
     [CONF_OPT_INDEX]         =   {"ddp",       required_argument,  NULL,        'd'},
+    [LOG_OPT_INDEX]          =    {"log",      required_argument,  NULL,        'l'},
     [HELP_OPT_INDEX]        =   {"help",       no_argument,        NULL,        'h'},
     [SOCK_DIR_OPT_INDEX]    =   {"sock-dir",   required_argument,  NULL,        's'},
     [MAX_OPT_INDEX]         =   { NULL,        0,                  NULL,        0},
@@ -76,8 +81,10 @@ Usage()
 {
     printf("Usage: dpdkconf [--ddp [add|delete]]\n");
     printf("\t   [--sock-dir <sock dir>]\n");
+    printf("\t   [--log list]\n");
+    printf("\t   [--log <LOGTYPE-id> <1-8 LOG-LEVEL INT>]\n");
+    printf("\t   [--log global <1-8 LOG-LEVEL INT>]\n");
     printf("\t   [--help]\n");
-
     exit(0);
 }
 
@@ -85,6 +92,10 @@ static void
 parse_long_opts(int option_index, char *opt_arg)
 {
     errno = 0;
+    if ((opt_arg != NULL) && (opt_arg[0] == '\0')) {
+	Usage();
+	return;
+    }
 
     switch (option_index) {
         case CONF_OPT_INDEX:
@@ -100,6 +111,18 @@ parse_long_opts(int option_index, char *opt_arg)
         case SOCK_DIR_OPT_INDEX:
             vr_socket_dir = opt_arg;
             break;
+
+        case LOG_OPT_INDEX:
+            if (strcmp(opt_arg,"list") == 0){
+                msginfo = CONF_LOG_LIST;
+            }
+            else if (strlen(opt_arg)>0){
+                msginfo = CONF_LOG;
+                vr_info_inbuf = opt_arg;
+            }
+            else {
+                Usage();
+            }
 
         default:
             break;
@@ -135,7 +158,7 @@ vr_set_dpdkconf(struct nl_client *cl)
 {
     int ret;
 
-    ret = vr_send_ddp_req(cl, msginfo);
+    ret = vr_send_ddp_req(cl, msginfo, vr_info_inbuf);
     if (ret < 0)
         return ret;
 
@@ -151,14 +174,13 @@ main(int argc, char *argv[])
 {
     int ret, opt, option_index;
     unsigned int i = 0;
-
+    char *space_fill=" ";
     unsigned int sock_proto = NETLINK_GENERIC;
     dpdkconf_fill_nl_callbacks();
-
     parse_ini_file();
     platform = get_platform();
 
-    while ((opt = getopt_long(argc, argv, "hd:s:",
+    while ((opt = getopt_long(argc, argv, "hd:s:l:",
                     long_options, &option_index)) >= 0) {
         switch (opt) {
             case 'd':
@@ -169,6 +191,35 @@ main(int argc, char *argv[])
                 sock_dir_set = 1;
                 parse_long_opts(SOCK_DIR_OPT_INDEX, optarg);
                 break;
+
+            case 'l':
+                if (optind == 2 && argc == 2) {
+                    Usage();
+                break;
+                }
+                else if (strcmp(optarg, "list") == 0 && optind == argc)
+                {
+                        parse_long_opts(LOG_OPT_INDEX, optarg);
+                        break;
+                }
+                else if (optind < argc)
+                {
+                    if (atoi(argv[optind]) < 1 && atoi(argv[optind]) > 8) {
+                        printf("\nInvalid log level");
+                        break;
+                    }
+                snprintf(log_send, sizeof(log_send), "%s %s", optarg, argv[optind]);
+                /*char *log_send  = (char *) malloc(1 + strlen(argv[optind]) + strlen(optarg));
+                strcpy(log_send, optarg);
+                strcat(log_send, space_fill);
+                strcat(log_send, argv[optind]);*/
+                parse_long_opts(LOG_OPT_INDEX, log_send);
+                break;
+                }
+                else{
+                    Usage();
+                    break;
+                }
 
             case 0:
                 parse_long_opts(option_index, optarg);

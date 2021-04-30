@@ -4,7 +4,6 @@
  * Copyright (c) 2015, Juniper Networks, Inc.
  * All rights reserved
  */
-
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -2522,7 +2521,7 @@ vr_send_qos_map_add(struct nl_client *cl, unsigned int router_id,
 }
 
 int
-vr_send_ddp_req(struct nl_client *cl, vr_info_msg_en msginfo)
+vr_send_ddp_req(struct nl_client *cl, vr_info_msg_en msginfo, uint8_t *vr_info_inbuf)
 {
     vr_info_req req;
 
@@ -2530,6 +2529,10 @@ vr_send_ddp_req(struct nl_client *cl, vr_info_msg_en msginfo)
 
     req.h_op        = SANDESH_OP_DUMP;
     req.vdu_msginfo = msginfo;
-
+    if(vr_info_inbuf!=NULL)
+    {
+	req.vdu_inbuf_size = strlen(vr_info_inbuf);
+	req.vdu_inbuf = vr_info_inbuf;
+    }
     return vr_sendmsg(cl, &req, "vr_info_req");
 }
