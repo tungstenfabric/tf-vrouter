@@ -25,6 +25,8 @@
     X(INFO_DDP, info_get_ddp, DPDK) \
     X(CONF_ADD_DDP, conf_add_ddp, DPDK) \
     X(CONF_DEL_DDP, conf_del_ddp, DPDK) \
+    X(CONF_LOG, conf_log, DPDK) \
+    X(CONF_LOG_LIST, conf_log_list, DPDK) \
 
 /* Define all supported platforms.
  * When a new platforms added, define like below.
