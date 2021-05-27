@@ -101,9 +101,6 @@ env.AppendENVPath('VROUTER_SOCKET_PATH', vtest_py_venv_sock_dir)
 env.AppendENVPath('VTEST_PY_VENV_PATH', vtest_py_venv_root)
 
 cmd = "%s/vrouter/tests/run_test.py -gxml --all" % src_root
-skip_tests = GetOption('skip_tests')
-if skip_tests:
-    cmd += " --skip_tests %s" % skip_tests
 vtest_py_ut = env.Command("vtest_py_ut", [], cmd)
 
 # commands for running pycodestyle
