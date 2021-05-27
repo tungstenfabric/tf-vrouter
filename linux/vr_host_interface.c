@@ -233,7 +233,7 @@ linux_if_rx(struct vr_interface *vif, struct vr_packet *pkt)
             cksum_off = offsetof(struct vr_tcp, tcp_csum);
         else if (ip->ip_proto == VR_IP_PROTO_UDP)
             cksum_off = offsetof(struct vr_udp, udp_csum);
- 
+
         if (cksum_off)
             *(unsigned short *)
                 (pkt_data_at_offset(pkt, transport_off + cksum_off))
@@ -567,8 +567,8 @@ linux_gso_xmit(struct vr_interface *vif, struct sk_buff *skb,
     }
 
     /*
-     * avoid fragmentation after segmentation. 
-     */ 
+     * avoid fragmentation after segmentation.
+     */
     if (seg_size > ndev->mtu + ndev->hard_header_len) {
         skb_shinfo(skb)->gso_size -= (seg_size - ndev->mtu -
                 ndev->hard_header_len);
@@ -641,7 +641,7 @@ linux_get_rxq(struct sk_buff *skb, u16 *rxq, unsigned int curr_cpu,
 
     if (num_cpus) {
         rxhash = skb_get_hash(skb);
-#if (LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,32)) 
+#if (LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,32))
         next_cpu = ((u32)rxhash * num_cpus) >> 16;
 #else
         next_cpu = ((u64)rxhash * num_cpus) >> 32;
@@ -675,7 +675,7 @@ linux_get_rxq(struct sk_buff *skb, u16 *rxq, unsigned int curr_cpu,
         *rxq = curr_cpu;
     }
     return;
-}   
+}
 
 #endif
 
@@ -718,8 +718,8 @@ linux_enqueue_pkt_for_gro(struct sk_buff *skb, struct vr_interface *vif,
 
     /*
      * napi_schedule may raise a softirq, so if we are not already in
-     * interrupt context (which is the case when we get here as a result of 
-     * the agent enabling a flow for forwarding), ensure that the softirq is 
+     * interrupt context (which is the case when we get here as a result of
+     * the agent enabling a flow for forwarding), ensure that the softirq is
      * handled immediately.
      */
     in_intr_context = in_interrupt();
@@ -1482,7 +1482,7 @@ vr_interface_common_hook(struct sk_buff *skb)
      */
     if (vr_perfr3 && (!rpsdev) && (vif->vif_type == VIF_TYPE_PHYSICAL)) {
         vr_do_rps_outer(skb, vif);
-        
+
         return NULL;
     }
 #endif
@@ -1896,7 +1896,7 @@ linux_pkt_dev_free(void)
     linux_pkt_dev_free_helper(&pkt_gro_dev);
     linux_pkt_dev_free_helper(&pkt_l2_gro_dev);
     linux_pkt_dev_free_helper(&pkt_rps_dev);
- 
+
     return;
 }
 
@@ -1967,7 +1967,7 @@ pkt_rps_dev_setup(struct net_device *dev)
 }
 
 /*
- * linux_pkt_dev_init - initialize the packet device used for GRO. Returns 
+ * linux_pkt_dev_init - initialize the packet device used for GRO. Returns
  * pointer to packet device if no errors, NULL otherwise.
  */
 static struct net_device *
@@ -2139,7 +2139,7 @@ lh_gro_process(struct vr_packet *pkt, struct vr_interface *vif, bool l2_pkt)
     return handled;
 }
 
-static rx_handler_result_t 
+static rx_handler_result_t
 pkt_gro_dev_rx_handler(struct sk_buff **pskb)
 {
     unsigned short vif_id, drop_reason;
@@ -2258,7 +2258,7 @@ pkt_rps_dev_rx_handler(struct sk_buff **pskb)
     unsigned short nh_id;
     struct vr_nexthop *nh;
     struct vr_interface *vif;
-    struct vrouter *router = vrouter_get(0);  
+    struct vrouter *router = vrouter_get(0);
     bool l2_pkt = true;
 
     if (vr_perfr3) {
@@ -2666,7 +2666,7 @@ vr_nf_hook(unsigned int hooknum,
 
     iph = ip_hdr(skb);
 
-    if (iph->saddr != lo_ip) {
+    if (ntohl(iph->saddr) != lo_ip) {
         return NF_ACCEPT;
     }
 
