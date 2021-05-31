@@ -1314,7 +1314,12 @@ vr_send_interface_add(struct nl_client *cl, int router_id, char *vif_name,
     req.vifr_transport = vif_transport;
 
     if (vif_type == VIF_TYPE_HOST) {
-        req.vifr_cross_connect_idx_size = VR_MAX_PHY_INF;
+        for(i = 0; i < VR_MAX_PHY_INF; i++) {
+            if(vif_xconnect_index[i] < 0) {
+                break;
+            }
+        }
+        req.vifr_cross_connect_idx_size = i;
         req.vifr_cross_connect_idx = vif_xconnect_index;
     }
 

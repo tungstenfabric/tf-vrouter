@@ -1612,7 +1612,7 @@ linux_if_del_tap(struct vr_interface *vif)
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,39))
 static int
-linux_if_add_tap(struct vr_interface *vif)
+linux_if_add_tap(struct vr_interface *vif, vr_interface_req *vifr)
 {
     struct net_device *dev;
 
@@ -1637,7 +1637,7 @@ linux_if_add_tap(struct vr_interface *vif)
 }
 #else
 static int
-linux_if_add_tap(struct vr_interface *vif)
+linux_if_add_tap(struct vr_interface *vif, vr_interface_req *vifr)
 {
     struct net_device *dev;
 

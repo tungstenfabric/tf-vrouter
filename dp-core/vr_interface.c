@@ -386,10 +386,6 @@ vif_xconnect(struct vr_interface *vif, struct vr_packet *pkt,
         goto free_pkt;
 
     if (is_vrouter_multihomed(router)) {
-        if (vr_pkt_type(pkt, 0, fmd) < 0) {
-            vif_drop_pkt(vif, pkt, 1);
-            return 0;
-        }
         if (pkt->vp_type == VP_TYPE_ARP) {
             bridge = vr_get_arp_xconnect_interface_mh(vif, pkt);
             if (bridge && (bridge == vif)) {
@@ -803,7 +799,7 @@ agent_drv_del(struct vr_interface *vif)
 
 static int
 agent_drv_add(struct vr_interface *vif,
-        vr_interface_req *vifr __attribute__unused__)
+        vr_interface_req *vifr)
 {
     int ret;
 
@@ -827,7 +823,7 @@ agent_drv_add(struct vr_interface *vif,
     vif->vif_rx = agent_rx;
     vif->vif_send = agent_send;
 
-    ret = hif_ops->hif_add_tap(vif);
+    ret = hif_ops->hif_add_tap(vif, vifr);
     if (ret)
         hif_ops->hif_del(vif);
 
@@ -921,6 +917,7 @@ vhost_tx(struct vr_interface *vif, struct vr_packet *pkt,
     struct vr_eth *eth_hdr;
     struct vr_vlan_hdr *vlan;
     struct vr_interface *in_vif;
+    struct vr_ip *ip = (struct vr_ip *) pkt_network_header(pkt);
 
     stats->vis_obytes += pkt_len(pkt);
     stats->vis_opackets++;
@@ -972,6 +969,12 @@ vhost_tx(struct vr_interface *vif, struct vr_packet *pkt,
             else
                 eth_hdr->eth_proto = htons(VR_ETH_PROTO_IP);
         }
+        if (!strncmp(vif->vif_name, "vhost0", 5)) {
+            if (ntohl(ip->ip_daddr) == vif->vif_l3mh_loip) {
+                eth_hdr = (struct vr_eth *)pkt_data(pkt);
+                memcpy(eth_hdr->eth_dmac, vif->vif_mac, VR_ETHER_ALEN);
+            }
+        }
     }
 
     vif_mirror(vif, pkt, fmd, vif->vif_flags & VIF_FLAG_MIRROR_TX);
@@ -1019,7 +1022,7 @@ vhost_drv_add(struct vr_interface *vif,
      */
     for (i = 0; i < VR_MAX_PHY_INF; i++) {
         if (vif->vif_bridge[i]) {
-            ret = hif_ops->hif_add_tap(vif->vif_bridge[i]);
+            ret = hif_ops->hif_add_tap(vif->vif_bridge[i], vifr);
         }
     }
     if (ret)
@@ -1672,7 +1675,7 @@ eth_drv_add_sub_interface(struct vr_interface *pvif, struct vr_interface *vif)
 
 static int
 eth_drv_add(struct vr_interface *vif,
-        vr_interface_req *vifr __attribute__unused__)
+        vr_interface_req *vifr)
 {
     int ret = 0;
 
@@ -1727,7 +1730,7 @@ eth_drv_add(struct vr_interface *vif,
       */
     if ((!(vif->vif_flags & VIF_FLAG_VHOST_PHYS)) ||
             (vif->vif_bridge[0]) || (hif_ops->hif_get_encap(vif) == VIF_ENCAP_TYPE_L3_DECRYPT)) {
-        ret = hif_ops->hif_add_tap(vif);
+        ret = hif_ops->hif_add_tap(vif, vifr);
         if (ret)
             hif_ops->hif_del(vif);
     }
@@ -2096,25 +2099,19 @@ vrouter_add_interface(struct vr_interface *vif, vr_interface_req *vifr)
         return -EEXIST;
 
     if (vif->vif_type == VIF_TYPE_HOST) {
-        if (vifr->vifr_cross_connect_idx && is_vrouter_multihomed(router)){
-            for (i = 0; i < vifr->vifr_cross_connect_idx_size; i++) {
-                if (vifr->vifr_cross_connect_idx[i] < 0) {
-                    return -EINVAL;
-                }
-                eth_vif[i] = __vrouter_get_interface_os(router,
-                        vifr->vifr_cross_connect_idx[i]);
-                if(!eth_vif[i]) {
-                    vr_printf("%s vifr_cross_connect_idx eth_vif[%d]is NULL\n",
-                            __func__, i);
-                    return -ENODEV;
-                }
-            }
-        } else {
-            eth_vif[0] = __vrouter_get_interface_os(router,
-                    vifr->vifr_cross_connect_idx[0]);
-            if (!eth_vif[0]){
-                vr_printf("%s eth_vif[0] is NULL cross_idx: %d\n", __func__,
-                        vifr->vifr_cross_connect_idx[0]);
+        for (i = 0; i < router->vr_num_phy_interfaces; i++) {
+#ifdef PLATFORM_IS_DPDK
+            eth_vif[i] = __vrouter_get_interface(router, i);
+#else
+            if ((!vifr->vifr_cross_connect_idx) ||
+                    (vifr->vifr_cross_connect_idx[i] < 0))
+                return -EINVAL;
+            eth_vif[i] = __vrouter_get_interface_os(router,
+                    vifr->vifr_cross_connect_idx[i]);
+#endif
+            if(!eth_vif[i]) {
+                vr_printf("%s vifr_cross_connect_idx eth_vif[%d]is NULL\n",
+                        __func__, i);
                 return -ENODEV;
             }
         }
@@ -2131,12 +2128,25 @@ vrouter_add_interface(struct vr_interface *vif, vr_interface_req *vifr)
         break;
 
     case VIF_TYPE_HOST:
-        router->vr_host_if = vif;
-        for (i = 0; i < VR_MAX_PHY_INF; i++) {
-            if (eth_vif[i]) {
-                router->vr_eth_if[i] = eth_vif[i];
-                vif->vif_bridge[i] = eth_vif[i];
-                eth_vif[i]->vif_bridge[0] = vif;
+        if (!strncmp(vif->vif_name, "vhost0", 5)) {
+            router->vr_host_if = vif;
+            for (i = 0; i < VR_MAX_PHY_INF; i++) {
+                if (eth_vif[i]) {
+                    router->vr_eth_if[i] = eth_vif[i];
+                    vif->vif_bridge[i] = eth_vif[i];
+                    /*
+                     * Condition to ensure the following assignment of bridge
+                     * happens for all cases except for dpdk in l3mh mode. In
+                     * the case of dpdk in l3mh mode, the dpdk_if_add_tun_tap()
+                     * function assigns the bridge.
+                     */
+#ifdef PLATFORM_IS_DPDK
+                    if(!is_vrouter_multihomed(router))
+                        eth_vif[i]->vif_bridge[0] = vif;
+#else
+                    eth_vif[i]->vif_bridge[0] = vif;
+#endif
+                }
             }
         }
         break;
@@ -2516,7 +2526,7 @@ vr_interface_add(vr_interface_req *req, bool need_response)
     vif = __vrouter_get_interface(router, req->vifr_idx);
     if (vif) {
 
-        if (vif_is_vhost(vif)) {
+        if (vif_is_vhost(vif) && (!strncmp(req->vifr_name, "vhost0", 5))) {
             vr_printf("%s: vhost interface change \n", __FUNCTION__);
 
             if (is_vrouter_multihomed(router)) {
@@ -2526,20 +2536,38 @@ vr_interface_add(vr_interface_req *req, bool need_response)
                         if (hif_ops->hif_lock)
                             hif_ops->hif_lock();
 
-                        ret = hif_ops->hif_add_tap(__vrouter_get_interface(router, i));
+#ifdef PLATFORM_IS_DPDK
+                        ret = hif_ops->hif_add_tun_tap(
+                            __vrouter_get_interface(router, i), req);
+#else
+                        ret = hif_ops->hif_add_tap(__vrouter_get_interface(router, i),
+                                                    req);
+#endif
 
                         if (hif_ops->hif_lock)
                             hif_ops->hif_unlock();
+#ifdef PLATFORM_IS_DPDK
+                        if(ret) {
+                            ret = hif_ops->hif_del_tun_tap(__vrouter_get_interface(
+                                    router, VR_TOTAL_INTERFACES + i));
+                        }
+#else
+                        if(ret) {
+                            ret = hif_ops->hif_del_tap(
+                                    __vrouter_get_interface(router, i));
+                        }
 
-                        if(!ret)
-                            hif_ops->hif_del(__vrouter_get_interface(router, i));
-
+                        /*
+                         * eth_bridge is not assigned to vhost0 in
+                         * case of l3mh in dpdk mode
+                         */
                         eth_vif = __vrouter_get_interface(router, i);
                         if (eth_vif) {
                             vr_printf("%s Setting vif->vif_bridge for vif %d\n",
                                     __func__, eth_vif->vif_idx);
                             eth_vif->vif_bridge[0] = vif;
                         }
+#endif
                     }
                 }
             }
@@ -2694,6 +2722,26 @@ vr_interface_add(vr_interface_req *req, bool need_response)
         vif_delete(vif);
         vif = NULL;
     }
+/*
+ * The following code snippet is used for creating the additional tun-tap
+ * interfaces corresponding to each physical interface in case of l3mh
+ * when vrouter is in dpdk mode. These tun-tap interfaces are created by
+ * the vrouter itself and agent has no knowledge about it. They are a means
+ * by which the kernel can send/recv packets to the physical interface
+ * since vhost0 does not correspond to any single physical interface in
+ * case of l3mh.
+ */
+#ifdef PLATFORM_IS_DPDK
+    if (is_vrouter_multihomed(router) &&
+            (!strncmp(vif->vif_name, "vhost0", 5))) {
+        for (i = 0; i < VR_MAX_PHY_INF; i++) {
+            if(router->vr_eth_if[i]) {
+                ret = hif_ops->hif_add_tun_tap(
+                    __vrouter_get_interface(router, i), req);
+            }
+        }
+    }
+#endif
 
     if (!ret) {
         vrouter_setup_vif(vif);

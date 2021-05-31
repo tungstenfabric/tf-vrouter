@@ -616,6 +616,8 @@ struct vr_dpdk_tapdev {
     struct rte_ring *tapdev_tx_rings[RTE_MAX_LCORE];
     /* Pointer to vif. */
     struct vr_interface *tapdev_vif;
+    /* Name of the corresponding device on kernel. */
+    char tapdev_name[VR_INTERFACE_NAME_LEN];
 };
 
 struct vr_dpdk_global {

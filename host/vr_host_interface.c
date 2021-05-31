@@ -308,7 +308,7 @@ vr_lib_interface_del_tap(struct vr_interface *vif)
 }
 
 static int
-vr_lib_interface_add_tap(struct vr_interface *vif)
+vr_lib_interface_add_tap(struct vr_interface *vif, vr_interface_req *vifr)
 {
     return 0;
 }

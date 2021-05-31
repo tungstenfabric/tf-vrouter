@@ -52,8 +52,11 @@ vr_dpdk_tapdev_init(struct vr_interface *vif)
     /* If vif is vhost0, reuse previously existed slot if any. */
     if (vif_is_vhost(vif)) {
         for (i = 0; i < VR_DPDK_MAX_TAP_INTERFACES; i++) {
-            if (vr_dpdk.tapdevs[i].tapdev_vhost_fd > 0) {
-               RTE_LOG(INFO, VROUTER, "    TAP device %s already exists\n", vif->vif_name);
+            if ((vr_dpdk.tapdevs[i].tapdev_vhost_fd > 0) &&
+                (!strncmp((char *)vif->vif_name, vr_dpdk.tapdevs[i].tapdev_name,
+                VR_INTERFACE_NAME_LEN - 1))) {
+               RTE_LOG(INFO, VROUTER, "    TAP device %s already exists\n",
+                       vif->vif_name);
                tapdev = &vr_dpdk.tapdevs[i];
                fd = tapdev->tapdev_fd = tapdev->tapdev_vhost_fd;
                goto enable_tap;
@@ -101,11 +104,14 @@ enable_tap:
     /* Enable TAP device. */
     vif->vif_os = tapdev;
     tapdev->tapdev_vif = vif;
+    memset(tapdev->tapdev_name, 0, VR_INTERFACE_NAME_LEN);
+    strncpy(tapdev->tapdev_name, (char *)vif->vif_name,
+                VR_INTERFACE_NAME_LEN - 1);
     synchronize_rcu();
     tapdev->tapdev_fd = fd;
 
     /* Create tap netlink socket for link up/down mtu change notifications */
-    if (vif_is_vhost(vif) && vr_dpdk.tap_nl_fd <= 0) {
+    if(vif_is_vhost(vif) && (vr_dpdk.tap_nl_fd <= 0)) {
         vr_dpdk.tap_nl_fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
         if (vr_dpdk.tap_nl_fd < 0) {
             RTE_LOG(ERR, VROUTER, "    error creating tap netlink socket\n");
@@ -117,7 +123,7 @@ enable_tap:
         tap_nl_addr.nl_pid = getpid ();
         tap_nl_addr.nl_groups = RTMGRP_LINK;
         if (bind(vr_dpdk.tap_nl_fd,
-                    (struct sockaddr *) &tap_nl_addr, sizeof (tap_nl_addr)) < 0) {
+               (struct sockaddr *) &tap_nl_addr, sizeof (tap_nl_addr)) < 0) {
             RTE_LOG(ERR, VROUTER, "    error binding tap netlink socket\n");
             goto error;
         }
@@ -604,7 +610,7 @@ static void vr_dpdk_handle_vhost0_notification(uint32_t mtu, uint32_t if_up)
                 ret =  rte_eth_dev_set_mtu(slave_port_id, mtu);
                 if (ret < 0) {
                     /*
-                     * Do not return error as some NICs (such as X710) do not allow setting 
+                     * Do not return error as some NICs (such as X710) do not allow setting
                      * the MTU while the NIC is up and running. The max_rx_pkt_len is anyway
                      * set to support jumbo frames, so continue further here to set vif_mtu.
                      */
@@ -620,7 +626,7 @@ static void vr_dpdk_handle_vhost0_notification(uint32_t mtu, uint32_t if_up)
             ret =  rte_eth_dev_set_mtu(port_id, mtu);
             if (ret < 0) {
                 /*
-                 * Do not return error as some NICs (such as X710) do not allow setting 
+                 * Do not return error as some NICs (such as X710) do not allow setting
                  * the MTU while the NIC is up and running. The max_rx_pkt_len is anyway
                  * set to support jumbo frames, so continue further here to set vif_mtu.
                  */

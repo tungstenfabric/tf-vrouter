@@ -13,18 +13,21 @@
 #include "vr_flow.h"
 #include "vr_index_table.h"
 
-/*
- * 2 interfaces/VM + maximum vlan interfaces. VR_MAX_INTERFACES needs to
- * be the same as VR_UVH_MAX_CLIENTS.
- */
-#define VR_MAX_INTERFACES           (256 + 4096)
 
 /*
  * Number of maximum physical uplink interfaces
  */
 #define VR_MAX_PHY_INF 3
 
-/* 
+#define VR_TOTAL_INTERFACES           (256 + 4096)
+
+/*
+ * 2 interfaces/VM + maximum vlan interfaces. VR_MAX_INTERFACES needs to
+ * be the same as VR_UVH_MAX_CLIENTS.
+ */
+#define VR_MAX_INTERFACES           (VR_TOTAL_INTERFACES + VR_MAX_PHY_INF)
+
+/*
  * Default size for the interface bridge table.
  */
 #define VIF_BRIDGE_ENTRIES      1024
@@ -427,6 +430,7 @@ struct vr_interface {
     unsigned short vif_num_hw_queues;
     void *vif_queue_host_data;
     unsigned int  vif_ip;
+    unsigned int  vif_ip_mask;
     unsigned int vif_isid;
     uint8_t vif_ip6[VR_IP6_ADDRESS_LEN];
     uint8_t vif_pbb_mac[VR_ETHER_ALEN];
@@ -472,8 +476,10 @@ struct vr_host_interface_ops {
     void (*hif_unlock)(void);
     int (*hif_add)(struct vr_interface *);
     int (*hif_del)(struct vr_interface *);
-    int (*hif_add_tap)(struct vr_interface *);
+    int (*hif_add_tap)(struct vr_interface *, vr_interface_req *);
     int (*hif_del_tap)(struct vr_interface *);
+    int (*hif_add_tun_tap)(struct vr_interface *, vr_interface_req *);
+    int (*hif_del_tun_tap)(struct vr_interface *);
     int (*hif_tx)(struct vr_interface *, struct vr_packet *);
     int (*hif_rx)(struct vr_interface *, struct vr_packet *);
     int (*hif_get_settings)(struct vr_interface *,

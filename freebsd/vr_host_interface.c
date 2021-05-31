@@ -195,7 +195,7 @@ freebsd_if_del(struct vr_interface *vif)
 }
 
 static int
-freebsd_if_add_tap(struct vr_interface *vif)
+freebsd_if_add_tap(struct vr_interface *vif, vr_interface_req *vifr)
 {
 	struct ifnet *ifp;
 

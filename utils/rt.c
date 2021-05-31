@@ -804,7 +804,7 @@ main(int argc, char *argv[])
     cmd_label = -1;
     cmd_family_id = AF_INET;
 
-    while ((opt = getopt_long(argc, argv, "TcdbmPnM:p:l:v:t:s:e:f:u:r:Fx:",
+    while ((opt = getopt_long(argc, argv, "TcdbmPM:n:p:l:v:t:s:e:f:u:r:Fx:",
                     long_options, &option_index)) >= 0) {
             switch (opt) {
             case 'c':

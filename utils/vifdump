@@ -5,7 +5,7 @@
 
 ## Constants
 MON_IF_NAME="mon"
-VR_MAX_INTERFACES=$((256 + 4096))
+VR_TOTAL_INTERFACES=$((256 + 4096))
 MON_TYPE="monitoring"
 
 ## Functions
@@ -76,7 +76,7 @@ if ifconfig ${MON_IF_NAME}${MON_IF_ID} >/dev/null 2>&1; then
 fi
 
 ## find free monitoring vif index
-MON_VIF_ID=$((${VR_MAX_INTERFACES} - ${MON_IF_ID} - 1))
+MON_VIF_ID=$((${VR_TOTAL_INTERFACES} - ${MON_IF_ID} - 1))
 while true; do
     if ! sudo vif --list 2>/dev/null | grep "^vif0/${MON_VIF_ID}\b" >/dev/null 2>&1; then
         break

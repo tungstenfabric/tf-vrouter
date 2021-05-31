@@ -227,6 +227,7 @@ if sys.platform != 'darwin':
 
         # Pass -g and -O flags if present to DPDK
         DPDK_FLAGS = ' '.join(o for o in env['CCFLAGS'] if ('-g' in o or '-O' in o))
+        env.Append(CCFLAGS='-DPLATFORM_IS_DPDK')
 
         # Make DPDK
         dpdk_dst_dir = Dir(DPDK_DST_DIR).abspath

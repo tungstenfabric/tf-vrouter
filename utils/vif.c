@@ -1449,7 +1449,14 @@ parse_long_opts(int option_index, char *opt_arg)
         case XCONNECT_OPT_INDEX:
             opt_arg = strdup(opt_arg);
             while ((sep_arg = strsep(&opt_arg, ",")) != NULL) {
-                if_xconnect_kindex[i++] = if_nametoindex(sep_arg);
+                if(platform == DPDK_PLATFORM) {
+                    /* we need to check cross_connect index has be passed or
+                     * not for kernel & DPDK based platforms */
+                    /*Incase of DPDK platform, vif_idx is passed for xconnect */
+                    if_xconnect_kindex[i++] = safer_strtoul(sep_arg, NULL, 0);
+                } else {
+                    if_xconnect_kindex[i++] = if_nametoindex(sep_arg);
+                }
                 if (isdigit(sep_arg[0])) {
                     if_pmdindex = strtol(sep_arg, NULL, 0);
                 } else if (!if_xconnect_kindex[i]) {

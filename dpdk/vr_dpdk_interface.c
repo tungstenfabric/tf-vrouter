@@ -196,7 +196,7 @@ dpdk_mock_vif_add(struct vr_interface *vif)
     int ret = 0;
 
     /* A virtual interface is being added for mock physical/vhost device,
-     * For upper layers, it looks like packet being sent/receive on 
+     * For upper layers, it looks like packet being sent/receive on
      * physical/vhost interface*/
     vif->vif_flags |= VIF_FLAG_MOCK_DEVICE;
     ret = dpdk_virtual_if_add(vif);
@@ -431,18 +431,18 @@ vr_ethdev_inner_cksum_capable(struct vr_dpdk_ethdev *ethdev)
         rte_eth_dev_info_get(*port_id_ptr, &dev_info);
         if (dev_info.driver_name) {
             if ((strncmp(dev_info.driver_name, "net_ixgbe",
-                        strlen("net_ixgbe")) != 0) && 
+                        strlen("net_ixgbe")) != 0) &&
                 (strncmp(dev_info.driver_name, "net_i40e",
                         strlen("net_i40e")) != 0)) {
-                    return 0; 
-            } 
+                    return 0;
+            }
         } else {
             return 0;
         }
 
         port_num++;
         port_id_ptr++;
-    } while (port_num < ethdev->ethdev_nb_slaves); 
+    } while (port_num < ethdev->ethdev_nb_slaves);
 
     return 1;
 }
@@ -880,10 +880,7 @@ dpdk_fabric_af_packet_if_del(struct vr_interface *vif)
 static int
 dpdk_vhost_if_add(struct vr_interface *vif)
 {
-    uint8_t port_id;
     int ret;
-    struct rte_ether_addr mac_addr;
-    struct vr_dpdk_ethdev *ethdev;
     uint16_t nb_txqs, ports_num;
 
     ports_num = rte_eth_dev_count_avail();
@@ -893,35 +890,6 @@ dpdk_vhost_if_add(struct vr_interface *vif)
      * of physical port */
     if(ports_num == 0)
         return dpdk_mock_vif_add(vif);
-
-    /*
-     * The Agent passes xconnect fabric interface in cross_connect_idx,
-     * but dp-core does not copy it into vr_interface. Instead
-     * it looks for an interface with os_idx == cross_connect_idx
-     * and sets vif->vif_bridge if there is such an interface.
-     */
-    if(!vif->vif_bridge[0])
-    {
-        RTE_LOG(ERR, VROUTER,"vif->vif_bridge is NULL\n" );
-        return -1;
-    }
-    ethdev = (struct vr_dpdk_ethdev *)(vif->vif_bridge[0]->vif_os);
-    if (ethdev == NULL) {
-        RTE_LOG(ERR, VROUTER, "Error adding vif %u device %s:"
-            " bridge vif %u ethdev is not initialized\n",
-                vif->vif_idx, vif->vif_name, vif->vif_bridge[0]->vif_idx);
-        return -ENOENT;
-    }
-    port_id = ethdev->ethdev_port_id;
-
-    /* Get interface MAC address. */
-    memset(&mac_addr, 0, sizeof(mac_addr));
-    rte_eth_macaddr_get(port_id, &mac_addr);
-
-    RTE_LOG(INFO, VROUTER, "Adding vif %u (gen. %u) device %s at eth device %" PRIu8
-                " MAC " MAC_FORMAT " (vif MAC " MAC_FORMAT ")\n",
-                vif->vif_idx, vif->vif_gen, vif->vif_name, port_id,
-                MAC_VALUE(mac_addr.addr_bytes), MAC_VALUE(vif->vif_mac));
 
     /* If there is a tapdev VLAN device, assign vhost0 MAC address to it */
     if (vr_dpdk.vlan_dev) {
@@ -938,20 +906,6 @@ dpdk_vhost_if_add(struct vr_interface *vif)
             RTE_LOG(INFO, VROUTER, "    Adding MAC " MAC_FORMAT " to %s\n",
                     MAC_VALUE(vif->vif_mac), vr_dpdk.vlan_name);
         }
-    }
-
-    /*
-     * KNI does not support bond interfaces and generate random MACs,
-     * so we try to get a bond member instead.
-     */
-    if (ethdev->ethdev_nb_slaves > 0) {
-        port_id = ethdev->ethdev_slaves[0];
-
-        memset(&mac_addr, 0, sizeof(mac_addr));
-        rte_eth_macaddr_get(port_id, &mac_addr);
-        RTE_LOG(INFO, VROUTER, "    using bond slave eth device %" PRIu8
-                " MAC " MAC_FORMAT "\n",
-                port_id, MAC_VALUE(mac_addr.addr_bytes));
     }
 
     ret = dpdk_vif_queue_setup(vif);
@@ -1218,20 +1172,67 @@ dpdk_if_del(struct vr_interface *vif)
     return -EFAULT;
 }
 
+/*
+ *This function is used to delete a tuntap vif corresponding
+ *to a physical interface in the case of l3mh
+ */
+static int
+dpdk_if_del_tun_tap(struct vr_interface *vif)
+{
+    if (vif) {
+        if (vif->vif_type == VIF_TYPE_HOST)
+            vif_delete(vif);
+    }
+
+    return 0;
+}
+
+/*
+ * This function is used to create a tuntap vif corresponding
+ * to a physical interface in the case of l3mh
+ */
+static int
+dpdk_if_add_tun_tap(struct vr_interface *vif, vr_interface_req *vifr)
+{
+    int ret = 0;
+    vr_interface_req req = *vifr;
+    struct vrouter *router = vrouter_get(0);
+
+    if((vifr->vifr_idx < VR_TOTAL_INTERFACES) &&
+            (vr_dpdk.tapdevs[0].tapdev_vhost_fd > 0)) {
+        req.vifr_idx = VR_TOTAL_INTERFACES + vif->vif_idx;
+        memcpy(req.vifr_mac, vif->vif_mac, sizeof(vif->vif_mac));
+        snprintf(req.vifr_name, VR_INTERFACE_NAME_LEN, "tap%d", vif->vif_idx);
+        RTE_LOG(INFO, VROUTER,
+                "%s : L3MH - Phy Intf: %s Corresponding tuntap intf %s \n",
+                __func__, vif->vif_name, req.vifr_name);
+        ret = vr_interface_add(&req, 0);
+        if(ret) {
+            RTE_LOG(ERR, VROUTER,
+                    "%s: Tuntap interface creation failed for %s id %d\n",
+                    __func__, req.vifr_name, req.vifr_idx);
+        } else {
+            struct vr_interface *tap_if = __vrouter_get_interface(router,
+                        (VR_TOTAL_INTERFACES + vif->vif_idx));
+            tap_if->vif_bridge[0] = vif;
+            vif->vif_bridge[0] = tap_if;
+        }
+    }
+
+    return ret;
+}
+
 /* vRouter callback */
 static int
 dpdk_if_del_tap(struct vr_interface *vif)
 {
-    /* TODO: we untap interfaces at if_del */
     return 0;
 }
 
-
 /* vRouter callback */
 static int
-dpdk_if_add_tap(struct vr_interface *vif)
+dpdk_if_add_tap(struct vr_interface *vif, vr_interface_req *vifr)
 {
-    /* TODO: we tap interfaces at if_add */
     return 0;
 }
 
@@ -1701,7 +1702,7 @@ dpdk_if_tx(struct vr_interface *vif, struct vr_packet *pkt)
 
     if (unlikely(will_segment)) {
         num_of_segs = dpdk_segment_packet(pkt, m, mbufs_segs_out,
-                VR_DPDK_FRAG_MAX_IP_SEGS, m->tso_segsz, 
+                VR_DPDK_FRAG_MAX_IP_SEGS, m->tso_segsz,
                 (vif->vif_flags & VIF_FLAG_TX_CSUM_OFFLOAD));
         if (num_of_segs < 0) {
             RTE_LOG_DP(DEBUG, VROUTER, "%s: error %d during GSO of an "
@@ -1969,6 +1970,30 @@ dpdk_if_clear_stats(struct vr_interface *vif)
     }
     return 0;
 
+}
+
+static int
+dpdk_get_host_ip_mask(struct vr_interface *vif, unsigned int *ip,
+        unsigned int *mask)
+{
+    if(!vif) {
+        RTE_LOG(ERR, VROUTER, "%s: Vif is NULL\n", __func__);
+        return -1;
+    }
+    *ip = vif->vif_ip;
+    *mask = vif->vif_ip_mask;
+    return 0;
+}
+static int
+dpdk_get_host_mac_addr(struct vr_interface *vif, unsigned char **mac)
+{
+    if(!vif) {
+        RTE_LOG(ERR, VROUTER, "%s : vif is NULL\n", __func__);
+        return -1;
+    }
+    *mac = vif->vif_mac;
+
+    return 0;
 }
 
 static int
@@ -2349,6 +2374,8 @@ struct vr_host_interface_ops dpdk_interface_ops = {
     .hif_del            =    dpdk_if_del,
     .hif_add_tap        =    dpdk_if_add_tap,   /* not implemented */
     .hif_del_tap        =    dpdk_if_del_tap,   /* not implemented */
+    .hif_add_tun_tap    =    dpdk_if_add_tun_tap,
+    .hif_del_tun_tap    =    dpdk_if_del_tun_tap,
     .hif_tx             =    dpdk_if_tx,
     .hif_rx             =    dpdk_if_rx,
     .hif_get_settings   =    dpdk_if_get_settings,
@@ -2358,8 +2385,8 @@ struct vr_host_interface_ops dpdk_interface_ops = {
     .hif_get_bond_info  =    dpdk_if_get_bond_info,
     .hif_get_vlan_info  =    dpdk_if_get_vlan_info,
     .hif_clear_stats    =    dpdk_if_clear_stats,
-    .hif_get_host_ip_mask =  NULL,
-    .hif_get_host_mac_addr = NULL,
+    .hif_get_host_ip_mask =  dpdk_get_host_ip_mask,
+    .hif_get_host_mac_addr = dpdk_get_host_mac_addr,
     .hif_rx_pass        =    NULL,
 };
 
