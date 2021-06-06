@@ -9,16 +9,16 @@ import copy
 import re
 import platform
 
-AddOption('--kernel-dir', dest = 'kernel-dir', action='store',
+AddOption('--kernel-dir', dest='kernel-dir', action='store',
           help='Linux kernel source directory for vrouter.ko')
 
-AddOption('--dpdk-dir', dest = 'dpdk-dir', action='store',
+AddOption('--dpdk-dir', dest='dpdk-dir', action='store',
           help='third party dpdk built library')
 
-AddOption('--system-header-path', dest = 'system-header-path', action='store',
+AddOption('--system-header-path', dest='system-header-path', action='store',
           help='Linux kernel headers for applications')
 
-AddOption('--add-opts', dest = 'add-opts', action='store',
+AddOption('--add-opts', dest='add-opts', action='store',
           help='Additional options for vrouter compilation')
 
 env = DefaultEnvironment().Clone()
@@ -31,7 +31,7 @@ dpdk_exists = os.path.isdir('../third_party/dpdk')
 compiler = env['CC']
 
 if compiler == 'cl':
-    env.Append(CCFLAGS = '/WX')
+    env.Append(CCFLAGS='/WX')
 
 # get CPU flag for GCC
 if compiler == 'gcc' or compiler == 'clang':
@@ -40,45 +40,46 @@ if compiler == 'gcc' or compiler == 'clang':
     if target == 'x86_64':
         cpu = env.get('CPU_TYPE')
         if cpu == 'native':
-            env.Append(CCFLAGS = '-march=' + 'native')
+            env.Append(CCFLAGS='-march=' + 'native')
         elif cpu == 'snb':
-            env.Append(CCFLAGS = '-march=' + 'corei7-avx')
+            env.Append(CCFLAGS='-march=' + 'corei7-avx')
         elif cpu == 'ivb':
-            env.Append(CCFLAGS = '-march=' + 'core-avx-i')
+            env.Append(CCFLAGS='-march=' + 'core-avx-i')
         elif cpu == 'hsw':
-            env.Append(CCFLAGS = '-march=' + 'core-avx2')
+            env.Append(CCFLAGS='-march=' + 'core-avx2')
 
     flags = env['CCFLAGS']
     autoflags_b = b''
-    proc = subprocess.Popen(str(compiler) + ' ' + str(flags) + \
+    proc = subprocess.Popen(
+        str(compiler) + ' ' + str(flags) +
         ' -dM -E - < /dev/null', stdout=subprocess.PIPE, shell=True)
     (autoflags_b, _) = proc.communicate()
 
     autoflags = autoflags_b.decode('utf-8')
     if autoflags.find('__x86_64__') != -1:
-        env.Append(CCFLAGS = '-D__VR_X86_64__')
+        env.Append(CCFLAGS='-D__VR_X86_64__')
     if autoflags.find('__AVX2__') != -1:
-        env.Append(CCFLAGS = '-D__VR_AVX2__')
+        env.Append(CCFLAGS='-D__VR_AVX2__')
     if autoflags.find('__AVX__') != -1:
-        env.Append(CCFLAGS = '-D__VR_AVX__')
+        env.Append(CCFLAGS='-D__VR_AVX__')
     if autoflags.find('__SSE__') != -1:
-        env.Append(CCFLAGS = '-D__VR_SSE__')
+        env.Append(CCFLAGS='-D__VR_SSE__')
     if autoflags.find('__SSE2__') != -1:
-        env.Append(CCFLAGS = '-D__VR_SSE2__')
+        env.Append(CCFLAGS='-D__VR_SSE2__')
     if autoflags.find('__SSE3__') != -1:
-        env.Append(CCFLAGS = '-D__VR_SSE3__')
+        env.Append(CCFLAGS='-D__VR_SSE3__')
     if autoflags.find('__SSSE3__') != -1:
-        env.Append(CCFLAGS = '-D__VR_SSSE3__')
+        env.Append(CCFLAGS='-D__VR_SSSE3__')
     if autoflags.find('__SSE4_1__') != -1:
-        env.Append(CCFLAGS = '-D__VR_SSE4_1__')
+        env.Append(CCFLAGS='-D__VR_SSE4_1__')
     if autoflags.find('__SSE4_2__') != -1:
-        env.Append(CCFLAGS = '-D__VR_SSE4_2__')
+        env.Append(CCFLAGS='-D__VR_SSE4_2__')
     if autoflags.find('__AES__') != -1:
-        env.Append(CCFLAGS = '-D__VR_AES__')
+        env.Append(CCFLAGS='-D__VR_AES__')
     if autoflags.find('__RDRND__') != -1:
-        env.Append(CCFLAGS = '-D__VR_RDRND__')
+        env.Append(CCFLAGS='-D__VR_RDRND__')
     if autoflags.find('__PCLMUL__') != -1:
-        env.Append(CCFLAGS = '-D__VR_PCLMUL__')
+        env.Append(CCFLAGS='-D__VR_PCLMUL__')
 
 # DPDK build configuration
 DPDK_TARGET = 'x86_64-native-linuxapp-gcc'
@@ -90,10 +91,10 @@ THRD_PRT_DIR = '#third_party/'
 ADDNL_OPTION = GetOption('add-opts')
 
 # Include paths
-env.Replace(CPPPATH = '#vrouter/include')
-env.Append(CPPPATH = [env['TOP'] + '/vrouter/sandesh/gen-c'])
-env.Append(CPPPATH = ['#src/contrail-common'])
-env.Append(CPPPATH = ['#src/contrail-common/sandesh/library/c'])
+env.Replace(CPPPATH='#vrouter/include')
+env.Append(CPPPATH=[env['TOP'] + '/vrouter/sandesh/gen-c'])
+env.Append(CPPPATH=['#src/contrail-common'])
+env.Append(CPPPATH=['#src/contrail-common/sandesh/library/c'])
 
 # Make Sandesh quiet for production
 if 'production' in env['OPT']:
@@ -104,15 +105,18 @@ makefile = vr_root + 'Makefile'
 dp_dir = Dir(vr_root).srcnode().abspath + '/'
 make_dir = dp_dir
 
+
 def MakeTestCmdFn(self, env, test_name, test_list, deps):
     sources = copy.copy(deps)
     sources.append(test_name + '.c')
-    tgt = env.UnitTest(target = test_name, source = sources)
-    env.Alias('vrouter:'+ test_name, tgt)
+    tgt = env.UnitTest(target=test_name, source=sources)
+    env.Alias('vrouter:' + test_name, tgt)
     test_list.append(tgt)
     return tgt
 
+
 VRouterEnv.AddMethod(MakeTestCmdFn, 'MakeTestCmd')
+
 
 def shellCommand(cmd):
     """ Return the output of a shell command
@@ -122,6 +126,7 @@ def shellCommand(cmd):
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
     (output, _) = proc.communicate()
     return output.strip()
+
 
 def genBuildVersion():
     h_code = """
@@ -134,9 +139,10 @@ def genBuildVersion():
 #define VROUTER_VERSIONID "%(build)s"
 
 #endif /* __VR_BUILDINFO_H__ */
-""" % { 'build': env.GetBuildVersion()[1] }
+""" % {'build': env.GetBuildVersion()[1]}
     with open(os.path.join(dp_dir, 'include/vr_buildinfo.h'), 'w') as c_file:
         c_file.write(h_code)
+
 
 if sys.platform.startswith('freebsd'):
     make_dir = make_dir + '/freebsd'
@@ -174,22 +180,24 @@ if kernel_dir:
     kern_version = shellCommand('cat %s/include/config/kernel.release' % kernel_dir)
 else:
     kern_version = default_kernel_ver
-    if kernel_build_dir: kernel_dir = kernel_build_dir
+    if kernel_build_dir:
+        kernel_dir = kernel_build_dir
 kern_version = kern_version.strip()
 
 if sys.platform != 'darwin':
 
     install_root = GetOption('install_root')
-    if install_root == None:
+    if install_root is None:
         install_root = ''
 
     src_root = install_root + '/usr/src/vrouter/'
-    env.Replace(SRC_INSTALL_TARGET = src_root)
+    env.Replace(SRC_INSTALL_TARGET=src_root)
     env.Install(src_root, ['LICENSE', 'Makefile', 'GPL-2.0.txt'])
     env.Alias('install', src_root)
 
-    buildinfo = env.GenerateBuildInfoCCode(target = ['vr_buildinfo.c'],
-            source = [], path = dp_dir + 'dp-core')
+    buildinfo = env.GenerateBuildInfoCCode(
+        target=['vr_buildinfo.c'],
+        source=[], path=dp_dir + 'dp-core')
 
     buildversion = genBuildVersion()
 
@@ -202,7 +210,7 @@ if sys.platform != 'darwin':
         'host',
         'linux',
         'uvrouter',
-        ]
+    ]
 
     skip_dpdk_build = False
     link_dpdk = False
@@ -243,9 +251,10 @@ if sys.platform != 'darwin':
             print("info: Adjusting libdpdk build to use RTE_KERNELDIR=%s" % kernel_build_dir)
             make_cmd += "RTE_KERNELDIR=%s " % kernel_build_dir
 
-        dpdk_lib = env.Command('dpdk_lib', None,
-            make_cmd + 'config T=' + DPDK_TARGET
-            + ' && ' + make_cmd)
+        dpdk_lib = env.Command(
+            'dpdk_lib', None, make_cmd + 'config T=' + DPDK_TARGET +
+            ' && ' + make_cmd +
+            ' && cp ' + dpdk_src_dir + '/usertools/dpdk-devbind.py ' + Dir(env['TOP'] + '/vrouter/dpdk/').abspath)
 
         if GetOption('clean'):
             os.system(make_cmd + 'clean')
@@ -316,18 +325,19 @@ if sys.platform != 'darwin':
         DPDK_LIBS.append('-Wl,--no-whole-archive')
         DPDK_LIBS.append('-Wl,-lnuma')
 
-        env.Append(CPPPATH = DPDK_INC_DIR);
-        env.Append(LIBPATH = DPDK_LIB_DIR)
-        env.Append(DPDK_LINKFLAGS = DPDK_LIBS)
+        env.Append(CPPPATH=DPDK_INC_DIR)
+        env.Append(LIBPATH=DPDK_LIB_DIR)
+        env.Append(DPDK_LINKFLAGS=DPDK_LIBS)
 
     for sdir in subdirs:
         env.SConscript(sdir + '/SConscript',
-                       exports = exports,
-                       variant_dir = env['TOP'] + '/vrouter/' + sdir,
-                       duplicate = 0)
+                       exports=exports,
+                       variant_dir=env['TOP'] + '/vrouter/' + sdir,
+                       duplicate=0)
 
     make_cmd = 'cd ' + make_dir + ' && make'
-    if kernel_dir: make_cmd += ' KERNELDIR=' + kernel_dir
+    if kernel_dir:
+        make_cmd += ' KERNELDIR=' + kernel_dir
     make_cmd += ' SANDESH_HEADER_PATH=' + Dir(env['TOP'] + '/vrouter/').abspath
     make_cmd += ' SANDESH_SRC_ROOT=' + '../build/kbuild/'
     make_cmd += ' SANDESH_EXTRA_HEADER_PATH=' + Dir('#src/contrail-common/').abspath
@@ -358,13 +368,14 @@ if sys.platform != 'darwin':
         'transport/thrift_fake_transport.c',
         'transport/thrift_file_transport.c',
         'transport/thrift_memory_buffer.c',
-        ]
+    ]
     for src in sandesh_lib:
         dirname = os.path.dirname(src)
-        env.Depends(kern,
-                env.Install(
-                    '#build/kbuild/sandesh/library/c/' + dirname,
-                    env['TOP'] + '/tools/sandesh/library/c/' + src))
+        env.Depends(
+            kern,
+            env.Install(
+                '#build/kbuild/sandesh/library/c/' + dirname,
+                env['TOP'] + '/tools/sandesh/library/c/' + src))
 
     if GetOption('clean') and (not COMMAND_LINE_TARGETS or 'vrouter' in COMMAND_LINE_TARGETS):
         os.system(make_cmd + ' clean')
