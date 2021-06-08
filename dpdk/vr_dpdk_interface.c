@@ -1197,9 +1197,17 @@ dpdk_if_add_tun_tap(struct vr_interface *vif, vr_interface_req *vifr)
     int ret = 0;
     vr_interface_req req = *vifr;
     struct vrouter *router = vrouter_get(0);
+    uint16_t ports_num;
 
+    ports_num = rte_eth_dev_count_avail();
+
+    /*
+     * When there is no PCI ports for DPDK, it considered to be running on
+     * vtest(Vrouter Unit Test simulation framework). Even in this case,
+     * the tun tap interfaces need to be created in case of l3mh.
+     */
     if((vifr->vifr_idx < VR_TOTAL_INTERFACES) &&
-            (vr_dpdk.tapdevs[0].tapdev_vhost_fd > 0)) {
+            ((vr_dpdk.tapdevs[0].tapdev_vhost_fd > 0) || (!ports_num))) {
         req.vifr_idx = VR_TOTAL_INTERFACES + vif->vif_idx;
         memcpy(req.vifr_mac, vif->vif_mac, sizeof(vif->vif_mac));
         snprintf(req.vifr_name, VR_INTERFACE_NAME_LEN, "tap%d", vif->vif_idx);

@@ -29,12 +29,11 @@ class TestVifL3MH(unittest.TestCase):
             idx=0)
         self.fabric_vif.vifr_os_idx = self.fabric_vif.vifr_idx
         self.fabric_vif.sync()
-        # import pdb;pdb.set_trace()
 
         # Add Fabric vif 1
         self.fabric_vif_1 = FabricVif(
             name="eth1",
-            mac_str="00:1b:21:bb:f9:46",
+            mac_str="00:1b:21:bb:f9:50",
             ipv4_str="2.2.2.2",
             idx=1)
         self.fabric_vif_1.vifr_os_idx = self.fabric_vif_1.vifr_idx
@@ -95,11 +94,11 @@ class TestVifL3MH(unittest.TestCase):
         self.icmp_fabric_to_vhost_pkt = icmp.get_packet()
         self.icmp_fabric_to_vhost_pkt.show()
 
-        ether = Ether(src='90:e2:ba:84:48:88', dst='00:00:5e:00:01:00',
+        ether = Ether(src='90:e2:ba:84:48:88', dst='00:1b:21:bb:f9:46',
                       type=0x0806)
         arp = ARP()
-        self.arp_fabric_to_vhost_pkt = ether / arp
-        self.arp_fabric_to_vhost_pkt.show()
+        self.arp_fabric_to_tap0_pkt = ether / arp
+        self.arp_fabric_to_tap0_pkt.show()
 
         ether = Ether(src='00:00:5e:00:01:00', dst='90:e2:ba:84:48:88',
                       type=0x0806)
@@ -118,6 +117,8 @@ class TestVifL3MH(unittest.TestCase):
 
     def teardown_method(self, method):
         ObjectBase.tearDown()
+        ObjectBase.get_cli_output("vif --delete 4352")
+        ObjectBase.get_cli_output("vif --delete 4352")
 
     def test_l3mh_vif_add(self):
         self.assertEqual("eth0", self.fabric_vif.get_vif_name())
@@ -128,18 +129,25 @@ class TestVifL3MH(unittest.TestCase):
         self.vhost_vif.send_packet(self.icmp_vhost_to_fabric_pkt)
         self.assertEqual(1, self.fabric_vif.get_vif_opackets())
 
+        # In xconnet mode, every packet(both L2 and L3) is transferred
+        # via vif_bridge and hence no packet entering into physical
+        # interface will ever reach vhost0 in l3mh in dpdk xconnect mode.
         self.fabric_vif.send_packet(self.icmp_fabric_to_vhost_pkt)
-        self.assertEqual(1, self.vhost_vif.get_vif_opackets())
-#
-#        pkt = self.fabric_vif.send_and_receive_packet(
-#                self.arp_fabric_to_vhost_pkt, self.vhost_vif)
-#        pkt.show()
-#        self.assertTrue(ARP in pkt)
-#
-#        pkt = self.vhost_vif.send_and_receive_packet(
-#                self.arp_vhost_to_fabric_pkt, self.fabric_vif)
-#        pkt.show()
-#        self.assertTrue(ARP in pkt)
+        self.assertEqual(0, self.vhost_vif.get_vif_opackets())
+        vif_tap0_get = ObjectBase.get_cli_output("vif --get 4352")
+        self.assertEqual(1, ("TX packets:1" in vif_tap0_get))
+
+        # clear the stats for tap0 vif before sending L2 packet
+        ObjectBase.get_cli_output("vif --clear 4352")
+
+        self.fabric_vif.send_packet(self.arp_fabric_to_tap0_pkt)
+        vif_tap0_get = ObjectBase.get_cli_output("vif --get 4352")
+        self.assertEqual(1, ("TX packets:1" in vif_tap0_get))
+
+        pkt = self.vhost_vif.send_and_receive_packet(
+                self.arp_vhost_to_fabric_pkt, self.fabric_vif)
+        pkt.show()
+        self.assertTrue(ARP in pkt)
 
     def test_traffic_l3mh_normal(self):
         # Add agent vif
@@ -152,15 +160,14 @@ class TestVifL3MH(unittest.TestCase):
         self.fabric_vif.send_packet(self.icmp_fabric_to_vhost_pkt)
         self.assertEqual(1, self.vhost_vif.get_vif_opackets())
 
-#        pkt = self.fabric_vif.send_and_receive_packet(
-#                self.arp_fabric_to_vhost_pkt, self.vhost_vif)
-#        pkt.show()
-#        self.assertTrue(ARP in pkt)
-#
-#        pkt = self.vhost_vif.send_and_receive_packet(
-#                self.arp_vhost_to_fabric_pkt, self.fabric_vif)
-#        pkt.show()
-#        self.assertTrue(ARP in pkt)
+        self.fabric_vif.send_packet(self.arp_fabric_to_tap0_pkt)
+        vif_tap0_get = ObjectBase.get_cli_output("vif --get 4352")
+        self.assertEqual(1, ("TX packets:1" in vif_tap0_get))
+
+        pkt = self.vhost_vif.send_and_receive_packet(
+                self.arp_vhost_to_fabric_pkt, self.fabric_vif)
+        pkt.show()
+        self.assertTrue(ARP in pkt)
 
     def test_vhost_traffic_lb(self):
         self.vhost_vif.delete()
