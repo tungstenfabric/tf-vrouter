@@ -2605,10 +2605,10 @@ vr_send_ddp_req(struct nl_client *cl, vr_info_msg_en msginfo, uint8_t *vr_info_i
 
     req.h_op        = SANDESH_OP_DUMP;
     req.vdu_msginfo = msginfo;
-    if(vr_info_inbuf!=NULL)
-    {
-	req.vdu_inbuf_size = strlen(vr_info_inbuf);
-	req.vdu_inbuf = vr_info_inbuf;
+
+    if (vr_info_inbuf != NULL) {
+        req.vdu_inbuf_size = strlen(vr_info_inbuf);
+        req.vdu_inbuf = vr_info_inbuf;
     }
     return vr_sendmsg(cl, &req, "vr_info_req");
 }

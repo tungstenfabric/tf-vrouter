@@ -51,13 +51,15 @@
 #include "nl_util.h"
 #include "ini_parser.h"
 
+#define BUF_LENGTH 256
+
 static int platform;
 static void Usage(void);
 static struct nl_client *cl;
 static vr_info_msg_en msginfo;
 static int sock_dir_set;
 static bool dump_pending = false;
-static char log_send[512];
+static char log_send[BUF_LENGTH];
 static uint8_t *vr_info_inbuf;
 
 enum opt_index {
@@ -85,6 +87,7 @@ Usage()
     printf("\t   [--log <LOGTYPE-id> <1-8 LOG-LEVEL INT>]\n");
     printf("\t   [--log global <1-8 LOG-LEVEL INT>]\n");
     printf("\t   [--help]\n");
+
     exit(0);
 }
 
@@ -195,28 +198,15 @@ main(int argc, char *argv[])
             case 'l':
                 if (optind == 2 && argc == 2) {
                     Usage();
-                break;
-                }
-                else if (strcmp(optarg, "list") == 0 && optind == argc)
-                {
-                        parse_long_opts(LOG_OPT_INDEX, optarg);
-                        break;
-                }
-                else if (optind < argc)
-                {
-                    if (atoi(argv[optind]) < 1 && atoi(argv[optind]) > 8) {
-                        printf("\nInvalid log level");
-                        break;
-                    }
-                snprintf(log_send, sizeof(log_send), "%s %s", optarg, argv[optind]);
-                /*char *log_send  = (char *) malloc(1 + strlen(argv[optind]) + strlen(optarg));
-                strcpy(log_send, optarg);
-                strcat(log_send, space_fill);
-                strcat(log_send, argv[optind]);*/
-                parse_long_opts(LOG_OPT_INDEX, log_send);
-                break;
-                }
-                else{
+                    break;
+                } else if (strcmp(optarg, "list") == 0 && optind == argc) {
+                    parse_long_opts(LOG_OPT_INDEX, optarg);
+                    break;
+                } else if (optind < argc) {
+                    snprintf(log_send, sizeof(log_send), "%s %s", optarg, argv[optind]);
+                    parse_long_opts(LOG_OPT_INDEX, log_send);
+                    break;
+                } else {
                     Usage();
                     break;
                 }

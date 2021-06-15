@@ -20,8 +20,8 @@
 #include "vrouter.h"
 
 struct rte_log_dynamic_type {
-        const char *name;
-        uint32_t loglevel;
+    const char *name;
+    uint32_t loglevel;
 };
 
 int
@@ -75,43 +75,39 @@ dpdk_conf_log(VR_INFO_ARGS)
     char *log_type = strtok(msg_req->inbuf," ");
     char *log_level = strtok(NULL," ");
 
-    if (strcmp(log_type,"GLOBAL") == 0 || strcmp(log_type,"global") == 0 || strcmp(log_type,"Global") == 0){
-    VI_PRINTF("\nSetting global Loglevel to :%s ", log_level);
-    VI_PRINTF("\n");
-    rte_log_set_global_level((uint32_t) atoi(log_level));
+    if (strcmp(log_type,"GLOBAL") == 0 || strcmp(log_type,"global") == 0 || strcmp(log_type,"Global") == 0) {
+        VI_PRINTF("\nSetting global Loglevel to :%s ", log_level);
+        VI_PRINTF("\n\n");
+        rte_log_set_global_level((uint32_t) atoi(log_level));
         return 0;
     }
     if (atoi(log_level) > RTE_LOG_DEBUG || atoi(log_level) < RTE_LOG_EMERG)
         return -1;
-    if (atoi(log_type) == 41){
+    if (atoi(log_type) == rte_log_register("pmd.net.i40e.driver")) {
         int i40e_logtype_driver;
         i40e_logtype_driver = rte_log_register("pmd.net.i40e.driver");
         if (i40e_logtype_driver >= 0)
             rte_log_set_level(i40e_logtype_driver, atoi(log_level));
-    }
-    else if (atoi(log_type) == 37){
+    } else if (atoi(log_type) == rte_log_register("pmd.net.bond")) {
         int bond_logtype;
         bond_logtype = rte_log_register("pmd.net.bond");
         if (bond_logtype >= 0)
             rte_log_set_level(bond_logtype, atoi(log_level));
-    }
-    else if (atoi(log_type) == 43){
+    } else if (atoi(log_type) == rte_log_register("pmd.net.ixgbe.driver")) {
         int ixgbe_logtype_driver;
         ixgbe_logtype_driver = rte_log_register("pmd.net.ixgbe.driver");
         if (ixgbe_logtype_driver >= 0)
             rte_log_set_level(ixgbe_logtype_driver, atoi(log_level));
-    }
-    else if (atoi(log_type) == 47){
+    } else if (atoi(log_type) == rte_log_register("pmd.net.e1000.driver")) {
         int e1000_logtype_driver;
         e1000_logtype_driver = rte_log_register("pmd.net.e1000.driver");
         if (e1000_logtype_driver >= 0)
             rte_log_set_level(e1000_logtype_driver, atoi(log_level));
-    }
-    else{
+    } else {
         rte_log_set_level(atoi(log_type), atoi(log_level));
     }
-    if (rte_log_get_global_level() < atoi(log_level)){
-    rte_log_set_global_level((uint32_t) atoi(log_level));
+    if (rte_log_get_global_level() < atoi(log_level)) {
+        rte_log_set_global_level((uint32_t) atoi(log_level));
     }
 
     VI_PRINTF("\nLog level changed for %s,current level is %s\n\n", log_type, log_level); 

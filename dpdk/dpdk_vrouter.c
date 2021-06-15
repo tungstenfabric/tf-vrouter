@@ -147,7 +147,7 @@ char service_core_mask_str[VR_DPDK_STR_BUF_SZ];
 char dpdk_ctrl_thread_mask_str[VR_DPDK_STR_BUF_SZ];
 char *service_core_mask_ptr = NULL;
 char *dpdk_ctrl_thread_mask_ptr = NULL;
-char *dpdk_log_level = NULL;
+char *vr_dpdk_log_level = NULL;
 static char log_string[VR_DPDK_STR_BUF_SZ];
 
 static int no_daemon_set;
@@ -666,7 +666,7 @@ dpdk_argv_update(void)
 
     if (vr_dpdk_ctrl_thread_mask != 0) {
         dpdk_ctrl_thread_mask_ptr = vr_core_mask_util(vr_dpdk_ctrl_thread_mask,
-			            dpdk_ctrl_thread_mask_str);
+                        dpdk_ctrl_thread_mask_str);
     }
     if (dpdk_ctrl_thread_mask_ptr) {
         if (dpdk_argv_append("-C", dpdk_ctrl_thread_mask_ptr) != 0)
@@ -686,16 +686,16 @@ dpdk_argv_update(void)
     /* Append lcores option. */
     if (dpdk_argv_append("--"LCORES_OPT, lcores_string) != 0)
         return -1;
-    if ((dpdk_log_level != NULL) && (dpdk_log_level[0] != '\0')) {
-        if (isdigit(dpdk_log_level[0]) && strlen(dpdk_log_level) == 1) {
-            snprintf(log_string, sizeof(log_string), "*:%d", atoi(dpdk_log_level));
+    if ((vr_dpdk_log_level != NULL) && (vr_dpdk_log_level[0] != '\0')) {
+        if (isdigit(vr_dpdk_log_level[0]) && strlen(vr_dpdk_log_level) == 1) {
+            snprintf(log_string, sizeof(log_string), "*:%d", atoi(vr_dpdk_log_level));
             if (dpdk_argv_append("--"VR_DPDK_LOG_LEVEL, log_string) != 0) {
                 return -1;
             }
         }
         else {
-            RTE_LOG(INFO, VROUTER, "\nAppending string : %s\n",dpdk_log_level);
-            if (dpdk_argv_append("--"VR_DPDK_LOG_LEVEL, dpdk_log_level) != 0) {
+            RTE_LOG(INFO, VROUTER, "\nAppending string : %s\n",vr_dpdk_log_level);
+            if (dpdk_argv_append("--"VR_DPDK_LOG_LEVEL, vr_dpdk_log_level) != 0) {
                 return -1;
             }
         }
@@ -741,7 +741,7 @@ dpdk_argv_update(void)
     RTE_LOG(INFO, VROUTER, "VR_DPDK_YIELD_OPTION:        %" PRIu32 "\n",
                 vr_dpdk_yield_option);
     RTE_LOG(INFO, VROUTER, "VR_DPDK_LOG_LEVEL:           %s\n",
-                dpdk_log_level);
+                vr_dpdk_log_level);
     RTE_LOG(INFO, VROUTER, "VR_SERVICE_CORE_MASK:        0x%x\n",
                 vr_service_core_mask);
     RTE_LOG(INFO, VROUTER, "VR_DPDK_CTRL_THREAD_MASK:    0x%x\n",
@@ -1322,9 +1322,9 @@ parse_long_opts(int opt_flow_index, char *optarg)
         break;
 
     case VR_DPDK_LOG_OPT_INDEX:
-        dpdk_log_level = optarg;
+        vr_dpdk_log_level = optarg;
         if (errno != 0) {
-            dpdk_log_level = NULL;
+            vr_dpdk_log_level = NULL;
         }
         break;
 
