@@ -458,6 +458,7 @@ vr_mac_reply_send(struct vr_packet *pkt, struct vr_forwarding_md *fmd)
         rt.rtr_req.rtr_vrf_id = fmd_new.fmd_dvrf;
         nh = vr_bridge_lookup(fmd->fmd_dvrf, &rt);
         if (!nh || !(nh->nh_flags & NH_FLAG_VALID)) {
+            PKT_LOG(VP_DROP_INVALID_NH, pkt, 0, VR_DATAPATH_C, __LINE__);
             vr_pfree(pkt, VP_DROP_INVALID_NH);
             return;
         }
