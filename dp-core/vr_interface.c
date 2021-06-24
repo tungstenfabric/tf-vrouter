@@ -2732,12 +2732,14 @@ vr_interface_add(vr_interface_req *req, bool need_response)
  * case of l3mh.
  */
 #ifdef PLATFORM_IS_DPDK
-    if (is_vrouter_multihomed(router) &&
-            (!strncmp(vif->vif_name, "vhost0", 5))) {
-        for (i = 0; i < VR_MAX_PHY_INF; i++) {
-            if(router->vr_eth_if[i]) {
-                ret = hif_ops->hif_add_tun_tap(
-                    __vrouter_get_interface(router, i), req);
+    if (!ret) {
+        if (is_vrouter_multihomed(router) &&
+                (!strncmp(vif->vif_name, "vhost0", 5))) {
+            for (i = 0; i < VR_MAX_PHY_INF; i++) {
+                if(router->vr_eth_if[i]) {
+                    ret = hif_ops->hif_add_tun_tap(
+                        __vrouter_get_interface(router, i), req);
+                }
             }
         }
     }
