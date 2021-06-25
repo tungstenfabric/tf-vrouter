@@ -23,6 +23,7 @@
     X(INFO_LCORE, info_get_lcore, DPDK) \
     X(INFO_APP, info_get_app, DPDK) \
     X(INFO_DDP, info_get_ddp, DPDK) \
+    X(INFO_LINK, link_status_change, DPDK) \
     X(CONF_ADD_DDP, conf_add_ddp, DPDK) \
     X(CONF_DEL_DDP, conf_del_ddp, DPDK) \
     X(CONF_LOG, conf_log, DPDK) \

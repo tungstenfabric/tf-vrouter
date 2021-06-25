@@ -39,7 +39,7 @@ static int dump_marker = -1;
 static int buff_table_id, buffsz;
 
 static int help_set, ver_set, bond_set, lacp_set, mempool_set, stats_set,
-             xstats_set, lcore_set, app_set, ddp_set, sock_dir_set;
+             xstats_set, lcore_set, app_set, ddp_set, sock_dir_set, link_set;
 static unsigned int core = (unsigned)-1;
 static unsigned int stats_index = 0;
 /* For few  CLI, Inbuf has to send to vrouter for processing(i.e kind of filter
@@ -61,6 +61,7 @@ enum opt_index {
     APP_OPT_INDEX,
     DDP_OPT_INDEX,
     SOCK_DIR_OPT_INDEX,
+    LINK_OPT_INDEX,
     MAX_OPT_INDEX,
 };
 
@@ -77,6 +78,7 @@ static struct option long_options[] = {
     [DDP_OPT_INDEX]    =   {"ddp",    required_argument,        &ddp_set,      1},
     [BUFFSZ_OPT_INDEX]  =   {"buffsz",  required_argument,  &buffsz,        1},
     [SOCK_DIR_OPT_INDEX]  = {"sock-dir", required_argument, &sock_dir_set,  1},
+    [LINK_OPT_INDEX]    =   {"link", required_argument, &link_set,  1},
     [MAX_OPT_INDEX]     =   {NULL,    0,                  0,              0},
 };
 
@@ -111,7 +113,7 @@ static void
 validate_options(void)
 {
     if(!(ver_set || bond_set || lacp_set || mempool_set ||
-        stats_set || xstats_set || lcore_set || app_set|| ddp_set))
+        stats_set || xstats_set || lcore_set || app_set|| ddp_set || link_set))
         Usage();
 
     return;
@@ -233,6 +235,11 @@ parse_long_opts(int opt_index, char *opt_arg)
         buffsz = (unsigned)strtol(opt_arg, NULL, 0);
         break;
 
+    case LINK_OPT_INDEX:
+        msginfo = INFO_LINK;
+        vr_info_inbuf = opt_arg;
+        break;
+
     case HELP_OPT_INDEX:
     default:
         Usage();
@@ -278,7 +285,7 @@ main(int argc, char *argv[])
 
     parse_ini_file();
 
-    while (((opt = getopt_long(argc, argv, "-:hvbl:m:sn:d:cax::",
+    while (((opt = getopt_long(argc, argv, "-:hvbl:m:sn:p:d:cax::",
                         long_options, &option_index)) >= 0)) {
         switch (opt) {
         case 'v':
@@ -328,6 +335,12 @@ main(int argc, char *argv[])
         case 'a':
             app_set = 1;
             msginfo = INFO_APP;
+            break;
+
+        case 'p':
+            link_set = 1;
+            msginfo = INFO_LINK;
+            parse_long_opts(LINK_OPT_INDEX, optarg);
             break;
 
 	case 'd':

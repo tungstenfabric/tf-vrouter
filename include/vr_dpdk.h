@@ -807,6 +807,9 @@ uint64_t vr_dpdk_ethdev_rx_emulate(struct vr_interface *vif,
     struct rte_mbuf *pkts[VR_DPDK_RX_BURST_SZ], uint32_t *nb_pkts);
 /* Check if port_id is a bond slave. */
 bool vr_dpdk_ethdev_bond_port_match(uint8_t port_id, struct vr_dpdk_ethdev *ethdev);
+/* Send bond interface state to Agent. */
+void vr_dpdk_nl_send_bond_intf_state(struct vr_dpdk_bond_member_info *info,
+    unsigned type, uint8_t vif_idx);
 
 int vr_dpdk_table_mem_init(unsigned int, unsigned int, unsigned long,
         unsigned int, unsigned long);
