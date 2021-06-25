@@ -1229,3 +1229,62 @@ dpdk_info_get_ddp(VR_INFO_ARGS)
 
     return 0;
 }
+
+int
+dpdk_link_status_change(VR_INFO_ARGS) {
+    uint16_t port_id = VR_DPDK_INVALID_PORT_ID;
+    int i, idx = -1;
+    char args[7], oper[4];
+    char *ptr;
+    unsigned bond_type = VR_DPDK_BOND_MASTER;
+    struct vr_dpdk_bond_member_info member_info;
+    struct vrouter *router = vrouter_get(0);
+
+    VR_INFO_BUF_INIT();
+    memcpy(args, msg_req->inbuf, 7);
+
+    ptr = strtok(args, ",");
+    while (ptr != NULL) {
+        if (ptr[0] >= '0' && ptr[0] <= '2')
+            idx = atoi(&ptr[0]);
+        else
+            memcpy(oper, ptr, 4);
+        ptr = strtok(NULL, ",");
+    }
+
+    if (idx == -1) {
+        VI_PRINTF("Invalid vif ID!\n");
+        return -1;
+    }
+    for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
+        if (vr_dpdk.ethdevs[i].ethdev_vif_idx == idx) {
+            port_id = vr_dpdk.ethdevs[i].ethdev_port_id;
+            break;
+        }
+    }
+
+    if (port_id == VR_DPDK_INVALID_PORT_ID) {
+        RTE_LOG(ERR, VROUTER, "Port Id is invalid\n");
+        return -1;
+    }
+
+    /* Set msginfo */
+    memset(&member_info, 0, sizeof(member_info));
+    strcpy(member_info.intf_name, (char *)router->vr_interfaces[idx]->vif_name);
+
+    if(rte_eth_devices[port_id].device->driver->name != NULL)
+        snprintf(member_info.intf_drv_name, (VR_INTERFACE_NAME_LEN - 1),
+                "%s", rte_eth_devices[port_id].device->driver->name);
+
+    if (!strncmp(oper, "up", 2)) {
+        member_info.status = 1;
+    } else if (!strncmp(oper, "down", 4)) {
+        member_info.status = 0;
+    } else {
+        VI_PRINTF("Enter link operation 'up' or 'down'\n\n");
+        return -1;
+    }
+    vr_dpdk_nl_send_bond_intf_state(&member_info, bond_type, idx);
+
+    return 0;
+}

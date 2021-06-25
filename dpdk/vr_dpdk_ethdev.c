@@ -735,7 +735,7 @@ vr_dpdk_ethdev_bond_port_match(uint8_t port_id, struct vr_dpdk_ethdev *ethdev)
  * info->status 1 - up
  * Called when bond master/slave interface goes down or comes up
  */
-static void
+void
 vr_dpdk_nl_send_bond_intf_state(struct vr_dpdk_bond_member_info *info,
         unsigned type, uint8_t vif_idx)
 {
