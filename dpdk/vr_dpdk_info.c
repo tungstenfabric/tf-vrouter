@@ -145,7 +145,9 @@ dpdk_bond_info_show_slave(VR_INFO_ARGS, uint16_t port_id,
 
         ret = rte_eth_dev_get_name_by_port(slave_id, name);
         if (ret != 0) {
-            RTE_LOG(ERR, VROUTER, "Error getting bond interface name\n");
+            RTE_LOG(ERR, VROUTER, "%s: Error getting slave interface name "
+                                    "slave_id:%d \n", __func__, slave_id);
+            return VR_INFO_FAILED;
         }
 
 
@@ -284,7 +286,9 @@ dpdk_bond_info_show_master(VR_INFO_ARGS, uint16_t port_id,
 
     ret = rte_eth_bond_8023ad_slave_info(port_id, slave_id, &info);
     if (ret != 0) {
-        RTE_LOG(ERR, VROUTER, "Error getting bond interface name\n");
+        RTE_LOG(ERR, VROUTER, "%s: Error getting slave info bond:%d slave:%d\n",
+                                __func__, port_id, slave_id);
+        return VR_INFO_FAILED;
     }
 
     VI_PRINTF("System priority: %"PRIu16"\n", htons(info.actor.system_priority));
@@ -305,41 +309,51 @@ int
 dpdk_info_get_bond(VR_INFO_ARGS)
 {
     uint16_t port_id;
+    struct vr_dpdk_bond_port_list port_list;
     struct vr_dpdk_ethdev *ethdev;
-    int ret;
+    char name[VR_INTERFACE_NAME_LEN] = "";
+    int ret, i;
 
     /* If output buffer size(--buffsz) is sent from CLI, then allocate with
        that size else allocate with default size */
     VR_INFO_BUF_INIT();
-
-    /* Get the port_id for master, Incase of non-bond devices, it return here */
-    port_id = dpdk_find_port_id_by_drv_name();
-    if (port_id == VR_DPDK_INVALID_PORT_ID) {
-        RTE_LOG(ERR, VROUTER, "Port Id is invalid\n");
+    /* Get the port_id list for master, Incase of non-bond devices, it return here */
+    if (!dpdk_find_bond_port_id_list(&port_list)) {
+        RTE_LOG(ERR, VROUTER, "%s: Port Id list is invalid\n", __func__);
         return -1;
     }
 
-    /* Get the ethdev for master port. */
-    ethdev = &vr_dpdk.ethdevs[port_id];
-    if (ethdev->ethdev_ptr == NULL) {
-        RTE_LOG(ERR, VROUTER, "Ethdev not available\n");
+    VI_PRINTF("No. of bond id available: %d\n", port_list.intf_count);
+    for (i = 0; i < port_list.intf_count ; i++) {
+        port_id = port_list.intf_list[i];
+        /* Get the ethdev for master port. */
+        ethdev = &vr_dpdk.ethdevs[port_id];
+        if (ethdev == NULL ||
+            ethdev->ethdev_ptr == NULL) {
+            RTE_LOG(ERR, VROUTER, "%s: Ethdev not available port: %d\n",
+                                   __func__, port_id);
+            continue;
+        }
+
+        rte_eth_dev_get_name_by_port(port_id, name);
+        VI_PRINTF("=================================================\n");
+        VI_PRINTF("|| Bond : %s No. of bond slaves: %d ||\n",
+                    name, ethdev->ethdev_nb_slaves);
+        VI_PRINTF("=================================================\n");
+
+        ret = dpdk_bond_info_show_master(msg_req, port_id, ethdev);
+        if (ret < 0) {
+            RTE_LOG(ERR, VROUTER, "%s failed to show master info port_id:%d(ret:%d)\n",
+                    __func__, port_id, ret);
+        }
+
+        ret = dpdk_bond_info_show_slave(msg_req, port_id, ethdev);
+        if (ret < 0) {
+            RTE_LOG(ERR, VROUTER, "%s failed to show slave info port_id:%d(ret:%d)\n",
+                    __func__, port_id, ret);
+        }
     }
-
-    VI_PRINTF("No. of bond slaves: %d\n", ethdev->ethdev_nb_slaves);
-
-    ret = dpdk_bond_info_show_master(msg_req, port_id, ethdev);
-    if (ret < 0) {
-        goto err;
-    }
-
-    ret = dpdk_bond_info_show_slave(msg_req, port_id, ethdev);
-    if (ret < 0) {
-        goto err;
-    }
-
     return 0;
-err:
-    return ret;
 }
 
 static int
@@ -375,7 +389,8 @@ dpdk_info_get_lacp(VR_INFO_ARGS)
 
     uint16_t port_id, slave_id = 0;
     struct vr_dpdk_ethdev *ethdev;
-    int i, ret = 0;
+    struct vr_dpdk_bond_port_list port_list;
+    int i, j, ret = 0;
     char name[VR_INTERFACE_NAME_LEN] = "";
     struct rte_eth_bond_8023ad_slave_info info;
     uint64_t lacp_rx_cnt, lacp_tx_cnt;
@@ -383,83 +398,105 @@ dpdk_info_get_lacp(VR_INFO_ARGS)
 
     VR_INFO_BUF_INIT();
 
-    /* Get the port_id for master, Incase of non-bond devices,
-       it return here. */
-    port_id = dpdk_find_port_id_by_drv_name();
-    if (port_id == VR_DPDK_INVALID_PORT_ID) {
-        RTE_LOG(ERR, VROUTER, "Port Id is invalid\n");
-        return -1;
-    }
-
-    if (strcmp(msg_req->inbuf, "all") == 0) {
-        ret = display_lacp_conf(msg_req, port_id);
-
-        ethdev = &vr_dpdk.ethdevs[port_id];
-        if (ethdev->ethdev_ptr == NULL) {
-            RTE_LOG(ERR, VROUTER, "Ethdev not available\n");
-        }
-
-        /* Displaying bond slave inforamtion */
-        for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
-            slave_id = ethdev->ethdev_slaves[i];
-
-            ret = rte_eth_dev_get_name_by_port(slave_id, name);
-            if (ret != 0) {
-                RTE_LOG(ERR, VROUTER, "Error getting bond interface name\n");
-                return VR_INFO_FAILED;
-            }
-
-            VI_PRINTF("Slave Interface(%d): %s \n", i, name);
-
-            ret = rte_eth_bond_8023ad_slave_info(port_id, slave_id, &info);
-            if (ret == 0) {
-                VI_PRINTF("Details actor lacp pdu: \n");
-                ret = get_port_states(msg_req, info.actor_state);
-                if (ret < 0)
-                     goto err;
-
-                VI_PRINTF("Details partner lacp pdu: \n");
-                ret = get_port_states(msg_req, info.partner_state);
-                if (ret < 0)
-                    goto err;
-            } else {
-                VI_PRINTF("Link status: DOWN\n\n");
-            }
-        }
-
-        VI_PRINTF("LACP Packet Statistics:\n");
-        VI_PRINTF("\t\t Tx \t Rx\n");
-
-        for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
-            slave_id = ethdev->ethdev_slaves[i];
-
-            ret = rte_eth_dev_get_name_by_port(slave_id, name);
-            if (ret != 0) {
-                RTE_LOG(ERR, VROUTER, "Error getting bond interface name\n");
-            }
-
-            lacp_tx_cnt = rte_eth_bond_8023ad_lacp_tx_count(slave_id, 0);
-            if (lacp_tx_cnt < 0)
-                return VR_INFO_FAILED;
-
-            lacp_rx_cnt = rte_eth_bond_8023ad_lacp_rx_count(slave_id, 0);
-            if (lacp_rx_cnt < 0)
-                return VR_INFO_FAILED;
-
-            VI_PRINTF("%s\t%"PRId64"\t%"PRId64"\n", name, lacp_tx_cnt, lacp_rx_cnt);
-        }
-        VI_PRINTF("\n");
-    } else if (strcmp(msg_req->inbuf, "conf") == 0) {
-        ret = display_lacp_conf(msg_req, port_id);
-        if(ret < 0)
-            goto err;
-    } else {
+    /* expecting buf string to be either all or conf */
+    if ((strcmp(msg_req->inbuf, "all") &&
+        (strcmp(msg_req->inbuf, "conf")))) {
         RTE_LOG(ERR, VROUTER, "Invalid argument.\n");
         return -1;
     }
+
+    /* Get the port_id list for master, Incase of non-bond devices,
+       it return here. */
+    if (!dpdk_find_bond_port_id_list(&port_list)) {
+        RTE_LOG(ERR, VROUTER, "%s: Port Id is invalid\n", __func__);
+        return -1;
+    }
+
+    VI_PRINTF("No. of bond ids: %d\n", port_list.intf_count);
+    for (j = 0; j < port_list.intf_count; j++) {
+        port_id = port_list.intf_list[j];
+
+        rte_eth_dev_get_name_by_port(port_id, name);
+        VI_PRINTF("=======================================\n");
+        VI_PRINTF("|| Bond Interface(%d): %s ||\n", port_id, name);
+        VI_PRINTF("=======================================\n");
+
+        if (strcmp(msg_req->inbuf, "all") == 0) {
+            ret = display_lacp_conf(msg_req, port_id);
+
+            ethdev = &vr_dpdk.ethdevs[port_id];
+            if (ethdev == NULL ||
+                ethdev->ethdev_ptr == NULL) {
+                RTE_LOG(ERR, VROUTER, "%s: Ethdev not available port id: %d\n",
+                                       __func__, port_id);
+                continue;
+            }
+
+            /* Displaying bond slave inforamtion */
+            for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
+                slave_id = ethdev->ethdev_slaves[i];
+
+                ret = rte_eth_dev_get_name_by_port(slave_id, name);
+                if (ret != 0) {
+                    RTE_LOG(ERR, VROUTER, "%s: Error getting dev name "
+                            "port: %d slave: %d \n", __func__, port_id, slave_id);
+                    continue;
+                }
+
+                VI_PRINTF("Slave Interface(%d): %s \n", i, name);
+
+                ret = rte_eth_bond_8023ad_slave_info(port_id, slave_id, &info);
+                if (ret == 0) {
+                    VI_PRINTF("Details actor lacp pdu: \n");
+                    ret = get_port_states(msg_req, info.actor_state);
+                    if (ret < 0)
+                        RTE_LOG(ERR, VROUTER, "Failed to get stats for actor port: %d\n",
+                                               port_id);
+
+                    VI_PRINTF("Details partner lacp pdu: \n");
+                    ret = get_port_states(msg_req, info.partner_state);
+                    if (ret < 0)
+                        RTE_LOG(ERR, VROUTER, "Failed to get stats for partner port=%d\n",
+                                               port_id);
+                } else {
+                    VI_PRINTF("Port id: %d slave id: %d Link status: DOWN\n\n", port_id, slave_id);
+                }
+            }
+
+            VI_PRINTF("LACP Packet Statistics:\n");
+            VI_PRINTF("\t\t Tx \t Rx\n");
+
+            for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
+                slave_id = ethdev->ethdev_slaves[i];
+
+                ret = rte_eth_dev_get_name_by_port(slave_id, name);
+                if (ret != 0) {
+                    RTE_LOG(ERR, VROUTER, "%s: Error getting dev name id:%d\n",
+                                            __func__, slave_id);
+                }
+
+                lacp_tx_cnt = rte_eth_bond_8023ad_lacp_tx_count(slave_id, 0);
+                if (lacp_tx_cnt < 0) {
+                    RTE_LOG(ERR, VROUTER, "Failed to get lacp tx count  port=%d\n",
+                                           port_id);
+                    continue;
+                }
+
+                lacp_rx_cnt = rte_eth_bond_8023ad_lacp_rx_count(slave_id, 0);
+                if (lacp_rx_cnt < 0) {
+                    RTE_LOG(ERR, VROUTER, "Failed to get lacp rx count  port=%d\n",
+                                           port_id);
+                    continue;
+                }
+
+                VI_PRINTF("%s\t%"PRId64"\t%"PRId64"\n", name, lacp_tx_cnt, lacp_rx_cnt);
+            }
+            VI_PRINTF("\n");
+        } else if (strcmp(msg_req->inbuf, "conf") == 0) {
+            ret = display_lacp_conf(msg_req, port_id);
+        }
+    }
     return 0;
-err:
-    return ret;
 }
 
 static void
@@ -664,58 +701,72 @@ dpdk_info_get_stats(VR_INFO_ARGS)
 {
 
     uint16_t port_id, slave_id = 0;
-    int i, ret = 0;
+    int i, j, ret = 0;
     struct rte_eth_stats eth_stats;
     struct vr_dpdk_ethdev *ethdev;
+    struct vr_dpdk_bond_port_list port_list;
     char name[VR_INTERFACE_NAME_LEN] = "";
 
     VR_INFO_BUF_INIT();
 
-    port_id = dpdk_find_port_id_by_drv_name();
-    if (port_id == VR_DPDK_INVALID_PORT_ID) {
-        RTE_LOG(ERR, VROUTER, "Port Id is invalid\n");
-        return -1;
-    }
-
-    /* Get the ethdev for master port. */
-    ethdev = &vr_dpdk.ethdevs[port_id];
-    if (ethdev->ethdev_ptr == NULL) {
-        RTE_LOG(ERR, VROUTER, "Ethdev not available\n");
-    }
-
-    if (rte_eth_stats_get(port_id, &eth_stats) != 0) {
-        return -1;
-    }
-    if (strcmp(msg_req->inbuf, "eth") == 0) {
-        VI_PRINTF("Master Info: \n");
-        ret = display_eth_stats(msg_req, eth_stats);
-        if (ret < 0)
-            goto err;
-
-        /* Displaying slave stats */
-        for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
-            slave_id = ethdev->ethdev_slaves[i];
-            ret = rte_eth_dev_get_name_by_port(slave_id, name);
-            if (ret != 0) {
-                RTE_LOG(ERR, VROUTER, "Error getting bond interface name\n");
-                return -1;
-            }
-            VI_PRINTF("Slave Info(%s): \n", name);
-            if (rte_eth_stats_get(slave_id, &eth_stats) != 0) {
-                return -1;
-            }
-            ret = display_eth_stats(msg_req, eth_stats);
-            if(ret < 0)
-                goto err;
-        }
-    } else {
+    /* msg req buf is not eth, return */
+    if (strcmp(msg_req->inbuf, "eth")) {
         RTE_LOG(ERR, VROUTER, "Invalid argument.\n");
         return -1;
     }
 
+    /* Get the port_id list for master, Incase of non-bond devices,
+       it return here.
+     */
+    if (!dpdk_find_bond_port_id_list(&port_list)) {
+        RTE_LOG(ERR, VROUTER, "%s: Port Id is invalid\n", __func__);
+        return -1;
+    }
+
+    VI_PRINTF("No. of bond ids: %d\n", port_list.intf_count);
+    for (j = 0; j < port_list.intf_count; j++) {
+        port_id = port_list.intf_list[j];
+        /* Get the ethdev for master port. */
+        ethdev = &vr_dpdk.ethdevs[port_id];
+        if (ethdev == NULL ||
+            ethdev->ethdev_ptr == NULL) {
+            RTE_LOG(ERR, VROUTER, "%s: Ethdev not available port id: %d\n",
+                                  __func__, port_id);
+            continue;
+        }
+
+        if (rte_eth_stats_get(port_id, &eth_stats) != 0) {
+            continue;
+        }
+
+        rte_eth_dev_get_name_by_port(port_id, name);
+        if (strcmp(msg_req->inbuf, "eth") == 0) {
+            VI_PRINTF("Master %s Info: No. of slaves: %d\n",
+                       name, ethdev->ethdev_nb_slaves);
+            VI_PRINTF("============================================\n");
+            ret = display_eth_stats(msg_req, eth_stats);
+
+            /* Displaying slave stats */
+            for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
+                slave_id = ethdev->ethdev_slaves[i];
+                ret = rte_eth_dev_get_name_by_port(slave_id, name);
+                if (ret != 0) {
+                    RTE_LOG(ERR, VROUTER, "%s: Error getting dev name "
+                            "port: %d slave: %d\n", __func__, port_id, slave_id);
+                    continue;
+                }
+                VI_PRINTF("Slave Info(%s): \n", name);
+                if (rte_eth_stats_get(slave_id, &eth_stats) != 0) {
+                    RTE_LOG(ERR, VROUTER, "%s: Error getting interface stats "
+                            "port: %d slave: %d\n", __func__, port_id, slave_id);
+                    continue;
+                }
+                ret = display_eth_stats(msg_req, eth_stats);
+            }
+        }
+    }
+
     return 0;
-err:
-    return ret;
 }
 
 static int
@@ -856,109 +907,131 @@ dpdk_info_get_xstats(VR_INFO_ARGS)
 {
 
     uint16_t port_id, slave_id = 0;
-    int i, reqd_interface, ret = 0, slave = 0, xstats_count = -1;
+    int i, j, reqd_interface, ret = 0, slave = 0, xstats_count = -1;
     char name[VR_INTERFACE_NAME_LEN] = "";
     struct vrouter *router = vrouter_get(0);
     struct vr_dpdk_ethdev *ethdev = NULL;
+    struct vr_dpdk_bond_port_list port_list;
     bool is_all = false;
 
     VR_INFO_BUF_INIT();
 
-    port_id = dpdk_find_port_id_by_drv_name();
     is_all = !strcmp(msg_req->inbuf, "all");
 
-    if (port_id != VR_DPDK_INVALID_PORT_ID) {
-
-        /* Get the ethdev for master port. */
-        ethdev = &vr_dpdk.ethdevs[port_id];
-        if (ethdev->ethdev_ptr == NULL) {
-            RTE_LOG(ERR, VROUTER, "Ethdev not available\n");
-            return -1;
-        }
-
-        if (!strcmp(msg_req->inbuf, "") || is_all) {
-            reqd_interface = 0;
-        } else if (!strcmp(msg_req->inbuf, "0") ||
-            (atoi(msg_req->inbuf) > 0 &&
-                atoi(msg_req->inbuf) <= ethdev->ethdev_nb_slaves)) {
-            reqd_interface = 1;
-        } else {
-            VI_PRINTF("There are only %d slaves available.\n\n",
-                           ethdev->ethdev_nb_slaves);
-            return 0;
-        }
-
-        xstats_count = rte_eth_xstats_get_names_by_id(port_id, NULL, 0, NULL);
-        if (xstats_count < 0) {
-            RTE_LOG(ERR, VROUTER, "Cannot get xstats count\n");
-            return -1;
-        }
-
-        switch (reqd_interface) {
-        case 0:
-            VI_PRINTF("Master Info: \n");
-            ret = display_xstats(msg_req, port_id, xstats_count, is_all);
-            if (ret < 0)
-                goto err;
-
-            /* Displaying slave stats */
-            for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
-                slave_id = ethdev->ethdev_slaves[i];
-                ret = rte_eth_dev_get_name_by_port(slave_id, name);
-                if (ret != 0) {
-                    RTE_LOG(ERR, VROUTER, "Error getting bond interface name\n");
-                    return -1;
-                }
-                VI_PRINTF("Slave Info(%d):%s \n", i, name);
-
-                xstats_count = rte_eth_xstats_get_names_by_id(slave_id, NULL,
-                                                                 0, NULL);
-                if (xstats_count < 0) {
-                    RTE_LOG(ERR, VROUTER, "Cannot get xstats count\n");
-                    return -1;
-                }
-                ret = display_xstats(msg_req, slave_id, xstats_count, is_all);
-                if (ret < 0)
-                    goto err;
+    /* Get the port_id list for master, Incase of non-bond devices,
+       it return here. */
+    if (dpdk_find_bond_port_id_list(&port_list)) {
+        VI_PRINTF("No. of bond ids: %d\n", port_list.intf_count);
+        for (j = 0; j < port_list.intf_count; j++) {
+            port_id = port_list.intf_list[j];
+            /* Get the ethdev for master port. */
+            ethdev = &vr_dpdk.ethdevs[port_id];
+            if (ethdev->ethdev_ptr == NULL) {
+                RTE_LOG(ERR, VROUTER, "Ethdev not available for port=%d\n", port_id);
+                continue;
             }
-            break;
-        case 1:
-            if (!strcmp(msg_req->inbuf, "0")) {
-                VI_PRINTF("Master Info: \n");
-                ret = display_xstats(msg_req, port_id, xstats_count, is_all);
-                if (ret < 0)
-                    goto err;
 
+            rte_eth_dev_get_name_by_port(port_id, name);
+            VI_PRINTF("=======================================\n");
+            VI_PRINTF("|| Bond Interface(%d): %s ||\n", port_id, name);
+            VI_PRINTF("=======================================\n");
+
+            if (!strcmp(msg_req->inbuf, "") || is_all) {
+                reqd_interface = 0;
+            } else if (!strcmp(msg_req->inbuf, "0") ||
+                    (atoi(msg_req->inbuf) > 0 &&
+                     atoi(msg_req->inbuf) <= ethdev->ethdev_nb_slaves)) {
+                reqd_interface = 1;
             } else {
-                slave = atoi(msg_req->inbuf) - 1;
-                slave_id = ethdev->ethdev_slaves[slave];
-                ret = rte_eth_dev_get_name_by_port(slave_id, name);
-                if (ret != 0) {
-                    RTE_LOG(ERR, VROUTER, "Error getting bond interface name\n");
-                    return -1;
-                }
-                VI_PRINTF("Slave Info(%d):%s \n", slave, name);
-                xstats_count = rte_eth_xstats_get_names_by_id(slave_id, NULL,
-                                                                0, NULL);
-                if (xstats_count < 0) {
-                    RTE_LOG(ERR, VROUTER, "Cannot get xstats count\n");
-                    return -1;
-                }
-                ret = display_xstats(msg_req, slave_id, xstats_count, is_all);
-                if (ret < 0)
-                    goto err;
+                VI_PRINTF("There are only %d slaves available.\n\n",
+                        ethdev->ethdev_nb_slaves);
+                continue;
             }
-            break;
+
+            xstats_count = rte_eth_xstats_get_names_by_id(port_id, NULL, 0, NULL);
+            if (xstats_count < 0) {
+                RTE_LOG(ERR, VROUTER, "Cannot get xstats count port=%d\n", port_id);
+                continue;
+            }
+
+            switch (reqd_interface) {
+                case 0:
+                    VI_PRINTF("Master Info: \n");
+                    ret = display_xstats(msg_req, port_id, xstats_count, is_all);
+                    if (ret < 0) {
+                        RTE_LOG(ERR, VROUTER, "Failed to display xstats port=%d\n", port_id);
+                        continue;
+                    }
+
+                    /* Displaying slave stats */
+                    for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
+                        slave_id = ethdev->ethdev_slaves[i];
+                        ret = rte_eth_dev_get_name_by_port(slave_id, name);
+                        if (ret != 0) {
+                            RTE_LOG(ERR, VROUTER, "%s: Error getting dev  name "
+                                    "port=%d slave=%d\n", __func__, port_id, slave_id);
+                            continue;
+                        }
+                        VI_PRINTF("Slave Info(%d):%s \n", i, name);
+
+                        xstats_count = rte_eth_xstats_get_names_by_id(slave_id, NULL,
+                                0, NULL);
+                        if (xstats_count < 0) {
+                            RTE_LOG(ERR, VROUTER, "Cannot get xstats count "
+                                    "port=%d slave=%d\n", port_id, slave_id);
+                            continue;
+                        }
+                        ret = display_xstats(msg_req, slave_id, xstats_count, is_all);
+                        if (ret < 0) {
+                            RTE_LOG(ERR, VROUTER, "Failed to display xstats "
+                                    "port=%d slave=%d\n", port_id, slave_id);
+                            continue;
+                        }
+                    }
+                    break;
+                case 1:
+                    if (!strcmp(msg_req->inbuf, "0")) {
+                        VI_PRINTF("Master Info: \n");
+                        ret = display_xstats(msg_req, port_id, xstats_count, is_all);
+                        if (ret < 0)
+                            continue;
+
+                    } else {
+                        slave = atoi(msg_req->inbuf) - 1;
+                        slave_id = ethdev->ethdev_slaves[slave];
+                        ret = rte_eth_dev_get_name_by_port(slave_id, name);
+                        if (ret != 0) {
+                            RTE_LOG(ERR, VROUTER, "%s: Error getting bond interface namei "
+                                    "port=%d slave=%d\n", __func__, port_id, slave_id);
+                            continue;
+                        }
+                        VI_PRINTF("Slave Info(%d):%s \n", slave, name);
+                        xstats_count = rte_eth_xstats_get_names_by_id(slave_id, NULL,
+                                0, NULL);
+                        if (xstats_count < 0) {
+                            RTE_LOG(ERR, VROUTER, "Cannot get xstats count "
+                                    "port=%d slave=%d\n", port_id, slave_id);
+                            continue;
+                        }
+                        ret = display_xstats(msg_req, slave_id, xstats_count, is_all);
+                        if (ret < 0)
+                            continue;
+                    }
+                    break;
+            }
         }
-    } else {
+    }else {
         /* if bond is not configured */
         if (strcmp(msg_req->inbuf, "") == 0 || is_all) {
             if (router->vr_eth_if[0]) {
                 ethdev = (struct vr_dpdk_ethdev* ) router->vr_eth_if[0]->vif_os;
             }
-            if (ethdev) {
-                port_id = ethdev->ethdev_port_id;
+            if (!ethdev) {
+                RTE_LOG(ERR, VROUTER, "%s: ethdev null\n", __func__);
+                return -1;
             }
+
+            port_id = ethdev->ethdev_port_id;
             xstats_count = rte_eth_xstats_get_names_by_id(port_id, NULL,
                                                             0, NULL);
             if (xstats_count < 0) {
@@ -1013,102 +1086,79 @@ dpdk_info_get_app(VR_INFO_ARGS)
 {
 
     uint16_t port_id;
-    FILE *intf = NULL, *bond_file = NULL;
-    char filepath[] = "/var/run/vrouter/", tempbuf[LINE], tempbuf2[LINE],
-         *bond_file_line, *slave_names;
     struct vr_dpdk_ethdev *ethdev = NULL;
     struct rte_eth_dev_info dev_info;
     struct vr_dpdk_tapdev *tapdev = vr_dpdk.tapdevs;
+    struct vr_dpdk_bond_port_list port_list;
     size_t soff;
     struct vrouter *router = vrouter_get(0);
     int i, j = 0, k = 0;
     struct vr_interface *vif;
     bool monitoring_intf = false, sriov_flag = false;
+    char name[VR_INTERFACE_NAME_LEN] = "";
 
     VR_INFO_BUF_INIT();
 
     VI_PRINTF("No. of lcores: %d \n", vr_num_cpus);
     VI_PRINTF("No. of forwarding lcores: %d \n", vr_dpdk.nb_fwd_lcores);
 
-    /* Get the port_id for master, Incase of non-bond devices,
-       port_id is VR_DPDK_INVALID_PORT_ID */
-    port_id = dpdk_find_port_id_by_drv_name();
-    if (port_id == VR_DPDK_INVALID_PORT_ID) {
-        RTE_LOG(ERR, VROUTER, "Port Id is invalid\n");
-    }
-    ethdev = &vr_dpdk.ethdevs[port_id];
-    if (ethdev->ethdev_ptr == NULL) {
-        RTE_LOG(ERR, VROUTER, "Ethdev not available\n");
-    }
-    snprintf(tempbuf, sizeof(tempbuf), "%s%s", filepath, "nic");
-    intf = fopen(tempbuf, "r");
-    if (intf == NULL){
-        RTE_LOG(ERR, VROUTER, "Nic file does not exits.\n");
+    /* Get the port_id list for master, Incase of non-bond devices, */
+    if (!dpdk_find_bond_port_id_list(&port_list)) {
+        RTE_LOG(ERR, VROUTER, "%s: Port Id list is invalid\n", __func__);
         return -1;
     }
-    if (fgets (tempbuf, sizeof(tempbuf), intf)){
-        VI_PRINTF("Fabric interface: %s", tempbuf);
-        if (strstr(tempbuf, "bond")){
-            snprintf(tempbuf2, strlen(tempbuf), "%s", tempbuf);
-            snprintf(tempbuf, sizeof(tempbuf), "%s%s%s", filepath,
-                        tempbuf2, "_bond");
-            bond_file = fopen(tempbuf, "r");
-            if (bond_file == NULL){
-                RTE_LOG(ERR, VROUTER, "Bond file does not exists.\n");
-                if(intf)
-                    fclose(intf);
-                return -1;
-            }
-            fgets (tempbuf, sizeof(tempbuf), bond_file);
-            bond_file_line = strtok(tempbuf, " ");
-            while(j < 2){
-                bond_file_line = strtok(NULL, " ");
-                j++;
-            }
-            snprintf(tempbuf, sizeof(tempbuf), "%s", bond_file_line);
-            slave_names = strtok(tempbuf, ",");
-            for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
-                VI_PRINTF("Slave interface(%d): %s \n", i, slave_names);
-                slave_names = strtok(NULL, ",");
-            }
-        }
-    }
+
     /* Display vlan information */
     if (vr_dpdk.vlan_vif){
         VI_PRINTF("Vlan vif: %s \n", vr_dpdk.vlan_vif->vif_name);
         VI_PRINTF("Vlan name: %s \n", vr_dpdk.vlan_name);
         VI_PRINTF("Vlan tag: %d \n", vr_dpdk.vlan_tag);
     }
-    /* Display Ethdev information */
-    if (ethdev->ethdev_ptr) {
-        rte_eth_dev_info_get(port_id, &dev_info);
-        VI_PRINTF("Ethdev (Master):\n");
-        VI_PRINTF("\tMax rx queues: %"PRIu16"\n", dev_info.max_rx_queues);
-        VI_PRINTF("\tMax tx queues: %"PRIu16"\n", dev_info.max_tx_queues);
-        VI_PRINTF("\tEthdev nb rx queues: %"PRIu16"\n",
-                       ethdev->ethdev_nb_rx_queues);
-        VI_PRINTF("\tEthdev nb tx queues: %"PRIu16"\n",
-                       ethdev->ethdev_nb_tx_queues);
-        VI_PRINTF("\tEthdev nb rss queues: %"PRIu16"\n",
-                       ethdev->ethdev_nb_rss_queues);
-        VI_PRINTF("\tEthdev reta size: %"PRIu16"\n", ethdev->ethdev_reta_size);
-        VI_PRINTF("\tEthdev port id: %"PRIu16"\n", ethdev->ethdev_port_id);
-        VI_PRINTF("\tEthdev nb slaves: %d \n", ethdev->ethdev_nb_slaves);
-        VI_PRINTF("\tEthdev slaves: ");
-        for (i = 0; i < VR_DPDK_BOND_MAX_SLAVES; i++){
-            VI_PRINTF("%"PRIu16 " ", ethdev->ethdev_slaves[i]);
+
+    VI_PRINTF("No. of bond id available: %d\n", port_list.intf_count);
+    for (j = 0; j < port_list.intf_count ; j++) {
+        port_id = port_list.intf_list[j];
+        ethdev = &vr_dpdk.ethdevs[port_id];
+        if (ethdev == NULL ||
+            ethdev->ethdev_ptr == NULL) {
+            RTE_LOG(ERR, VROUTER, "%s: Ethdev not available\n", __func__);
+            continue;
         }
-        VI_PRINTF("\n\n");
+
+        /* Display Ethdev information */
+        if (ethdev->ethdev_ptr) {
+            rte_eth_dev_get_name_by_port(port_id, name);
+            rte_eth_dev_info_get(port_id, &dev_info);
+            VI_PRINTF("Ethdev (Master: %s):\n", name);
+            VI_PRINTF("================================\n");
+            VI_PRINTF("\tMax rx queues: %"PRIu16"\n", dev_info.max_rx_queues);
+            VI_PRINTF("\tMax tx queues: %"PRIu16"\n", dev_info.max_tx_queues);
+            VI_PRINTF("\tEthdev nb rx queues: %"PRIu16"\n",
+                    ethdev->ethdev_nb_rx_queues);
+            VI_PRINTF("\tEthdev nb tx queues: %"PRIu16"\n",
+                    ethdev->ethdev_nb_tx_queues);
+            VI_PRINTF("\tEthdev nb rss queues: %"PRIu16"\n",
+                    ethdev->ethdev_nb_rss_queues);
+            VI_PRINTF("\tEthdev reta size: %"PRIu16"\n", ethdev->ethdev_reta_size);
+            VI_PRINTF("\tEthdev port id: %"PRIu16"\n", ethdev->ethdev_port_id);
+            VI_PRINTF("\tEthdev nb slaves: %d \n", ethdev->ethdev_nb_slaves);
+            VI_PRINTF("\tEthdev slaves: ");
+            for (i = 0; i < VR_DPDK_BOND_MAX_SLAVES; i++){
+                VI_PRINTF("%"PRIu16 " ", ethdev->ethdev_slaves[i]);
+            }
+            VI_PRINTF("\n\n");
+        }
+
+        for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
+            VI_PRINTF("Ethdev (Slave %d): %s\n", i, rte_eth_devices[i].data->name);
+            VI_PRINTF("\tNb rx queues: %"PRIu16"\n",
+                    rte_eth_devices[i].data->nb_rx_queues);
+            VI_PRINTF("\tNb tx queues: %"PRIu16"\n",
+                    rte_eth_devices[i].data->nb_tx_queues);
+            VI_PRINTF("\tEthdev reta size: %"PRIu16"\n\n", dev_info.reta_size);
+        }
     }
 
-    for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
-        VI_PRINTF("Ethdev (Slave %d): %s\n", i, rte_eth_devices[i].data->name);
-        VI_PRINTF("\tNb rx queues: %"PRIu16"\n",
-                       rte_eth_devices[i].data->nb_rx_queues);
-        VI_PRINTF("\tNb tx queues: %"PRIu16"\n",
-                       rte_eth_devices[i].data->nb_tx_queues);
-        VI_PRINTF("\tEthdev reta size: %"PRIu16"\n\n", dev_info.reta_size);
-    }
     /* Display Tapdev information */
     if(tapdev) {
         VI_PRINTF("Tapdev:\n");
@@ -1159,16 +1209,6 @@ dpdk_info_get_app(VR_INFO_ARGS)
     }
 
     VI_PRINTF("\n");
-
-    if(intf) {
-        fclose(intf);
-        intf = NULL;
-    }
-
-    if(bond_file) {
-        fclose(bond_file);
-        bond_file = NULL;
-    }
 
     return 0;
 }

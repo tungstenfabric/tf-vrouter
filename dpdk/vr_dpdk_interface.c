@@ -320,11 +320,65 @@ dpdk_find_port_id_by_pci_addr(const struct rte_pci_addr *addr)
     return VR_DPDK_INVALID_PORT_ID;
 }
 
+/* Function to check if sub string is found.
+   In case of bond with vlan vif name will have (bond0.101)
+   and the eth dev will have name (eth_bond_bond0), so
+   need to compore bond0 instead of bond0.101 with eth_bond_bond0
+   to get device port id 0
+ */
 uint8_t
-dpdk_find_port_id_by_drv_name(void)
+find_sub_str(const char *dest, const char *src)
+{
+    char str[10];
+    memcpy(str, src, 5);
+
+    if(strstr(dest, str))
+        return 1;
+
+    return 0;
+}
+
+uint8_t
+dpdk_find_port_id_by_vif_name(struct vr_interface *vif)
 {
     uint8_t i;
+    struct rte_ether_addr *mac_addr;
 
+    VR_DPDK_RTE_ETH_FOREACH_DEV(i) {
+        if (rte_eth_devices[i].device == NULL)
+            continue;
+
+        if (!rte_eth_dev_is_valid_port(i))
+            continue;
+
+        if (rte_eth_devices[i].data == NULL)
+            continue;
+
+        if (strncmp((const char *)vif->vif_name, "bond", 4) == 0) {
+            if (find_sub_str(rte_eth_devices[i].data->name, (const char *)vif->vif_name)) {
+                return i;
+            }
+        } else if (rte_eth_devices[i].data->mac_addrs != NULL) {
+            mac_addr = rte_eth_devices[i].data->mac_addrs;
+            if (memcmp(vif->vif_mac, mac_addr->addr_bytes, RTE_ETHER_ADDR_LEN) == 0) {
+                return i;
+            }
+        }
+    }
+
+    return VR_DPDK_INVALID_PORT_ID;
+}
+
+/* function will return the bond port ids created.
+   for L3MH we will have more then one bond ports
+ */
+bool
+dpdk_find_bond_port_id_list(struct vr_dpdk_bond_port_list *bond_list)
+{
+    uint8_t i;
+    bool bond_port_id_found = false;
+
+    memset(bond_list, 0, sizeof(struct vr_dpdk_bond_port_list));
     VR_DPDK_RTE_ETH_FOREACH_DEV(i) {
         if (rte_eth_devices[i].device == NULL)
             continue;
@@ -336,11 +390,13 @@ dpdk_find_port_id_by_drv_name(void)
             rte_eth_devices[i].device->driver->name == NULL)
             continue;
 
-        if (strcmp(rte_eth_devices[i].device->driver->name, "net_bonding") == 0)
-            return i;
+        if (strcmp(rte_eth_devices[i].device->driver->name, "net_bonding") == 0) {
+            bond_list->intf_list[bond_list->intf_count++] = i;
+            bond_port_id_found = true;
+        }
     }
 
-    return VR_DPDK_INVALID_PORT_ID;
+    return bond_port_id_found;
 }
 
 static inline void
@@ -726,9 +782,11 @@ dpdk_fabric_if_add(struct vr_interface *vif)
             return -ENOENT;
         }
 
-        port_id = dpdk_find_port_id_by_drv_name();
-        if (port_id == VR_DPDK_INVALID_PORT_ID)
-            port_id = vif->vif_os_idx;
+        port_id = dpdk_find_port_id_by_vif_name(vif);
+        if (port_id == VR_DPDK_INVALID_PORT_ID) {
+            RTE_LOG(ERR, VROUTER, "%s: Port Id is invalid\n", __func__);
+            return -ENOENT;
+        }
 
         rte_eth_macaddr_get(port_id, &mac_addr);
         RTE_LOG(INFO, VROUTER, "Adding vif %u (gen. %u) eth device %" PRIu8
@@ -736,8 +794,7 @@ dpdk_fabric_if_add(struct vr_interface *vif)
             vif->vif_idx, vif->vif_gen, port_id,
             MAC_VALUE(mac_addr.addr_bytes), MAC_VALUE(vif->vif_mac));
     } else {
-        dpdk_dbdf_to_pci(vif->vif_os_idx, &pci_address);
-        port_id = dpdk_find_port_id_by_pci_addr(&pci_address);
+        port_id = dpdk_find_port_id_by_vif_name(vif);
         if (port_id == VR_DPDK_INVALID_PORT_ID) {
             RTE_LOG(ERR, VROUTER, "Error adding vif %u eth device %s:"
                 " no port ID found for PCI " PCI_PRI_FMT "\n",

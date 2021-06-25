@@ -2099,6 +2099,11 @@ vrouter_add_interface(struct vr_interface *vif, vr_interface_req *vifr)
         return -EEXIST;
 
     if (vif->vif_type == VIF_TYPE_HOST) {
+        if (router->vr_num_phy_interfaces == 0) {
+            vr_printf("%s: Num of phy interfaces is 0 \n",
+                    __func__);
+            return -ENODEV;
+        }
         for (i = 0; i < router->vr_num_phy_interfaces; i++) {
 #ifdef PLATFORM_IS_DPDK
             eth_vif[i] = __vrouter_get_interface(router, i);
