@@ -1307,12 +1307,8 @@ vr_dpdk_ethdev_rx_emulate(struct vr_interface *vif,
     }
 
     /* emulate VLAN stripping if needed */
-    if (unlikely (vr_dpdk.vlan_tag != VLAN_ID_INVALID
-            && vif_is_fabric(vif)
-            && ((vif->vif_flags & VIF_FLAG_VLAN_OFFLOAD) == 0))) {
-        for (i = 0; i < *nb_pkts; i++) {
-            rte_vlan_strip(pkts[i]);
-        }
+    for (i = 0; i < *nb_pkts; i++) {
+        rte_vlan_strip(pkts[i]);
     }
 
     /* indicate packets from namespace don't have checksum calculated */
