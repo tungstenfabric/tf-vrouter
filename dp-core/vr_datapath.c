@@ -522,7 +522,7 @@ vr_pkt_type(struct vr_packet *pkt, unsigned short offset,
          * vlan tag. Customers vlan tag, Vrouter is not bothered off
          */
         if (fmd && (fmd->fmd_vlan == VLAN_ID_INVALID))
-            fmd->fmd_vlan = vlan->vlan_tag & 0xFFF;
+            fmd->fmd_vlan = ntohs(vlan->vlan_tag) & 0xFFF;
         eth_proto = ntohs(vlan->vlan_proto);
         pull_len += sizeof(*vlan);
     }
