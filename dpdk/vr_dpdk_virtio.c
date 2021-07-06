@@ -834,6 +834,12 @@ dpdk_virtio_create_mss_sized_mbuf_chain(struct rte_mbuf *mbuf,
     if (mbuf->nb_segs > 1)
         header_len = 0;
 
+    /* Cannot compute checksum of odd sized mbufs in chain,
+     * so make it even sized
+     */
+    if (mss & 1)
+        mbuf->tso_segsz = mss -=1;
+
     while (pktlen_to_copy > 0) {
         copy_len = mss + header_len - last_mbuf->data_len;
         header_len = 0;
