@@ -1487,7 +1487,7 @@ eth_mac_request(struct vr_interface *vif, struct vr_packet *pkt,
         struct vr_forwarding_md *fmd, unsigned char *dmac)
 {
     bool underlay_arp = false, underlay_ipv6 = false;
-    struct vr_arp *sarp;
+    struct vr_arp *sarp = NULL;
     struct vr_icmp *icmp6;
     bool is_ipv6_nd_packet = false;
     mac_response_t mr;
@@ -3711,8 +3711,8 @@ vr_interface_clear_stats(vr_interface_req *r)
             response->vifr_name = vr_zalloc(VR_INTERFACE_NAME_LEN,
                     VR_INTERFACE_REQ_NAME_OBJECT);
             if (response->vifr_name) {
-                snprintf(response->vifr_name, (sizeof(vif->vif_name) - 1),
-                        "%s", vif->vif_name);
+                memcpy(response->vifr_name, vif->vif_name,
+                    MINIMUM(sizeof(vif->vif_name), VR_INTERFACE_NAME_LEN) - 1);
             } else {
                 ret = -ENOMEM;
                 goto exit_get;
