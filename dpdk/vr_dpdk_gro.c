@@ -532,6 +532,11 @@ dpdk_gro_process(struct vr_packet *pkt, struct vr_interface *vif, bool l2_pkt)
         flush = 1;
     }
 
+    /* Cannot handle odd size segments */
+    if (tcp_data_len & 1) {
+        flush = 1;
+    }
+
     if (likely(flush == 0)) {
         /* Check TCP checksum */
         tcph->tcp_csum = 0;
