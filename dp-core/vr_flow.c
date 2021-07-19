@@ -1098,6 +1098,7 @@ vr_flow_action(struct vrouter *router, struct vr_flow_entry *fe,
 
     src_nh = __vrouter_get_nexthop(router, fe->fe_src_nh_index);
     if (!src_nh) {
+        PKT_LOG(VP_DROP_INVALID_NH, pkt, 0, VR_FLOW_C, __LINE__);
         vr_pfree(pkt, VP_DROP_INVALID_NH);
         goto res;
     }
