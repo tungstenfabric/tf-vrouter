@@ -216,6 +216,8 @@ extern unsigned vr_packet_sz;
 #define VR_DPDK_SLEEP_SERVICE_US    100
 /* Invalid port ID */
 #define VR_DPDK_INVALID_PORT_ID     0xFF
+/* L3MH supports 3 bond interfaces */
+#define VR_DPDK_BOND_PORT_IDS     3
 /* Invalid queue ID */
 #define VR_DPDK_INVALID_QUEUE_ID    0xFFFF
 /* Socket connection retry timeout in seconds (use power of 2) */
@@ -358,6 +360,14 @@ struct vr_dpdk_bond_member_info {
     char intf_name[VR_INTERFACE_NAME_LEN];
     char intf_drv_name[VR_INTERFACE_NAME_LEN];
     bool status;
+};
+
+/* structure used to store the list of availbale port_ids
+   for net_bonding. For L3MH we will have more then 1 bond interface.
+ */
+struct vr_dpdk_bond_port_list {
+    uint8_t intf_list[VR_DPDK_BOND_PORT_IDS];
+    uint8_t intf_count;
 };
 
 /* Maximum number of IO lcores */
@@ -1044,7 +1054,12 @@ void vr_dpdk_init_cpuid(struct vr_cpu_type_t *cpu);
 /*
  * Get bond interface port id by drv_name
  */
-uint8_t dpdk_find_port_id_by_drv_name(void);
+uint8_t dpdk_find_port_id_by_vif_name(struct vr_interface *);
+
+/*
+ * Get all bond interface port ids
+ */
+bool dpdk_find_bond_port_id_list(struct vr_dpdk_bond_port_list *);
 
 /*
  * Get DPDK info

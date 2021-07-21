@@ -836,7 +836,8 @@ vr_dpdk_bond_send_port_info(uint16_t port_id, uint8_t vif_idx)
 
     ret = rte_eth_dev_get_name_by_port(port_id, member_info.intf_name);
     if(ret != 0)
-        RTE_LOG(ERR, VROUTER, "Error getting bond interface name\n");
+        RTE_LOG(ERR, VROUTER, "%s: Error getting bond interface name "
+                            "port_id:%d\n", __func__, port_id);
 
     if(rte_eth_devices[port_id].device->driver->name != NULL)
         snprintf(member_info.intf_drv_name, (VR_INTERFACE_NAME_LEN - 1),
@@ -938,7 +939,8 @@ vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *ethdev, struct rte_eth_conf *dev_conf
         return ret;
     }
 
-    if (dpdk_find_port_id_by_drv_name() != VR_DPDK_INVALID_PORT_ID) {
+    if (rte_eth_devices[port_id].device->driver != NULL &&
+       (strcmp(rte_eth_devices[port_id].device->driver->name, "net_bonding") == 0)) {
         dpdk_ethdev_bond_info_update(ethdev);
 
     }
