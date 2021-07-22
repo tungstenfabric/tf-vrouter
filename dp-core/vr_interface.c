@@ -2544,9 +2544,6 @@ vr_interface_add(vr_interface_req *req, bool need_response)
 #ifdef PLATFORM_IS_DPDK
                         ret = hif_ops->hif_add_tun_tap(
                             __vrouter_get_interface(router, i), req);
-#else
-                        ret = hif_ops->hif_add_tap(__vrouter_get_interface(router, i),
-                                                    req);
 #endif
 
                         if (hif_ops->hif_lock)
@@ -2557,11 +2554,6 @@ vr_interface_add(vr_interface_req *req, bool need_response)
                                     router, VR_TOTAL_INTERFACES + i));
                         }
 #else
-                        if(ret) {
-                            ret = hif_ops->hif_del_tap(
-                                    __vrouter_get_interface(router, i));
-                        }
-
                         /*
                          * eth_bridge is not assigned to vhost0 in
                          * case of l3mh in dpdk mode
