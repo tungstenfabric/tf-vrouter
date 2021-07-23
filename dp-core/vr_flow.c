@@ -555,6 +555,8 @@ vr_flow_get_free_entry(struct vrouter *router, struct vr_flow *key, uint8_t type
             if (!fe->fe_hold_list) {
                 vr_flow_reset_entry(router, fe);
                 fe = NULL;
+                vr_printf("%s:%d flow reset\n", __func__, __LINE__);
+                return fe;
             } else {
                 fe->fe_hold_list->vfq_index = *fe_index;
             }
@@ -1672,7 +1674,11 @@ vr_flow_allow_new_flow(struct vrouter *router, struct vr_packet *pkt,
     unsigned int hold_count;
     struct vr_flow_table_info *infop = router->vr_flow_table_info;
 
-
+    if(!infop) {
+        vr_printf("vrouter: vr_flow_table_info is NULL @ %s:%d\n",
+                __FILE__, __LINE__);
+        return false;
+    }
     *drop_reason = VP_DROP_FLOW_UNUSABLE;
     if (burst)
         *burst = false;
@@ -1751,6 +1757,29 @@ vr_flow_lookup(struct vrouter *router, struct vr_flow *key,
      * Store the source of the packet which gets used incase of Ecmp
      * Source
      */
+    if(!pkt->vp_if) {
+       vr_printf("vp_rx_pass: %x, vp_priority: %x \n"
+                 "vp_queue: %x,   vp_ttl: %x \n"
+                 "vp_type: %x,     vp_cpu: %x \n"
+                 "vp_inner_network_h: %u, vp_flags: %u\n"
+                 "vp_network_h: %u,   vp_end: %u\n"
+                 "vp_len: %u,     vp_data: %u \n",
+                  pkt->vp_rx_pass, pkt->vp_priority, pkt->vp_queue,
+                  pkt->vp_ttl, pkt->vp_type, pkt->vp_cpu, pkt->vp_inner_network_h,
+                  pkt->vp_flags, pkt->vp_network_h, pkt->vp_end, pkt->vp_len,
+                  pkt->vp_data);
+        if(pkt->vp_nh) {
+            vr_printf("nh_type: %x,        nh_family: %x \n"
+                      "nh_data_size: %u, nh_flags: %u \n"
+                      "nh_vrf: %d,       nh_id: %u \n"
+                      "nh_rid: %u,       nh_users: %u\n",
+                       pkt->vp_nh->nh_type, pkt->vp_nh->nh_family,
+                       pkt->vp_nh->nh_data_size, pkt->vp_nh->nh_flags,
+                       pkt->vp_nh->nh_vrf, pkt->vp_nh->nh_id,
+                       pkt->vp_nh->nh_rid, pkt->vp_nh->nh_users);
+        }
+
+    }
     if (vif_is_fabric(pkt->vp_if))
         flow_e->fe_src_info = fmd->fmd_outer_src_ip;
     else if (vif_is_virtual(pkt->vp_if))
