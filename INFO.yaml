@@ -48,7 +48,7 @@ committers:
       email: 'kiran.kn80@gmail.com'
       company: ''
       id: 'kirankn'
-      timezone: 'Asia/Kolkata'  
+      timezone: 'Asia/Kolkata'
 tsc:
     # yamllint disable rule:line-length
     approval: 'https://wiki.tungsten.io/display/TUN/Projects'
