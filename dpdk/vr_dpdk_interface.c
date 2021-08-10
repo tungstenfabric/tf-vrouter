@@ -366,6 +366,7 @@ dpdk_find_port_id_by_vif_name(struct vr_interface *vif)
         }
     }
 
+    RTE_LOG(ERR, VROUTER, "%s: Returning id:%d if_name:%s\n", __func__, i, vif->vif_name);
     return VR_DPDK_INVALID_PORT_ID;
 }
 
