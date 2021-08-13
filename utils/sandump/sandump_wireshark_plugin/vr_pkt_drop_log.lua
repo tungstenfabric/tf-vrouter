@@ -55,3 +55,18 @@ vr_pkt_drop_log_table[9] = {}
 vr_pkt_drop_log_table[9].field_name = "vdl_pkt_droplog_arr"
 vr_pkt_drop_log_table[9].ProtoField = ProtoField.bytes
 vr_pkt_drop_log_table[9].base = base.SPACE
+
+vr_pkt_drop_log_table[10] = {}
+vr_pkt_drop_log_table[10].field_name = "vdl_pkt_droplog_type"
+vr_pkt_drop_log_table[10].ProtoField = ProtoField.int8
+vr_pkt_drop_log_table[10].base = base.DEC
+
+vr_pkt_drop_log_table[11] = {}
+vr_pkt_drop_log_table[11].field_name = "vdl_pkt_droplog_min_sysctl_en"
+vr_pkt_drop_log_table[11].ProtoField = ProtoField.int8
+vr_pkt_drop_log_table[11].base = base.DEC
+
+vr_pkt_drop_log_table[12] = {}
+vr_pkt_drop_log_table[12].field_name = "vdl_pkt_droplog_config"
+vr_pkt_drop_log_table[12].ProtoField = ProtoField.int8
+vr_pkt_drop_log_table[12].base = base.DEC
