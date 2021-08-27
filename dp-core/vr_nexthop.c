@@ -3534,7 +3534,8 @@ static int
 nh_tunnel_add(struct vr_nexthop *nh, vr_nexthop_req *req)
 {
     int i, ret = 0;
-    struct vr_interface *vif[3], *old_vif[3] = {0};
+    struct vr_interface *vif[VR_MAX_PHY_INF]     = {NULL};
+    struct vr_interface *old_vif[VR_MAX_PHY_INF] = {NULL};
     struct vr_interface *crypt_vif = NULL, *old_crypt_vif = NULL;
 
     if (req->nhr_family == AF_INET6) {
