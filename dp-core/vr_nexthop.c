@@ -1982,7 +1982,12 @@ nh_composite_fabric(struct vr_packet *pkt, struct vr_nexthop *nh,
                  * from Bridge entry
                  */
                 vr_fmd_set_label(fmd, label, VR_LABEL_TYPE_UNKNOWN);
-                fmd->fmd_dvrf = dir_nh->nh_dev->vif_vrf;
+                for (j = 0; j < VR_MAX_PHY_INF; j++) {
+                    if (dir_nh->nh_dev_arr[j] != NULL) {
+                        fmd->fmd_dvrf = dir_nh->nh_dev_arr[j]->vif_vrf;
+                        break;
+                    }
+                }
                 if (nh_vxlan_tunnel_helper(nh->nh_router, &new_pkt,
                                         fmd, sip, dip) == false) {
                     PKT_LOG(VP_DROP_PUSH, pkt, 0, VR_NEXTHOP_C, __LINE__);
@@ -2004,7 +2009,12 @@ nh_composite_fabric(struct vr_packet *pkt, struct vr_nexthop *nh,
         /* MPLS label for outer header encapsulation */
         vr_fmd_set_label(fmd, nh->nh_component_nh[i].cnh_label,
                 VR_LABEL_TYPE_UNKNOWN);
-        fmd->fmd_dvrf = dir_nh->nh_dev->vif_vrf;
+        for (j = 0; j < VR_MAX_PHY_INF; j++) {
+            if (dir_nh->nh_dev_arr[j] != NULL) {
+                fmd->fmd_dvrf = dir_nh->nh_dev_arr[j]->vif_vrf;
+                break;
+            }
+        }
         nh_output(new_pkt, dir_nh, fmd);
     }
 
