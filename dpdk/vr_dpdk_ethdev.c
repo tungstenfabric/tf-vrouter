@@ -862,18 +862,20 @@ vr_dpdk_bond_intf_callback(uint16_t port_id, enum rte_eth_event_type type,
         void *param, void *ret_param __rte_unused)
 {
 
-    /* TODO: Currently, we have one physical interface and vif_idx always 0
-     * For multi physical interface, need to send corresponding master vif_idx
-     * for slave interfaces */
-    uint8_t vif_idx = 0;
+    struct vr_dpdk_ethdev *ethdev = (struct vr_dpdk_ethdev *)param;
+
+    if(NULL == ethdev) {
+        RTE_LOG(ERR, VROUTER, "%s: ethdev is null\n", __func__);
+        return -1;
+    }
 
     /* On few platforms, Master lsc(callback) is not called.
      * Forcing here to send Master notification before
      * sending child interface */
-    if(vr_dpdk_master_port_id != port_id)
-            vr_dpdk_bond_send_port_info(vr_dpdk_master_port_id, vif_idx);
+    if(ethdev->ethdev_port_id != port_id)
+            vr_dpdk_bond_send_port_info(ethdev->ethdev_port_id, ethdev->ethdev_vif_idx);
 
-    return vr_dpdk_bond_send_port_info(port_id, vif_idx);
+    return vr_dpdk_bond_send_port_info(port_id, ethdev->ethdev_vif_idx);
 
 }
 
@@ -889,7 +891,7 @@ vr_dpdk_bond_intf_cb_register(struct vr_dpdk_ethdev *ethdev)
 
     /* Registering callback notification for Master bond interface */
     ret = rte_eth_dev_callback_register(port_id, RTE_ETH_EVENT_INTR_LSC,
-            vr_dpdk_bond_intf_callback, NULL);
+            vr_dpdk_bond_intf_callback, ethdev);
 
     if(ret)
         RTE_LOG(ERR, VROUTER, "Failed to setup callback for event \
@@ -906,8 +908,8 @@ vr_dpdk_bond_intf_cb_register(struct vr_dpdk_ethdev *ethdev)
         port_id = ethdev->ethdev_slaves[i];
 
         /* Registering callback notification for slave bond interfaces */
-        rte_eth_dev_callback_register(port_id, RTE_ETH_EVENT_INTR_LSC,
-                vr_dpdk_bond_intf_callback, NULL);
+        ret = rte_eth_dev_callback_register(port_id, RTE_ETH_EVENT_INTR_LSC,
+                vr_dpdk_bond_intf_callback, ethdev);
         if(ret)
             RTE_LOG(ERR, VROUTER, "Failed to setup callback for event \
                     RTE_ETH_EVENT_INTR_LSC for portid: %d\n", port_id);
