@@ -140,6 +140,77 @@ class TestL3MHTunnelNH(unittest.TestCase):
         recv_pkt2.show()
         self.assertEqual(1, self.fabric_vif2.get_vif_opackets())
 
+    # Multicast packet transfer from VM on compute 1 to to VM on compute 2 when
+    # the nexthop marked is a composite nexthop with a component as a tunnel nh
+    # during the L3MH case when one of the physical interfaces in down
+    def test_l3mh_composite_tunnel_nh_mpls_udp(self):
+        encap1 = "00 22 22 22 22 22 00 11 11 11 11 11 08 00"
+        encap2 = "00 33 33 33 33 33 00 11 11 11 11 11 08 00"
+        encapall = encap1+" "+encap2
+        oif_id = str(self.fabric_vif1.idx())+","+str(self.fabric_vif2.idx())
+        tunnel_nh = TunnelNextHopV4(
+            encap_oif_id=oif_id,
+            encap=encapall,
+            tun_sip="1.1.2.2",
+            tun_dip="2.2.1.1",
+            nh_idx=21,
+            nh_flags=(
+                constants.NH_FLAG_VALID |
+                constants.NH_FLAG_TUNNEL_UDP_MPLS |
+                constants.NH_FLAG_ETREE_ROOT |
+                constants.NH_FLAG_TUNNEL_UNDERLAY_ECMP))
+        tunnel_nh.sync()
+
+        comp_flags = (constants.NH_FLAG_VALID |
+                      constants.NH_FLAG_ETREE_ROOT |
+                      constants.NH_FLAG_COMPOSITE_FABRIC)
+        comp_ecmp_nh = CompositeNextHop(
+            nh_idx=51,
+            nh_family=constants.AF_BRIDGE,
+            nh_vrf=0,
+            nh_flags=comp_flags)
+
+        comp_ecmp_nh.add_nexthop(10, tunnel_nh.idx())
+        comp_ecmp_nh.sync()
+
+        bridge_route = BridgeRoute(
+            vrf=0,
+            mac_str="00:00:5e:00:01:01",
+            nh_idx=51,
+            rtr_label_flags=3,
+            rtr_label=128)
+
+        bridge_route.sync()
+
+        udp = UdpPacket(
+            sip='1.1.1.4',
+            dip='2.2.2.4',
+            smac='00:00:5e:00:01:00',
+            dmac='00:00:5e:00:01:01',
+            sport=0,
+            dport=1)
+        pkt = udp.get_packet()
+        pkt.show()
+
+        recv_pkt = self.vif3.send_and_receive_packet(pkt, self.fabric_vif1)
+        recv_pkt.show()
+        self.assertEqual(1, self.fabric_vif1.get_vif_opackets())
+        tunnel_nh_get_cmd1 = ObjectBase.get_cli_output("nh --get 21")
+        self.assertEqual(1, tunnel_nh_get_cmd1.count("Data:NULL"))
+
+        # update tunnel, oif_id[0] to invalid
+        tunnel_nh.nhr_encap_valid = [0, 1, 0]
+        tunnel_nh.nhr_encap_oif_id = [0, 1, -1]
+        tunnel_nh.sync()
+
+        tunnel_nh_get_cmd2 = ObjectBase.get_cli_output("nh --get 21")
+        self.assertEqual(2, tunnel_nh_get_cmd2.count("Data:NULL"))
+
+        # check pkt on other physical interface
+        recv_pkt2 = self.vif3.send_and_receive_packet(pkt, self.fabric_vif2)
+        recv_pkt2.show()
+        self.assertEqual(1, self.fabric_vif2.get_vif_opackets())
+
     # no valid encap for the tunnel nh should result in pkt drop and dropstats
     # increment. Then set one valid encap and send the pkt again.
     # No drop this time
