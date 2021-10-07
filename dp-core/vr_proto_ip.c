@@ -319,8 +319,6 @@ vr_icmp_input(struct vrouter *router, struct vr_packet *pkt,
     icmph = (struct vr_icmp *)(pkt_data(pkt) + offset);
     pull_len += sizeof(*icmph);
 
-    PKT_LOG(0,pkt, 0,VR_PROTO_IP_C,__LINE__);
-
     if (vr_icmp_error(icmph)) {
         pull_len += sizeof(*iph);
         ret = vr_pkt_may_pull(pkt, pull_len);
@@ -714,12 +712,16 @@ vr_inet_flow_nat(struct vr_flow_entry *fe, struct vr_packet *pkt,
     struct vr_ip *ip, *icmp_pl_ip;
     struct vr_icmp *icmph;
 
-    if (fe->fe_rflow < 0)
+    if (fe->fe_rflow < 0) {
+        PKT_LOG(VP_DROP_FLOW_NAT_NO_RFLOW, pkt, 0, VR_PROTO_IP_C, __LINE__);
         goto drop;
+    }
 
     rfe = vr_flow_get_entry(router, fe->fe_rflow);
-    if (!rfe)
+    if (!rfe) {
+        PKT_LOG(VP_DROP_FLOW_NAT_NO_RFLOW, pkt, 0, VR_PROTO_IP_C, __LINE__);
         goto drop;
+    }
 
     ip = (struct vr_ip *)pkt_network_header(pkt);
     if (ip->ip_proto == VR_IP_PROTO_ICMP) {
@@ -793,7 +795,6 @@ vr_inet_flow_nat(struct vr_flow_entry *fe, struct vr_packet *pkt,
     return FLOW_FORWARD;
 
 drop:
-    PKT_LOG(VP_DROP_FLOW_NAT_NO_RFLOW, pkt, 0, VR_PROTO_IP_C, __LINE__);
     vr_pfree(pkt, VP_DROP_FLOW_NAT_NO_RFLOW);
     return FLOW_CONSUMED;
 }
@@ -1240,8 +1241,11 @@ vr_ip_input(struct vrouter *router, struct vr_packet *pkt,
     struct vr_ip *ip;
 
     ip = (struct vr_ip *)pkt_data(pkt);
-    if (ip->ip_version == 4 && ip->ip_hl < 5)
-        goto corrupt_pkt;
+    if (ip->ip_version == 4 && ip->ip_hl < 5) {
+        PKT_LOG(VP_DROP_INVALID_PROTOCOL, pkt, 0, VR_PROTO_IP_C, __LINE__);
+        vr_pfree(pkt, VP_DROP_INVALID_PROTOCOL);
+        return 0;
+    }
 
     /*
      * interface is in a mode where it wants all packets to be received
@@ -1258,10 +1262,6 @@ vr_ip_input(struct vrouter *router, struct vr_packet *pkt,
         return 0;
 
     return vr_forward(router, pkt, fmd);
-corrupt_pkt:
-    PKT_LOG(VP_DROP_INVALID_PROTOCOL, pkt, 0, VR_PROTO_IP_C, __LINE__);
-    vr_pfree(pkt, VP_DROP_INVALID_PROTOCOL);
-    return 0;
 }
 
 bool

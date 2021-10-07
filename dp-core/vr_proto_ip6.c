@@ -140,8 +140,6 @@ vr_ipv6_nd_input(struct vr_packet *pkt, struct vr_forwarding_md *fmd)
     struct vr_ip6 *ip6;
     unsigned char *data, eth_dmac[VR_ETHER_ALEN];
 
-    PKT_LOG(0, pkt, 0, VR_PROTO_IP6_C, __LINE__);
-
     ip6 = (struct vr_ip6 *)pkt_data(pkt);
     icmp6 = (struct vr_icmp *) ((unsigned char *)ip6 + sizeof(struct vr_ip6));
     data = pkt_data(pkt);
@@ -731,8 +729,11 @@ vr_neighbor_input(struct vr_packet *pkt, struct vr_forwarding_md *fmd,
     if (ip6->ip6_nxt != VR_IP_PROTO_ICMP6)
         return !handled;
 
-    if (pkt->vp_len < pull_len + sizeof(struct vr_icmp))
-        goto drop;
+    if (pkt->vp_len < pull_len + sizeof(struct vr_icmp)) {
+        PKT_LOG(VP_DROP_INVALID_PACKET, pkt, 0, VR_PROTO_IP6_C, __LINE__);
+        vr_pfree(pkt, VP_DROP_INVALID_PACKET);
+        return handled;
+    }
 
     pkt_pull(pkt, pull_len);
     icmph = (struct vr_icmp *)pkt_data(pkt);
@@ -785,11 +786,6 @@ vr_neighbor_input(struct vr_packet *pkt, struct vr_forwarding_md *fmd,
     if (!handled)
         pkt_push(pkt, pull_len);
 
-    return handled;
-
-drop:
-    PKT_LOG(VP_DROP_INVALID_PACKET, pkt, 0, VR_PROTO_IP6_C, __LINE__);
-    vr_pfree(pkt, VP_DROP_INVALID_PACKET);
     return handled;
 }
 

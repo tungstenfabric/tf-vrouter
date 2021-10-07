@@ -2087,8 +2087,10 @@ nh_udp_tunnel(struct vr_packet *pkt, struct vr_nexthop *nh,
     struct vr_forwarding_class_qos *qos;
     struct vr_flow flow, *flowp = &flow;
 
-    if (!fmd)
+    if (!fmd) {
+        PKT_LOG(VP_DROP_PUSH, pkt, flowp, VR_NEXTHOP_C, __LINE__);
         goto send_fail;
+    }
 
     head_space = sizeof(struct vr_udp) + VR_ETHER_HLEN;
 
@@ -2096,12 +2098,15 @@ nh_udp_tunnel(struct vr_packet *pkt, struct vr_nexthop *nh,
         head_space += sizeof(struct vr_ip);
     else if (nh->nh_family == AF_INET6)
         head_space += sizeof(struct vr_ip6);
-    else
+    else {
+        PKT_LOG(VP_DROP_PUSH, pkt, flowp, VR_NEXTHOP_C, __LINE__);
         goto send_fail;
+    }
 
     if (pkt_head_space(pkt) < head_space) {
         tmp = vr_pexpand_head(pkt, head_space - pkt_head_space(pkt));
         if (!tmp) {
+            PKT_LOG(VP_DROP_PUSH, pkt, flowp, VR_NEXTHOP_C, __LINE__);
             goto send_fail;
         }
         pkt = tmp;
@@ -2144,11 +2149,14 @@ nh_udp_tunnel(struct vr_packet *pkt, struct vr_nexthop *nh,
         if (nh_udp_tunnel_helper(pkt, htons(sport),
                     nh->nh_udp_tun_dport, sip,
                     nh->nh_udp_tun_dip, qos) == false) {
+            PKT_LOG(VP_DROP_PUSH, pkt, flowp, VR_NEXTHOP_C, __LINE__);
             goto send_fail;
         }
 
-        if (pkt_len(pkt) > ((1 << sizeof(ip->ip_len) * 8)))
+        if (pkt_len(pkt) > ((1 << sizeof(ip->ip_len) * 8))) {
+            PKT_LOG(VP_DROP_PUSH, pkt, flowp, VR_NEXTHOP_C, __LINE__);
             goto send_fail;
+        }
 
         ip = (struct vr_ip *)(pkt_data(pkt));
         udp = (struct vr_udp *)((char *)ip + ip->ip_hl * 4);
@@ -2164,6 +2172,7 @@ nh_udp_tunnel(struct vr_packet *pkt, struct vr_nexthop *nh,
 
         if (nh_udp_tunnel6_helper(pkt, nh, vif_ip, htons(sport),
                    nh->nh_udp_tun6_dport) == false) {
+            PKT_LOG(VP_DROP_PUSH, pkt, flowp, VR_NEXTHOP_C, __LINE__);
             goto send_fail;
         }
 
@@ -2196,7 +2205,6 @@ nh_udp_tunnel(struct vr_packet *pkt, struct vr_nexthop *nh,
     return NH_PROCESSING_COMPLETE;
 
 send_fail:
-    PKT_LOG(VP_DROP_PUSH, pkt, flowp, VR_NEXTHOP_C, __LINE__);
     vr_pfree(pkt, VP_DROP_PUSH);
     return NH_PROCESSING_COMPLETE;
 }

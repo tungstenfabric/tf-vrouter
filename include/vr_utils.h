@@ -44,7 +44,7 @@ struct priority {
 /* macro to print drop stats having non zero values */
 #define PRINT_DROP_STAT(info_msg, is_non_zero_count) \
 if(is_non_zero_count) { \
-    printf("%s                   %" PRIu64 "\n", info_msg, is_non_zero_count); \
+    printf("%-28s  %" PRIu64 "\n", info_msg, is_non_zero_count); \
 }
 
 /* macro to print non zero value filed of PKT_LOG */

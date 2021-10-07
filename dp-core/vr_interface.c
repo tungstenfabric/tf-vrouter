@@ -710,8 +710,10 @@ agent_send(struct vr_interface *vif, struct vr_packet *pkt,
 
     if (encap == VIF_ENCAP_TYPE_L3) {
         eth = (struct vr_eth *)(pkt_push(pkt, VR_ETHER_HLEN));
-        if (!eth)
+        if (!eth) {
+            PKT_LOG(VP_DROP_PUSH, pkt, 0, VR_INTERFACE_C, __LINE__);
             goto drop;
+        }
 
         memcpy(eth->eth_dmac, vif->vif_mac, VR_ETHER_ALEN);
         memcpy(eth->eth_smac, vif->vif_mac, VR_ETHER_ALEN);
@@ -726,8 +728,10 @@ agent_send(struct vr_interface *vif, struct vr_packet *pkt,
             pkt->vp_data + sizeof(struct vr_eth));
 
     hdr = (struct agent_hdr *)pkt_push(pkt, sizeof(struct agent_hdr));
-    if (!hdr)
+    if (!hdr) {
+        PKT_LOG(VP_DROP_PUSH, pkt, 0, VR_INTERFACE_C, __LINE__);
         goto drop;
+    }
 
     hdr->hdr_ifindex = htons(pkt->vp_if->vif_idx);
     hdr->hdr_vrf = htons(params->trap_vrf);
@@ -771,8 +775,10 @@ agent_send(struct vr_interface *vif, struct vr_packet *pkt,
     }
 
     rewrite = pkt_push(pkt, VR_ETHER_HLEN);
-    if (!rewrite)
+    if (!rewrite) {
+        PKT_LOG(VP_DROP_PUSH, pkt, 0, VR_INTERFACE_C, __LINE__);
         goto drop;
+    }
 
     memcpy(rewrite, vif->vif_rewrite, VR_ETHER_HLEN);
 
@@ -781,7 +787,6 @@ agent_send(struct vr_interface *vif, struct vr_packet *pkt,
 
 drop:
     stats->vis_oerrors++;
-    PKT_LOG(VP_DROP_PUSH, pkt, 0, VR_INTERFACE_C, __LINE__);
     vr_pfree(pkt, VP_DROP_PUSH);
     return 0;
 }
@@ -1097,6 +1102,7 @@ vlan_tx(struct vr_interface *vif, struct vr_packet *pkt,
                 force_tag = true;
 
             if (vr_tag_pkt(&pkt, vif->vif_ovlan_id, force_tag)) {
+                PKT_LOG(VP_DROP_INVALID_IF, pkt, 0, VR_INTERFACE_C, __LINE__);
                 goto drop;
             }
             vr_pset_data(pkt, pkt->vp_data);
@@ -1109,19 +1115,21 @@ vlan_tx(struct vr_interface *vif, struct vr_packet *pkt,
         vif_mirror(vif, pkt, fmd, vif->vif_flags & VIF_FLAG_MIRROR_TX);
 
     pvif = vif->vif_parent;
-    if (!pvif)
+    if (!pvif) {
+        PKT_LOG(VP_DROP_INVALID_IF, pkt, 0, VR_INTERFACE_C, __LINE__);
         goto drop;
+    }
 
     ret = pvif->vif_tx(pvif, pkt, fmd);
     if (ret < 0) {
         ret = 0;
+        PKT_LOG(VP_DROP_INVALID_IF, pkt, 0, VR_INTERFACE_C, __LINE__);
         goto drop;
     }
 
     return ret;
 
 drop:
-    PKT_LOG(VP_DROP_INVALID_IF, pkt, 0, VR_INTERFACE_C, __LINE__);
     vr_pfree(pkt, VP_DROP_INVALID_IF);
     stats->vis_oerrors++;
 

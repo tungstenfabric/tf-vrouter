@@ -176,7 +176,7 @@ vr_fragment_queue_element_free(struct vr_fragment_queue_element *vfqe,
         unsigned int drop_reason)
 {
     if (vfqe->fqe_pnode.pl_packet) {
-        PKT_LOG(VP_DROP_FRAGMENTS, vfqe->fqe_pnode.pl_packet, 0, VR_FRAGMENT_C, __LINE__);
+        PKT_LOG(drop_reason, vfqe->fqe_pnode.pl_packet, 0, VR_FRAGMENT_C, __LINE__);
         vr_pfree(vfqe->fqe_pnode.pl_packet, drop_reason);
     }
 
@@ -593,6 +593,7 @@ vr_fragment_enqueue(struct vrouter *router,
         vfq->vfq_length = 0;
     } else {
         if ((vfq->vfq_length + 1) > VR_MAX_FRAGMENTS_PER_CPU_QUEUE)
+            PKT_LOG(VP_DROP_FRAGMENTS, pkt, 0, VR_FRAGMENT_C, __LINE__);
             goto fail;
     }
 
@@ -600,11 +601,13 @@ vr_fragment_enqueue(struct vrouter *router,
      * all cores exceeded. */
     if (vrouter_host->hos_is_frag_limit_exceeded &&
             vrouter_host->hos_is_frag_limit_exceeded()) {
+            PKT_LOG(VP_DROP_FRAGMENTS, pkt, 0, VR_FRAGMENT_C, __LINE__);
             goto fail;
     }
 
     fqe = vr_malloc(sizeof(*fqe), VR_FRAGMENT_QUEUE_ELEMENT_OBJECT);
     if (!fqe) {
+        PKT_LOG(VP_DROP_FRAGMENTS, pkt, 0, VR_FRAGMENT_C, __LINE__);
         goto fail;
     }
     fqe->fqe_router = router;
@@ -636,6 +639,7 @@ vr_fragment_enqueue(struct vrouter *router,
         } else {
             vfq->vfq_length--;
             if (i == (VR_FRAG_ENQUEUE_ATTEMPTS - 1)) {
+                PKT_LOG(VP_DROP_FRAGMENTS, pkt, 0, VR_FRAGMENT_C, __LINE__);
                 goto fail;
             }
         }
@@ -647,7 +651,6 @@ fail:
     if (fqe)
         vr_free(fqe, VR_FRAGMENT_QUEUE_ELEMENT_OBJECT);
 
-    PKT_LOG(VP_DROP_FRAGMENTS, pkt, 0, VR_FRAGMENT_C, __LINE__);
     vr_pfree(pkt, VP_DROP_FRAGMENTS);
     return -1;
 }

@@ -492,6 +492,7 @@ vr_print_drop_stats(vr_drop_stats_req *stats, int core)
        printf("Failed to maintain PerCPU stats for this interface\n\n");
 
     PRINT_DROP_STAT("Invalid IF", stats->vds_invalid_if);
+    PRINT_DROP_STAT("Invalid ARP", stats->vds_invalid_arp);
     PRINT_DROP_STAT("Trap No IF", stats->vds_trap_no_if);
     PRINT_DROP_STAT("IF TX Discard", stats->vds_interface_tx_discard);
     PRINT_DROP_STAT("IF Drop", stats->vds_interface_drop);
@@ -540,6 +541,7 @@ vr_print_drop_stats(vr_drop_stats_req *stats, int core)
     PRINT_DROP_STAT("No Fragment Entries", stats->vds_no_frag_entry);
     PRINT_DROP_STAT("ICMP errors", stats->vds_icmp_error);
     PRINT_DROP_STAT("Clone Failures", stats->vds_clone_fail);
+    PRINT_DROP_STAT("Invalid underlay ECMP", stats->vds_invalid_underlay_ecmp);
 
     if (platform == DPDK_PLATFORM)
     {
@@ -556,6 +558,139 @@ vr_print_drop_dbg_stats(vr_drop_stats_req *stats, int core)
             stats->vds_cloned_original);
     return;
 }
+
+const char *
+vr_pkt_vp_type_rsn(unsigned char vp_type)
+{
+    switch(vp_type) {
+    case VP_TYPE_ARP:    return "ARP";
+    case VP_TYPE_IP :    return "IP";
+    case VP_TYPE_IP6:    return "IP6";
+    case VP_TYPE_IPOIP:  return "IPOIP";
+    case VP_TYPE_IP6OIP: return "IP6OIP";
+    case VP_TYPE_AGENT:  return "AGENT";
+    case VP_TYPE_PBB:    return "PBB";
+    default:             return "UNKNOWN";
+    }
+}
+
+const char *
+vr_pkt_droplog_rsn(unsigned short drop_reason)
+{
+    switch(drop_reason) {
+    case VP_DROP_DISCARD:
+        return "Discards";
+    case VP_DROP_PULL:
+        return "Pull Fails";
+    case VP_DROP_INVALID_IF:
+        return "Invalid IF";
+    case VP_DROP_INVALID_ARP:
+        return "Invalid ARP";
+    case VP_DROP_TRAP_NO_IF:
+        return "Trap No IF";
+    case VP_DROP_NOWHERE_TO_GO:
+        return "Nowhere to go";
+    case VP_DROP_FLOW_QUEUE_LIMIT_EXCEEDED:
+        return "Flow Queue Limit Exceeded";
+    case VP_DROP_FLOW_NO_MEMORY:
+        return "Flow No Memory";
+    case VP_DROP_FLOW_INVALID_PROTOCOL:
+        return "Flow Invalid Protocol";
+    case VP_DROP_FLOW_NAT_NO_RFLOW:
+        return "Flow NAT no rflow";
+    case VP_DROP_FLOW_ACTION_DROP:
+        return "Flow Action Drop";
+    case VP_DROP_FLOW_ACTION_INVALID:
+        return "Flow Action Invalid";
+    case VP_DROP_FLOW_UNUSABLE:
+        return "Flow Unusable";
+    case VP_DROP_FLOW_TABLE_FULL:
+        return "Flow Table Full";
+    case VP_DROP_INTERFACE_TX_DISCARD:
+        return "IF TX Discard";
+    case VP_DROP_INTERFACE_DROP:
+        return "IF Drop";
+    case VP_DROP_DUPLICATED:
+        return "Duplicate";
+    case VP_DROP_PUSH:
+        return "Push Fails";
+    case VP_DROP_TTL_EXCEEDED:
+        return "TTL Exceeded";
+    case VP_DROP_INVALID_NH:
+        return "Invalid NH";
+    case VP_DROP_INVALID_LABEL:
+        return "Invalid Label";
+    case VP_DROP_INVALID_PROTOCOL:
+        return "Invalid Protocol";
+    case VP_DROP_INTERFACE_RX_DISCARD:
+        return "IF RX Discard";
+    case VP_DROP_INVALID_MCAST_SOURCE:
+        return "Invalid Mcast Source";
+    case VP_DROP_HEAD_ALLOC_FAIL:
+        return "Head Alloc Fails";
+    case VP_DROP_PCOW_FAIL:
+        return "PCOW fails";
+    case VP_DROP_MCAST_DF_BIT:
+        return "Jumbo Mcast Pkt with DF Bit";
+    case VP_DROP_MCAST_CLONE_FAIL:
+        return "Mcast Clone Fail";
+    case VP_DROP_NO_MEMORY:
+        return "Memory Failures";
+    case VP_DROP_REWRITE_FAIL:
+        return "Rewrite Fail";
+    case VP_DROP_MISC:
+        return "Misc";
+    case VP_DROP_INVALID_PACKET:
+        return "Invalid Packets";
+    case VP_DROP_CKSUM_ERR:
+        return "Checksum errors";
+    case VP_DROP_NO_FMD:
+        return "No Fmd";
+    case VP_DROP_CLONED_ORIGINAL:
+        return "Cloned Original";
+    case VP_DROP_INVALID_VNID:
+        return "Invalid VNID";
+    case VP_DROP_FRAGMENTS:
+        return "Fragment errors";
+    case VP_DROP_INVALID_SOURCE:
+        return "Invalid Source";
+    case VP_DROP_L2_NO_ROUTE:
+        return "No L2 Route";
+    case VP_DROP_FRAGMENT_QUEUE_FAIL:
+        return "Fragment Queueing Failures";
+    case VP_DROP_VLAN_FWD_TX:
+        return "VLAN fwd intf failed TX";
+    case VP_DROP_VLAN_FWD_ENQ:
+        return "VLAN fwd intf failed enq";
+    case VP_DROP_NEW_FLOWS:
+        return "New Flow Drops";
+    case VP_DROP_FLOW_EVICT:
+        return "Flow Unusable (Eviction)";
+    case VP_DROP_TRAP_ORIGINAL:
+        return "Original Packet Trapped";
+    case VP_DROP_LEAF_TO_LEAF:
+        return "Etree Leaf to Leaf";
+    case VP_DROP_BMAC_ISID_MISMATCH:
+        return "Bmac/ISID Mismatch";
+    case VP_DROP_PKT_LOOP:
+        return "Packet Loop";
+    case VP_DROP_NO_CRYPT_PATH:
+        return "No Encrypt Path Failures";
+    case VP_DROP_INVALID_HBS_PKT:
+        return "Invalid HBS received packet";
+    case VP_DROP_NO_FRAG_ENTRY:
+        return "No Fragment Entries";
+    case VP_DROP_ICMP_ERROR:
+        return "ICMP errors";
+    case VP_DROP_CLONE_FAIL:
+        return "Clone Failures";
+    case VP_DROP_INVALID_UNDERLAY_ECMP:
+        return "Invalid underlay ECMP";
+    default:
+        return "Unknow";
+    }
+
+}
 void vr_print_pkt_drop_log_data(vr_pkt_drop_log_req *pkt_log, int i,
                                 uint8_t show_pkt_drop_type)
 {
@@ -568,16 +703,6 @@ void vr_print_pkt_drop_log_data(vr_pkt_drop_log_req *pkt_log, int i,
     /* String mapping for packet drop log */
     char vr_pkt_droplog_str[][50] = {
         FILE_MAP(string)
-    };
-
-    /* String mapping for Drop reasons */
-    char vr_pkt_droplog_rsn[][50] = {
-        DROP_RSN_MAP(string)
-    };
-
-    /* String mapping for vp type reasons */
-    char vr_pkt_vp_type_rsn[][50] = {
-        DROP_VP_TYPE_MAP(string)
     };
 
     if (!pkt_log_utils[i].vp_type)
@@ -599,9 +724,9 @@ void vr_print_pkt_drop_log_data(vr_pkt_drop_log_req *pkt_log, int i,
     printf("sl no: %d  ", pkt_log->vdl_log_idx+i);
     printf("Epoch Time: %ld ", pkt_log_utils[i].timestamp);
     printf("Local Time: %s ", asctime(ptr_time));
-    printf("Packet Type: %s  ", vr_pkt_vp_type_rsn[pkt_log_utils[i].vp_type]);
+    printf("Packet Type: %s  ", vr_pkt_vp_type_rsn(pkt_log_utils[i].vp_type));
     if(pkt_log_utils[i].drop_reason)
-        printf("Drop reason: %s  ", vr_pkt_droplog_rsn[pkt_log_utils[i].drop_reason]);
+        printf("Drop reason: %s  ", vr_pkt_droplog_rsn(pkt_log_utils[i].drop_reason));
     else
         printf("Drop reason: NULL  ");
     PRINT_PKT_LOG("Vif idx:",    pkt_log_utils[i].vif_idx);
@@ -618,12 +743,7 @@ void vr_print_pkt_drop_log_data(vr_pkt_drop_log_req *pkt_log, int i,
         inet_ntop(AF_INET6, &pkt_log_utils[i].dst.ipv6, ipv6_addr, VR_IP6_ADDRESS_LEN);
         printf("Dst IPv6: %s  ", ipv6_addr);
     }
-    else
-    {
-        printf("Src IP: NULL  ");
-        printf("Dst IP: NULL  ");
 
-    }
     PRINT_PKT_LOG("Source port:", pkt_log_utils[i].sport);
     PRINT_PKT_LOG("Dest port:",   pkt_log_utils[i].dport);
     if(pkt_log_utils[i].drop_loc.file)
@@ -631,10 +751,10 @@ void vr_print_pkt_drop_log_data(vr_pkt_drop_log_req *pkt_log, int i,
     else
         printf("file: NULL  ");
     printf("line no: %d  ", pkt_log_utils[i].drop_loc.line);
-    printf("Packet Length: %d  ", pkt_log_utils[i].pkt_len);
-    
+
     if(pkt_log_utils[i].pkt_len)
     {
+        printf("Packet Length: %d  ", pkt_log_utils[i].pkt_len);
         printf("Packet Data: ");
 
         if(pkt_log_utils[i].pkt_len > 100)
