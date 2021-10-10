@@ -7,7 +7,7 @@ SRC_ROOT ?= ..
 CFLAGS += -I$(SRC_ROOT)/include -I$(SRC_ROOT)/sandesh/gen-c/
 CFLAGS += -I$(SRC_ROOT)/../../ -I$(SRC_ROOT)/../../sandesh/library/c/
 CFLAGS += -I$(SRC_ROOT)/include 
-CFLAGS += -g -Wall
+CFLAGS += -g -Wall -Werror 
 
 BIN_FLAGS = -L$(SRC_ROOT)/host -lvrouter
 BIN_FLAGS += -L$(SRC_ROOT)/../../../build/debug/sandesh/library/c/
@@ -17,7 +17,7 @@ UVROUTER = uvrouter
 UVROUTER_OBJS = uvrouter.o
 
 %.o: %.c
-	$(CC) -c -Wall -Werror $(CFLAGS) -o $@ $^
+	$(CC) -c $(CFLAGS) -o $@ $^
 
 
 all:vrouter uvrouter
