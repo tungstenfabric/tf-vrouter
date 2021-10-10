@@ -3,6 +3,7 @@
 # Copyright (c) 2014, 2015 Juniper Networks, Inc. All rights reserved.
 #
 import os
+import subprocess
 
 Import('VRouterEnv')
 Import('dpdk_lib')
@@ -11,6 +12,13 @@ env = VRouterEnv.Clone()
 
 # Flags
 env.Append(CCFLAGS = '-Werror -Wall')
+gpp_version = subprocess.check_output(
+    "g++ --version | grep g++ | awk '{print $3}'",
+    shell=True).rstrip()
+if int(gpp_version.split(".")[0]) >= 8:
+    # auto_ptr is depricated
+    env.Append(CCFLAGS = '-Wno-error=deprecated-declarations -Wno-deprecated-declarations')
+
 env.Append(CCFLAGS = '-msse4.2')
 if env['OPT'] == 'debug':
     env.Append(CCFLAGS = '-DCOMPILE_DEBUG_LOGS')
