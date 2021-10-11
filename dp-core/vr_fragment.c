@@ -592,9 +592,10 @@ vr_fragment_enqueue(struct vrouter *router,
     if (*tailp == NULL) {
         vfq->vfq_length = 0;
     } else {
-        if ((vfq->vfq_length + 1) > VR_MAX_FRAGMENTS_PER_CPU_QUEUE)
+        if ((vfq->vfq_length + 1) > VR_MAX_FRAGMENTS_PER_CPU_QUEUE) {
             PKT_LOG(VP_DROP_FRAGMENTS, pkt, 0, VR_FRAGMENT_C, __LINE__);
             goto fail;
+        }
     }
 
     /* Check if the total number of fragmented packets across
