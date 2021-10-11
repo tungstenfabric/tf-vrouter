@@ -29,7 +29,7 @@
 #include "vr_packet.h"
 
 static struct nl_client *cl;
-static int help_set, core_set, offload_set, log_set, clear_set, debug_set, sock_dir_set;
+static int help_set, core_set, offload_set, log_set, clear_set, clear_drop_log_set, debug_set, sock_dir_set;
 static unsigned int core = (unsigned)-1;
 static unsigned int stats_index = 0;
 static int log_type_set, log_type_show, min_log_set;
@@ -246,6 +246,16 @@ vr_get_drop_stats(struct nl_client *cl)
 }
 
 static int
+vr_clear_pkt_drop_log(struct nl_client *cl)
+{
+    int ret = vr_pkt_drop_log_reset(cl);
+    if (ret < 0)
+        return ret;
+
+    return 0;
+}
+
+static int
 vr_clear_drop_stats(struct nl_client *cl)
 {
     int ret = vr_drop_stats_reset(cl);
@@ -295,6 +305,7 @@ enum opt_index {
     DEBUG_OPT_INDEX,
     DROP_LOG_TYPE_OPT_INDEX,
     SHOW_LOG_TYPE_OPT_INDEX,
+    CLEAR_DROP_LOG_OPT_INDEX,
     MIN_LOG_OPT_INDEX,
     MAX_OPT_INDEX,
 };
@@ -309,6 +320,7 @@ static struct option long_options[] = {
     [DEBUG_OPT_INDEX]   =   {"debug",   no_argument,        &debug_set,     1},
     [DROP_LOG_TYPE_OPT_INDEX]   =   {"drop-type",  required_argument,  &log_type_set,   1},
     [SHOW_LOG_TYPE_OPT_INDEX]   =   {"show",       required_argument,  &log_type_show,  1},
+    [CLEAR_DROP_LOG_OPT_INDEX]   =   {"clear-drop-log",   no_argument, &clear_drop_log_set, 1},
     [MIN_LOG_OPT_INDEX]         =   {"min-log",    required_argument,  &min_log_set,    1},
     [MAX_OPT_INDEX]     =   {"NULL",    0,                  0,              0},
 };
@@ -332,6 +344,7 @@ Usage()
     printf("--debug\t To Display Debug counters\n");
     printf("--drop-type <drop log type|help>\t Log specific Packet drops type. \
         Use VP_DROP_MAX to clear drop set type\n");
+    printf("--clear-drop-log\t To clear packet drops log on all cores\n");
     printf("--min-log <1(enable)/ 0<disable)\t To set min log\n");
     exit(-EINVAL);
 }
@@ -410,6 +423,7 @@ parse_long_opts(int opt_index, char *opt_arg)
 	      core = is_valid_num(opt_arg);
 	      break;
     case CLEAR_OPT_INDEX:
+    case CLEAR_DROP_LOG_OPT_INDEX:
     case DEBUG_OPT_INDEX:
         break;
     case DROP_LOG_TYPE_OPT_INDEX:
@@ -517,6 +531,12 @@ main(int argc, char *argv[])
         pkt_drop_log_nlutils_callbacks();
 
         vr_get_pkt_drop_log(cl,log_core,stats_index);
+        return 0;
+    }
+
+    if (option_index == CLEAR_DROP_LOG_OPT_INDEX)
+    {
+        vr_clear_pkt_drop_log(cl);
         return 0;
     }
 
