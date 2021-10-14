@@ -392,7 +392,6 @@ vr_mirror(struct vrouter *router, uint8_t mirror_id, struct vr_packet *pkt,
 
     memcpy(&new_fmd, fmd, sizeof(*fmd));
     new_fmd.fmd_ecmp_nh_index = -1;
-    new_fmd.fmd_underlay_ecmp_index = -1;
     fmd = &new_fmd;
 
     vr_fmd_put_mirror_type(fmd, mtype);
@@ -432,14 +431,37 @@ vr_mirror(struct vrouter *router, uint8_t mirror_id, struct vr_packet *pkt,
             mirror_md_len = pkt->vp_if->vif_in_mirror_md_len;
             mirror_md = pkt->vp_if->vif_in_mirror_md;
         } else {
-            if (!pkt->vp_nh || !pkt->vp_nh->nh_dev) {
-                PKT_LOG(VP_DROP_INVALID_IF, pkt, 0, VR_MIRROR_C, __LINE__);
-                drop_reason = VP_DROP_INVALID_NH;
-                goto fail;
-            }
+            if (!is_vrouter_multihomed(router)) {
+                if (!pkt->vp_nh || !pkt->vp_nh->nh_dev) {
+                    PKT_LOG(VP_DROP_INVALID_IF, pkt, 0, VR_MIRROR_C, __LINE__);
+                    drop_reason = VP_DROP_INVALID_NH;
+                    goto fail;
+                }
 
-            mirror_md_len = pkt->vp_nh->nh_dev->vif_out_mirror_md_len;
-            mirror_md = pkt->vp_nh->nh_dev->vif_out_mirror_md;
+                mirror_md_len = pkt->vp_nh->nh_dev->vif_out_mirror_md_len;
+                mirror_md = pkt->vp_nh->nh_dev->vif_out_mirror_md;
+            } else {
+                if (pkt->vp_nh->nh_type != NH_TUNNEL) {
+                    if (!pkt->vp_nh->nh_dev) {
+                        PKT_LOG(VP_DROP_INVALID_IF, pkt, 0, VR_MIRROR_C, __LINE__);
+                        drop_reason = VP_DROP_INVALID_NH;
+                        goto fail;
+                    }
+
+                    mirror_md_len = pkt->vp_nh->nh_dev->vif_out_mirror_md_len;
+                    mirror_md = pkt->vp_nh->nh_dev->vif_out_mirror_md;
+                } else {
+                    if ((fmd->fmd_underlay_ecmp_index == -1) ||
+                            !pkt->vp_nh->nh_dev_arr[fmd->fmd_underlay_ecmp_index]) {
+                        PKT_LOG(VP_DROP_INVALID_IF, pkt, 0, VR_MIRROR_C, __LINE__);
+                        drop_reason = VP_DROP_INVALID_NH;
+                        goto fail;
+                    }
+
+                    mirror_md_len = pkt->vp_nh->nh_dev_arr[fmd->fmd_underlay_ecmp_index]->vif_out_mirror_md_len;
+                    mirror_md = pkt->vp_nh->nh_dev_arr[fmd->fmd_underlay_ecmp_index]->vif_out_mirror_md;
+                }
+            }
         }
 
         if (!mirror_md_len) {
@@ -523,6 +545,7 @@ vr_mirror(struct vrouter *router, uint8_t mirror_id, struct vr_packet *pkt,
      * mirror packet. hence, set the flow index to -1.
      */
     fmd->fmd_flow_index = -1;
+    fmd->fmd_underlay_ecmp_index = -1;
 
     fmd->fmd_outer_src_ip = 0;
 
