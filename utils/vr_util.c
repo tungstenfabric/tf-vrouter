@@ -727,8 +727,6 @@ void vr_print_pkt_drop_log_data(vr_pkt_drop_log_req *pkt_log, int i,
     printf("Packet Type: %s  ", vr_pkt_vp_type_rsn(pkt_log_utils[i].vp_type));
     if(pkt_log_utils[i].drop_reason)
         printf("Drop reason: %s  ", vr_pkt_droplog_rsn(pkt_log_utils[i].drop_reason));
-    else
-        printf("Drop reason: NULL  ");
     PRINT_PKT_LOG("Vif idx:",    pkt_log_utils[i].vif_idx);
     PRINT_PKT_LOG("Nexthop id:", pkt_log_utils[i].nh_id);
     if(pkt_log_utils[i].vp_type == VP_TYPE_IP)
@@ -748,8 +746,6 @@ void vr_print_pkt_drop_log_data(vr_pkt_drop_log_req *pkt_log, int i,
     PRINT_PKT_LOG("Dest port:",   pkt_log_utils[i].dport);
     if(pkt_log_utils[i].drop_loc.file)
         printf("file: %s  ", vr_pkt_droplog_str[pkt_log_utils[i].drop_loc.file]);
-    else
-        printf("file: NULL  ");
     printf("line no: %d  ", pkt_log_utils[i].drop_loc.line);
 
     if(pkt_log_utils[i].pkt_len)
