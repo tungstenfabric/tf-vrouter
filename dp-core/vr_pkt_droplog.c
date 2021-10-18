@@ -180,9 +180,13 @@ vr_pkt_drop_log_clear(vr_pkt_drop_log_req *req)
         return;
     }
 
-    size = vr_pkt_drop_log_req_get_size(req);
+    /* Calculate the MAX pkt log buffer*/
+    size = vr_pkt_droplog_bufsz * sizeof(vr_pkt_drop_log_t);
+
     for (i = 0; i < vr_num_cpus; i++) {
-        memset(router->vr_pkt_drop->vr_pkt_drop_log[i], 0, size);
+        if(router->vr_pkt_drop->vr_pkt_drop_log[i]) {
+            memset(router->vr_pkt_drop->vr_pkt_drop_log[i], 0, size);
+        }
     }
     response->h_op = SANDESH_OP_RESET;
 
