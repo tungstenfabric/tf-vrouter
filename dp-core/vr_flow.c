@@ -1877,8 +1877,16 @@ vr_reinit_forwarding_md(struct vrouter *router, struct vr_packet *pkt,
                         struct vr_flow_entry *fe, uint32_t flow_index,
                         struct vr_nexthop *nh, struct vr_forwarding_md *fmd)
 {
+    int i;
     struct vr_nexthop *src_nh = __vrouter_get_nexthop(router, fe->fe_src_nh_index);
-    fmd->fmd_dvrf = nh->nh_dev->vif_vrf;
+
+    for (i = 0; i < VR_MAX_PHY_INF; i++) {
+        if (nh->nh_dev_arr[i] != NULL) {
+            fmd->fmd_dvrf = nh->nh_dev_arr[i]->vif_vrf;
+            break;
+        }
+    }
+
     fmd->fmd_vlan = 0;
     fmd->fmd_dotonep = -1;
     fmd->fmd_outer_src_ip = src_nh->nh_udp_tun_dip;
@@ -1929,7 +1937,16 @@ vr_flow_forward(struct vrouter *router, struct vr_packet *pkt,
             nh_id = fe->fe_key.flow_nh_id;
             nh = vrouter_get_nexthop(0, nh_id);
             vr_reinit_forwarding_md(router, pkt, fe, flow_index, nh, fmd);
-            pkt->vp_if = nh->nh_dev;
+
+            if(fe->fe_underlay_ecmp_index >= 0) {
+                if(nh->nh_type == NH_TUNNEL) {
+                    pkt->vp_if = __vrouter_get_interface(router,
+                            fe->fe_underlay_ecmp_index);
+                } else
+                    pkt->vp_if = nh->nh_dev;
+            } else
+                pkt->vp_if = nh->nh_dev;
+
             memcpy(mac, nh->nh_data, VR_ETHER_ALEN);
             result = vr_flow_action_default(router, fe, flow_index, pkt, fmd);
             return __vr_flow_forward(result, pkt, fmd);
@@ -1979,7 +1996,16 @@ vr_flow_forward(struct vrouter *router, struct vr_packet *pkt,
             nh_id = fe->fe_key.flow_nh_id;
             nh = vrouter_get_nexthop(0, nh_id);
             vr_reinit_forwarding_md(router, pkt, fe, flow_index, nh, fmd);
-            pkt->vp_if = nh->nh_dev;
+
+            if(fe->fe_underlay_ecmp_index >= 0) {
+                if(nh->nh_type == NH_TUNNEL) {
+                    pkt->vp_if = __vrouter_get_interface(router,
+                            fe->fe_underlay_ecmp_index);
+                } else
+                    pkt->vp_if = nh->nh_dev;
+            } else
+                pkt->vp_if = nh->nh_dev;
+
             if (magic & VR_HBS_L3_PKT)
                memcpy(eth->eth_dmac, pkt->vp_if->vif_mac, VR_ETHER_ALEN);
             else

@@ -1647,7 +1647,7 @@ static nh_processing_t
 nh_composite_encap(struct vr_packet *pkt, struct vr_nexthop *nh,
                    struct vr_forwarding_md *fmd)
 {
-    int i;
+    int i, j;
     struct vr_vrf_stats *stats = NULL;
     struct vr_nexthop *dir_nh;
     unsigned short drop_reason;
@@ -1689,7 +1689,13 @@ nh_composite_encap(struct vr_packet *pkt, struct vr_nexthop *nh,
             PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
             break;
         }
-        fmd->fmd_dvrf = dir_nh->nh_dev->vif_vrf;
+
+        for (j = 0; j < VR_MAX_PHY_INF; j++) {
+            if (dir_nh->nh_dev_arr[j] != NULL) {
+                fmd->fmd_dvrf = dir_nh->nh_dev_arr[j]->vif_vrf;
+                break;
+            }
+        }
         nh_output(new_pkt, dir_nh, fmd);
     }
 
@@ -1703,7 +1709,7 @@ static nh_processing_t
 nh_composite_tor(struct vr_packet *pkt, struct vr_nexthop *nh,
                  struct vr_forwarding_md *fmd)
 {
-    int i;
+    int i, j;
     struct vr_vrf_stats *stats = NULL;
     struct vr_nexthop *dir_nh;
     unsigned short drop_reason;
@@ -1757,7 +1763,12 @@ nh_composite_tor(struct vr_packet *pkt, struct vr_nexthop *nh,
 
         vr_fmd_set_label(fmd, nh->nh_component_nh[i].cnh_label,
                 VR_LABEL_TYPE_UNKNOWN);
-        fmd->fmd_dvrf = dir_nh->nh_dev->vif_vrf;
+        for (j = 0; j < VR_MAX_PHY_INF; j++) {
+            if (dir_nh->nh_dev_arr[j] != NULL) {
+                fmd->fmd_dvrf = dir_nh->nh_dev_arr[j]->vif_vrf;
+                break;
+            }
+        }
         nh_output(new_pkt, dir_nh, fmd);
     }
 
@@ -1771,7 +1782,7 @@ static nh_processing_t
 nh_composite_evpn(struct vr_packet *pkt, struct vr_nexthop *nh,
                   struct vr_forwarding_md *fmd)
 {
-    int i;
+    int i, j;
     bool l2_control_data = false;
     struct vr_vrf_stats *stats = NULL;
     struct vr_nexthop *dir_nh;
@@ -1845,7 +1856,12 @@ nh_composite_evpn(struct vr_packet *pkt, struct vr_nexthop *nh,
 
         vr_fmd_set_label(fmd, nh->nh_component_nh[i].cnh_label,
                 VR_LABEL_TYPE_UNKNOWN);
-        fmd->fmd_dvrf = dir_nh->nh_dev->vif_vrf;
+        for (j = 0; j < VR_MAX_PHY_INF; j++) {
+            if (dir_nh->nh_dev_arr[j] != NULL) {
+                fmd->fmd_dvrf = dir_nh->nh_dev_arr[j]->vif_vrf;
+                break;
+            }
+        }
         nh_output(new_pkt, dir_nh, fmd);
     }
 
@@ -1859,7 +1875,7 @@ static nh_processing_t
 nh_composite_fabric(struct vr_packet *pkt, struct vr_nexthop *nh,
                     struct vr_forwarding_md *fmd)
 {
-    int i, j;
+    int i, j, flag = 0;
     int32_t label;
     unsigned int dip, sip;
     int8_t eth_mac[VR_ETHER_ALEN];
@@ -1901,6 +1917,7 @@ nh_composite_fabric(struct vr_packet *pkt, struct vr_nexthop *nh,
 
     for (i = 0; i < nh->nh_component_cnt; i++) {
         dir_nh = nh->nh_component_nh[i].cnh;
+        flag = 0;
         fmd->fmd_dvrf = pkt_vrf;
 
         /* If direct nexthop is not valid, dont process it */
@@ -1934,12 +1951,19 @@ nh_composite_fabric(struct vr_packet *pkt, struct vr_nexthop *nh,
         /* Dont flood back on ingress physical interface on the fabric. */
         if (vif_is_vlan(pkt->vp_if)) {
             for (j = 0; j < VR_MAX_PHY_INF; j++) {
-                if (vif_is_vlan(dir_nh->nh_dev_arr[j]) &&
-                    pkt->vp_if->vif_parent == dir_nh->nh_dev_arr[j]->vif_parent)
-                    continue;
-                else if (pkt->vp_if->vif_parent == dir_nh->nh_dev_arr[j])
-                    continue;
+                if (dir_nh->nh_dev_arr[j] != NULL) {
+                    if (vif_is_vlan(dir_nh->nh_dev_arr[j]) &&
+                        pkt->vp_if->vif_parent == dir_nh->nh_dev_arr[j]->vif_parent) {
+                        flag = 1;
+                        break;
+                    } else if (pkt->vp_if->vif_parent == dir_nh->nh_dev_arr[j]) {
+                        flag = 1;
+                        break;
+                    }
+                }
             }
+            if (flag == 1)
+                continue;
         }
 
         /*
