@@ -391,8 +391,8 @@ vrouter_ops_get_process(void *s_req)
     }
 
     /* Build info */
-    strncpy(resp->vo_build_info, ContrailBuildInfo,
-            strlen(ContrailBuildInfo) + 1);
+    memcpy(resp->vo_build_info, ContrailBuildInfo,
+           strlen(ContrailBuildInfo)+1);
 
     /* Logging entries */
     resp->vo_log_level = vr_get_log_level();

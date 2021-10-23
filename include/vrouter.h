@@ -342,7 +342,7 @@ vr_malloc_md_set(void *mem, unsigned int object)
     struct vr_malloc_md *vmm;
 
     vmm = (struct vr_malloc_md *)mem;
-    strncpy(vmm->vmm_magic, "MEM", sizeof(vmm->vmm_magic));
+    memcpy(vmm->vmm_magic, "MEM", sizeof(vmm->vmm_magic));
     vmm->vmm_state = VMM_STATE_ALLOCED;
     vmm->vmm_object = object;
 
