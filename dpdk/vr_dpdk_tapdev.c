@@ -88,7 +88,7 @@ vr_dpdk_tapdev_init(struct vr_interface *vif)
 
     /* Create TAP interface. */
     memset(&ifr, 0, sizeof(ifr));
-    strncpy(ifr.ifr_name, (char *)vif->vif_name, sizeof(ifr.ifr_name) - 1);
+    memcpy(ifr.ifr_name, (char *)vif->vif_name, sizeof(ifr.ifr_name) - 1);
     if (vif_is_vhost(vif))
         tapdev->tapdev_vhost_fd = fd;
     else
@@ -105,8 +105,8 @@ enable_tap:
     vif->vif_os = tapdev;
     tapdev->tapdev_vif = vif;
     memset(tapdev->tapdev_name, 0, VR_INTERFACE_NAME_LEN);
-    strncpy(tapdev->tapdev_name, (char *)vif->vif_name,
-                VR_INTERFACE_NAME_LEN - 1);
+    memcpy(tapdev->tapdev_name, (char *)vif->vif_name,
+           VR_INTERFACE_NAME_LEN - 1);
     synchronize_rcu();
     tapdev->tapdev_fd = fd;
 

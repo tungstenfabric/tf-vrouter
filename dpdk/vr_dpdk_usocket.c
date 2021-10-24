@@ -1141,12 +1141,12 @@ vr_usocket_bind(struct vr_usocket *usockp)
 
     case RAW:
         sun.sun_family = AF_UNIX;
-        memset(sun.sun_path, 0, sizeof(sun.sun_path));
         strncpy(vr_packet_unix_file, vr_socket_dir, sizeof(vr_packet_unix_file)
             - 1);
         strncat(vr_packet_unix_file, "/"VR_PACKET_UNIX_NAME,
             sizeof(vr_packet_unix_file) - strlen(vr_packet_unix_file) - 1);
-        strncpy(sun.sun_path, vr_packet_unix_file, sizeof(sun.sun_path) - 1);
+        memset(sun.sun_path, 0, sizeof(sun.sun_path));
+        memcpy(sun.sun_path, vr_packet_unix_file, sizeof(sun.sun_path) - 1);
 
         addr = (struct sockaddr *)&sun;
         addrlen = sizeof(sun);
