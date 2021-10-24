@@ -2976,7 +2976,8 @@ __vr_interface_make_req(vr_interface_req *req, struct vr_interface *intf,
     req->vifr_ref_cnt = intf->vif_users;
 
     if (req->vifr_name) {
-        strncpy(req->vifr_name, intf->vif_name, VR_INTERFACE_NAME_LEN - 1);
+        memcpy(req->vifr_name, intf->vif_name,
+               MINIMUM(sizeof(intf->vif_name), VR_INTERFACE_NAME_LEN) - 1);
     }
 
     if (intf->vif_parent)
