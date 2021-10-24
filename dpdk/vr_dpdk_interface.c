@@ -954,7 +954,7 @@ dpdk_vhost_if_add(struct vr_interface *vif)
         struct ifreq ifr;
         struct vr_dpdk_tapdev *tapdev = vr_dpdk.vlan_dev;
         memset(&ifr, 0, sizeof(ifr));
-        strncpy(ifr.ifr_name, vr_dpdk.vlan_name, sizeof(ifr.ifr_name) - 1);
+        memcpy(ifr.ifr_name, vr_dpdk.vlan_name, sizeof(ifr.ifr_name) - 1);
         rte_memcpy(ifr.ifr_hwaddr.sa_data, vif->vif_mac, RTE_ETHER_ADDR_LEN);
         ifr.ifr_hwaddr.sa_family = ARPHRD_ETHER;
         if (ioctl(tapdev->tapdev_fd, SIOCSIFHWADDR, &ifr) < 0) {

@@ -1160,7 +1160,7 @@ vr_uvh_cl_timer_handler(int fd, void *arg)
 
     memset(&sun, 0, sizeof(sun));
     sun.sun_family = AF_UNIX;
-    strncpy(sun.sun_path, vru_cl->vruc_path, sizeof(sun.sun_path) - 1);
+    memcpy(sun.sun_path, vru_cl->vruc_path, sizeof(sun.sun_path) - 1);
 
     ret = connect(vru_cl->vruc_fd, (struct sockaddr *) &sun, sizeof(sun));
     if (ret == -1) {
