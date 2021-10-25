@@ -1072,6 +1072,7 @@ nh_composite_ecmp(struct vr_packet *pkt, struct vr_nexthop *nh,
             case -VP_DROP_NO_MEMORY:
             case -VP_DROP_NO_FRAG_ENTRY:
                  drop_reason = -ret;
+                 PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
                  goto drop;
             default:
                  goto drop;
@@ -2582,12 +2583,16 @@ nh_mpls_udp_tunnel(struct vr_packet *pkt, struct vr_nexthop *nh,
     }
 
     qos = vr_qos_get_forwarding_class(nh->nh_router, pkt, fmd);
-    if (nh_push_mpls_header(pkt, fmd->fmd_label, qos, true) < 0)
+    if (nh_push_mpls_header(pkt, fmd->fmd_label, qos, true) < 0) {
+        PKT_LOG(reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
         goto send_fail;
+    }
     if (nh->nh_flags & NH_FLAG_TUNNEL_MPLS_O_MPLS) {
         /* insert outer label (transport label) */
-        if (nh_push_mpls_header(pkt, transport_label, qos, false) < 0)
+        if (nh_push_mpls_header(pkt, transport_label, qos, false) < 0) {
+            PKT_LOG(reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
             goto send_fail;
+        }
     }
 
 
@@ -2613,6 +2618,7 @@ nh_mpls_udp_tunnel(struct vr_packet *pkt, struct vr_nexthop *nh,
     if (nh_udp_tunnel_helper(pkt, htons(udp_src_port),
                              htons(VR_MPLS_OVER_UDP_DST_PORT),
                              tun_sip, tun_dip, qos) == false) {
+        PKT_LOG(reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
         goto send_fail;
     }
 
@@ -2643,6 +2649,8 @@ nh_mpls_udp_tunnel(struct vr_packet *pkt, struct vr_nexthop *nh,
                 nh->nh_data, tun_encap_len);
     }
     if (tun_encap_rewrite < 0) {
+        reason = VP_DROP_REWRITE_FAIL;
+        PKT_LOG(reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
         goto send_fail;
     }
 
@@ -2885,7 +2893,7 @@ nh_gre_tunnel(struct vr_packet *pkt, struct vr_nexthop *nh,
                 nh->nh_data, nh->nh_gre_tun_encap_len);
     }
     if (tun_encap_rewrite < 0) {
-        drop_reason = VP_DROP_PUSH;
+        drop_reason = VP_DROP_REWRITE_FAIL;
         PKT_LOG(drop_reason, pkt, 0, VR_NEXTHOP_C, __LINE__);
         goto send_fail;
     }

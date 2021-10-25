@@ -293,14 +293,18 @@ vr_fragment_flush_queue_element(struct vr_fragment_queue_element *vfqe)
     struct vr_forwarding_md fmd;
     struct vr_packet_node *pnode;
 
-    if (!vfqe)
-        goto exit_flush;
+    if (!vfqe) {
+        PKT_LOG(VP_DROP_CLONED_ORIGINAL, 0, 0, VR_FRAGMENT_C, __LINE__);
+        return;
+    }
 
     router = vfqe->fqe_router;
     pnode = &vfqe->fqe_pnode;
     pkt = pnode->pl_packet;
-    if (!pkt)
+    if (!pkt) {
+        PKT_LOG(VP_DROP_CLONED_ORIGINAL, 0, 0, VR_FRAGMENT_C, __LINE__);
         goto exit_flush;
+    }
 
     vr_init_forwarding_md(&fmd);
     fmd.fmd_vlan = pnode->pl_vlan;

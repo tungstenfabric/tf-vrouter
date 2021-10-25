@@ -118,6 +118,7 @@ static int
 vr_linux_assembler_table_init(void)
 {
     unsigned int i, size;
+    int ret;
 
     size = sizeof(struct vr_linux_fragment_bucket) * VR_ASSEMBLER_BUCKET_COUNT;
     vr_linux_assembler_table = vr_zalloc(size, VR_ASSEMBLER_TABLE_OBJECT);
@@ -131,7 +132,10 @@ vr_linux_assembler_table_init(void)
         spin_lock_init(&vr_linux_assembler_table[i].vfb_lock);
     }
 
-    vr_assembler_table_scan_init(vr_linux_assembler_table_scan);
+    ret = vr_assembler_table_scan_init(vr_linux_assembler_table_scan);
+    if (ret < 0) {
+        printk("%s:%d Allocation failed\n", __FUNCTION__, __LINE__);
+    }
 
     return 0;
 }
