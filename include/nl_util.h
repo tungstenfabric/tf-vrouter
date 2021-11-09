@@ -209,6 +209,9 @@ extern void vr_interface_req_destroy(vr_interface_req *);
 
 extern int vr_send_mem_stats_get(struct nl_client *, unsigned intid);
 
+extern int vr_send_vif_clear_stats(struct nl_client *cl, unsigned int router_id,
+        int vif_idx, int core);
+
 extern int vr_send_mirror_dump(struct nl_client *, unsigned int, int);
 extern int vr_send_mirror_get(struct nl_client *, unsigned int, unsigned int);
 extern int vr_send_mirror_delete(struct nl_client *,
