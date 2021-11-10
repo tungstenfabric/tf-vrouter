@@ -17,6 +17,10 @@
 #include <vr_route.h>
 #include <vr_vrf_table.h>
 
+// NOTE: Forward declaration is required due to circular dependency between
+// header files - vr_packet.h -> vrouter.h -> vr_offloads.h.
+struct vr_packet;
+
 enum vr_offloads_tag_type {
     VR_OFFLOADS_TAG_TYPE_MPLS_L2,
     VR_OFFLOADS_TAG_TYPE_MPLS_L3,
@@ -48,10 +52,14 @@ struct vr_offload_ops {
     /* perform soft reset, including initializing tables */
     int (*voo_soft_reset)(void);
 
+    /* packet related functions */
+    int (*voo_packet_parse)(struct vr_packet *);
+
     /* flow related functions */
     int (*voo_flow_set)(struct vr_flow_entry *, unsigned int,
                     struct vr_flow_entry *);
     int (*voo_flow_del)(struct vr_flow_entry *);
+    int (*voo_flow_stats_update)(struct vr_flow_entry *);
     int (*voo_flow_meta_data_set)(unsigned int, unsigned int, void *,
                               unsigned short);
 
