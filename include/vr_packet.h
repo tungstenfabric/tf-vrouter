@@ -956,6 +956,11 @@ struct vr_vxlan {
 #define VR_VXLAN_HDR_LEN        (sizeof(struct vr_vxlan) + \
                                     sizeof(struct vr_ip) + sizeof(struct vr_udp))
 
+#define VR_VXLAN_PKT_LEN        (sizeof(struct vr_eth) + \
+                                    sizeof(struct vr_ip) + \
+                                    sizeof(struct vr_udp) + \
+                                    sizeof(struct vr_vxlan))
+
 #define VR_L2_CTRL_DATA           (0x0000)
 #define VR_L2_CTRL_DATA_LEN       4
 
