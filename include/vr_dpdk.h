@@ -69,8 +69,9 @@ extern unsigned vr_packet_sz;
 #define RTE_LOGTYPE_USOCK           RTE_LOGTYPE_USER2
 #define RTE_LOGTYPE_UVHOST          RTE_LOGTYPE_USER3
 #define RTE_LOGTYPE_DPCORE          RTE_LOGTYPE_USER4
+#define RTE_LOGTYPE_OFFLOAD_PACKET  RTE_LOGTYPE_USER5
 /* Disable the rest (undefined) logtypes */
-#define VR_DPDK_LOGTYPE_DISABLE     (RTE_LOGTYPE_USER5 | RTE_LOGTYPE_USER6 | \
+#define VR_DPDK_LOGTYPE_DISABLE     (RTE_LOGTYPE_USER6 | \
                                      RTE_LOGTYPE_USER7 | RTE_LOGTYPE_USER8)
 
 /*
@@ -789,7 +790,8 @@ struct vr_dpdk_queue *
 vr_dpdk_ethdev_tx_queue_init(unsigned lcore_id, struct vr_interface *vif,
     unsigned tx_queue_id);
 /* Init ethernet device */
-int vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *, struct rte_eth_conf *);
+int vr_dpdk_ethdev_init(struct vr_dpdk_ethdev *, struct rte_eth_conf *,
+    struct rte_eth_txconf *, struct rte_eth_rxconf *);
 /* Release ethernet device */
 int vr_dpdk_ethdev_release(struct vr_dpdk_ethdev *);
 /* Get free queue ID */
@@ -956,6 +958,7 @@ int vr_dpdk_lcore_mpls_schedule(struct vr_interface *vif, unsigned dst_ip,
     unsigned mpls_label);
 /* Returns the least used lcore or VR_MAX_CPUS_DPDK */
 unsigned vr_dpdk_lcore_least_used_get(void);
+size_t vr_dpdk_lcore_free_lcore_get(void);
 /* Flush TX queues */
 static inline void
 vr_dpdk_lcore_flush(struct vr_dpdk_lcore *lcore)
@@ -1060,6 +1063,12 @@ uint8_t dpdk_find_port_id_by_vif_name(struct vr_interface *);
  * Get all bond interface port ids
  */
 bool dpdk_find_bond_port_id_list(struct vr_dpdk_bond_port_list *);
+
+/*
+ * vr_dpdk_interface.c
+ */
+int vr_dpdk_interface_queue_setup(struct vr_interface *vif);
+void vr_dpdk_interface_queue_free(struct vr_interface *vif);
 
 /*
  * Get DPDK info

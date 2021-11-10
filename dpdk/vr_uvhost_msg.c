@@ -95,7 +95,7 @@ static char *basename(char *string)
  * state 1 - up
  * Called when the VM goes down or comes up
  */
-static void
+void
 vr_uvh_nl_send_intf_state(int state, int intf_index, char *intf_name)
 {
     int nl_fd;
@@ -330,7 +330,7 @@ vr_uvmh_get_features(vr_uvh_client_t *vru_cl)
                            (1ULL << VHOST_F_LOG_ALL);
 
     if (dpdk_check_rx_mrgbuf_disable() == 0)
-        vru_cl->vruc_msg.u64 |= (1ULL << VIRTIO_NET_F_MRG_RXBUF); 
+        vru_cl->vruc_msg.u64 |= (1ULL << VIRTIO_NET_F_MRG_RXBUF);
 
     if (vr_perfs)
         vru_cl->vruc_msg.u64 |= (1ULL << VIRTIO_NET_F_GUEST_TSO4)|
@@ -1145,7 +1145,7 @@ error:
 }
 
 /*
- * vr_uvh_cl_timer_handler - handler for timer events for 
+ * vr_uvh_cl_timer_handler - handler for timer events for
  * clients when Qemu in server mode
  *
  * Returns 0 on success, -1 on error.
