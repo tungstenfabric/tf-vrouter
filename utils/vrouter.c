@@ -824,7 +824,7 @@ parse_long_opts(int opt_index, char *opt_arg)
     case SET_PERFQ2_INDEX:
         assert_platform_for_option(LINUX_PLATFORM, opt_index);
         vrouter_op = SANDESH_OP_ADD;
-        perfq3 = (int)strtol(opt_arg, NULL, 0);
+        perfq2 = (int)strtol(opt_arg, NULL, 0);
         if (errno != 0) {
             printf("vrouter: Error parsing perfq2: %s: %s (%d)\n", opt_arg,
                     strerror(errno), errno);
