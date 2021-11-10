@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright(c) HCL TECHNOLOGIES LTD
+# Submitted on behalf of a third-party: Intel Corporation, a
+# Delaware corporation, having its principal place of business
+# at 2200 Mission College Boulevard,
+# Santa Clara, California 95052, USA
+#
+
+Import('VRouterEnv')
+Import('dpdk_lib')
+
+env = VRouterEnv.Clone()
+
+env.Append(CCFLAGS = '-DALLOW_EXPERIMENTAL_API')
+if env['OPT'] == 'debug':
+    env.Append(CCFLAGS = '-DCOMPILE_DEBUG_LOGS')
+
+env.Append(CCFLAGS = '-Werror -Wall')
+env.Append(CCFLAGS = '-msse4.2')
+
+objs = env.Object(Glob('*.c')) + env.Object(Glob('offload_entry/*.c'))
+
+env.Requires(objs, dpdk_lib)
+
+env.StaticLibrary('vr_dpdk_n3k', source = objs)
