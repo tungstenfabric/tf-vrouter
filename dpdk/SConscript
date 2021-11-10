@@ -10,6 +10,9 @@ Import('dpdk_lib')
 
 env = VRouterEnv.Clone()
 
+if 'enableN3K' in env['ADD_OPTS']:
+    env.SConscript('n3k/SConscript', exports = ['VRouterEnv', 'dpdk_lib'], duplicate = 0)
+
 # Flags
 env.Append(CCFLAGS = '-Werror -Wall')
 gpp_version = subprocess.check_output(
@@ -23,13 +26,20 @@ env.Append(CCFLAGS = '-msse4.2')
 if env['OPT'] == 'debug':
     env.Append(CCFLAGS = '-DCOMPILE_DEBUG_LOGS')
 
+env.Append(CCFLAGS = '-DALLOW_EXPERIMENTAL_API')
+
 # Include/lLib paths
 env.Append(LIBPATH = [env['TOP_LIB']])
-env.Append(LIBPATH = ['../host', '../sandesh', '../dp-core'])
+env.Append(LIBPATH = ['../host', '../sandesh', '../dp-core', 'n3k'])
 
 # Libraries
 env.Replace(LIBS = ['dp_core', 'dp_sandesh_c', 'dp_core', 'sandesh-c'])
 env.Append(LIBS = ['rt', 'dl', 'pthread', 'urcu-qsbr', 'urcu-bp'])
+if 'enableN3K' in env['ADD_OPTS']:
+# Force n3k library build using --whole-archive option
+    env.Append(LIBS = ['vr_dpdk_n3k'])
+    env.Append(LINKFLAGS = ['-Wl,--whole-archive', '-lvr_dpdk_n3k', '-Wl,--no-whole-archive'])
+
 env.Append(LINKFLAGS = env['DPDK_LINKFLAGS'])
 
 dpdk_objs = env.Object(Glob('*.c'))

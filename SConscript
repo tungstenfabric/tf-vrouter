@@ -15,6 +15,9 @@ AddOption('--kernel-dir', dest='kernel-dir', action='store',
 AddOption('--dpdk-dir', dest='dpdk-dir', action='store',
           help='third party dpdk built library')
 
+AddOption('--dpdk-jobs', dest='dpdk-jobs', action='store', default=1, type=int,
+          help='Number of jobs passed to DPDK make command')
+
 AddOption('--system-header-path', dest='system-header-path', action='store',
           help='Linux kernel headers for applications')
 
@@ -89,6 +92,9 @@ DPDK_INC_DIR = DPDK_DST_DIR + '/include'
 DPDK_LIB_DIR = DPDK_DST_DIR + '/lib'
 THRD_PRT_DIR = '#third_party/'
 ADDNL_OPTION = GetOption('add-opts')
+
+# Save add-opts for nested SConscripts
+env['ADD_OPTS'] = ADDNL_OPTION if ADDNL_OPTION else []
 
 # Include paths
 env.Replace(CPPPATH='#vrouter/include')
@@ -217,9 +223,8 @@ if sys.platform != 'darwin':
     dpdk_dir = GetOption('dpdk-dir')
     if dpdk_dir:
         skip_dpdk_build = True
-        rte_ver_filename = dpdk_dir + '/include/rte_version.h'
         link_dpdk = True
-        DPDK_INC_DIR = dpdk_dir + '/include'
+        DPDK_INC_DIR = dpdk_dir + '/include/dpdk'
         DPDK_LIB_DIR = dpdk_dir + '/lib'
         dpdk_lib = env.Command('dpdk_lib', None, 'echo "*** Skipping DPDK Build, using provided DPDK directory ***"')
 
@@ -231,8 +236,6 @@ if sys.platform != 'darwin':
             mlnx_patch_cmd = 'patch -N ' + dpdk_src_dir + '/config/common_base ' + thrd_prt_dir + '/dpdk_mlnx.patch'
             os.system(mlnx_patch_cmd)
 
-        rte_ver_filename = '../third_party/dpdk/lib/librte_eal/common/include/rte_version.h'
-
         # Pass -g and -O flags if present to DPDK
         DPDK_FLAGS = ' '.join(o for o in env['CCFLAGS'] if ('-g' in o or '-O' in o))
         env.Append(CCFLAGS='-DPLATFORM_IS_DPDK')
@@ -240,10 +243,14 @@ if sys.platform != 'darwin':
         # Make DPDK
         dpdk_dst_dir = Dir(DPDK_DST_DIR).abspath
 
-        make_cmd = 'make -C ' + dpdk_src_dir \
+        dpdk_jobs = GetOption('dpdk-jobs')
+
+        make_cmd = 'make' \
+            + ' -j {}'.format(dpdk_jobs) \
+            + ' -C {}'.format(dpdk_src_dir) \
             + ' EXTRA_CFLAGS="' + DPDK_FLAGS + '"' \
             + ' ARCH=x86_64' \
-            + ' O=' + dpdk_dst_dir \
+            + ' O={}'.format(dpdk_dst_dir) \
             + ' '
 
         # If this var is set, then we need to pass it to make cmd for libdpdk
@@ -260,19 +267,17 @@ if sys.platform != 'darwin':
             os.system(make_cmd + 'clean')
 
     if link_dpdk:
+        subdirs.append('tests')
         subdirs.append('dpdk')
         exports.append('dpdk_lib')
-        rte_ver_file = open(rte_ver_filename, 'r')
-        file_content = rte_ver_file.read()
-        rte_ver_file.close()
-        matches = re.findall("define RTE_VER_MAJOR 2", file_content)
 
-        if matches:
-            rte_libs = ('-lethdev', '-lrte_malloc')
-        else:
-            rte_libs = ('-lrte_ethdev',)
-
-        rte_libs = rte_libs + ('-lrte_mempool_ring', '-lrte_bus_pci', '-lrte_pci', '-lrte_bus_vdev')
+        rte_libs = [
+            '-lrte_ethdev',
+            '-lrte_mempool_ring',
+            '-lrte_bus_pci',
+            '-lrte_pci',
+            '-lrte_bus_vdev',
+        ]
 
         #
         # DPDK libraries need to be linked as a whole archive, otherwise some
@@ -285,14 +290,25 @@ if sys.platform != 'darwin':
         # The list is from the rte.app.mk file
         DPDK_LIBS = [
             '-Wl,--whole-archive',
+            '-lrte_distributor',
+            '-lrte_reorder',
             '-lrte_kni',
+            '-lrte_pipeline',
+            '-lrte_table',
             '-lrte_port',
             '-lrte_timer',
             '-lrte_hash',
             '-lrte_net',
+            '-lrte_jobstats',
+            '-lrte_lpm',
+            '-lrte_power',
+            '-lrte_acl',
+            '-lrte_meter',
+            '-lrte_member',
             '-lrte_sched',
             '-lm',
             '-lrt',
+            '-lrte_vhost',
             '-lrte_cryptodev',
             '-Wl,--start-group',
             '-lrte_kvargs',
@@ -300,17 +316,22 @@ if sys.platform != 'darwin':
             '-lrte_ip_frag',
             rte_libs,
             '-lrte_mempool',
+            '-lrte_stack',
             '-lrte_ring',
             '-lrte_eal',
             '-lrte_cmdline',
+            '-lrte_cfgfile',
             "-lrte_eventdev",
             '-lrte_pmd_bond',
             '-lrte_pmd_bnxt',
+            '-lrte_bus_vmbus',
+            '-lrte_pmd_ifc',
             '-lrte_pmd_enic',
             '-lrte_pmd_i40e',
             '-lrte_pmd_ixgbe',
             '-lrte_pmd_nfp',
             '-lrte_pmd_e1000',
+            '-lrte_pmd_ring',
             '-lrte_pmd_af_packet'
         ]
         if env['OPT'] == 'coverage':
@@ -320,6 +341,14 @@ if sys.platform != 'darwin':
             DPDK_LIBS.append('-lrte_pmd_mlx5')
             DPDK_LIBS.append('-libverbs')
             DPDK_LIBS.append('-lmlx5')
+
+        if ADDNL_OPTION and 'enableN3K' in ADDNL_OPTION:
+            DPDK_LIBS += [
+                '-lrte_pmd_n3k',
+            ]
+            env.Append(CCFLAGS = '-DVR_ENABLE_N3K')
+
+        DPDK_LIBS.append('-lrte_pmd_virtio')
 
         DPDK_LIBS.append('-Wl,--end-group')
         DPDK_LIBS.append('-Wl,--no-whole-archive')
