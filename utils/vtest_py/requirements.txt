@@ -19,7 +19,7 @@ more-itertools==5.0.0
 netaddr==0.7.19
 packaging==20.3
 pathlib2==2.3.5
-pip==20.0.2
+pip==21.1
 pluggy==0.13.1
 py==1.8.1
 pycodestyle==2.5.0
