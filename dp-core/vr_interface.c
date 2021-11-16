@@ -2100,9 +2100,9 @@ vrouter_add_interface(struct vr_interface *vif, vr_interface_req *vifr)
     struct vr_interface *eth_vif[VR_MAX_PHY_INF] = {NULL};
     int i;
 
-    if (!router)
+    if (!router) {
         return -ENODEV;
-
+    }
     if (router->vr_interfaces[vif->vif_idx])
         return -EEXIST;
 
@@ -2117,8 +2117,12 @@ vrouter_add_interface(struct vr_interface *vif, vr_interface_req *vifr)
             eth_vif[i] = __vrouter_get_interface(router, i);
 #else
             if ((!vifr->vifr_cross_connect_idx) ||
-                    (vifr->vifr_cross_connect_idx[i] < 0))
+                    (vifr->vifr_cross_connect_idx[i] < 0)) {
+                vr_printf("Vrouter: %s:%d vifr_idx: %d vifr_cross_connect_idx=%d\n",
+                            __func__, __LINE__, vifr->vifr_idx,
+                           vifr->vifr_cross_connect_idx? vifr->vifr_cross_connect_idx[i]: 0);
                 return -EINVAL;
+            }
             eth_vif[i] = __vrouter_get_interface_os(router,
                     vifr->vifr_cross_connect_idx[i]);
 #endif
@@ -2526,12 +2530,17 @@ vr_interface_add(vr_interface_req *req, bool need_response)
     struct vrouter *router = vrouter_get(req->vifr_rid);
 
     if (!router || ((unsigned int)req->vifr_idx >= router->vr_max_interfaces)) {
+        vr_printf("Vrouter: %s:%d vifr_idx: %d vifr_type:%d vr_max_intf : %u \n",
+                   __func__, __LINE__, req->vifr_idx, req->vifr_type, router->vr_max_interfaces);
         ret = -EINVAL;
         goto error;
     }
 
-    if (req->vifr_type >= VIF_TYPE_MAX && (ret = -EINVAL))
+    if (req->vifr_type >= VIF_TYPE_MAX && (ret = -EINVAL)) {
+        vr_printf("Vrouter: %s:%d vifr_transport:%d vifr_name:%s vifr_idx:%d\n",
+                   __func__, __LINE__, req->vifr_transport, req->vifr_name, req->vifr_idx);
         goto error;
+    }
 
     if (!vif_transport_valid(req))
         goto error;
@@ -2670,6 +2679,7 @@ vr_interface_add(vr_interface_req *req, bool need_response)
 
     if (req->vifr_mac) {
         if (req->vifr_mac_size != sizeof(vif->vif_mac)) {
+            vr_printf("Vrouter: %s:%d Incorrect mac size %d\n", __func__, __LINE__, req->vifr_mac_size);
             ret = -EINVAL;
             goto error;
         }
@@ -2707,8 +2717,10 @@ vr_interface_add(vr_interface_req *req, bool need_response)
     }
 
     ret = vif_fat_flow_add(vif, req);
-    if (ret)
+    if (ret){
+        vr_printf("Vrouter: %s:%d ret:%d\n", __func__, __LINE__, ret);
         goto error;
+    }
 
     /*
      * the order below is probably not intuitive, but we do this because
@@ -2749,7 +2761,6 @@ vr_interface_add(vr_interface_req *req, bool need_response)
         }
     }
 #endif
-
     if (!ret) {
         vrouter_setup_vif(vif);
         vr_register_nic(vif, req);
@@ -3527,6 +3538,8 @@ vr_interface_get(vr_interface_req *req)
         vif = __vrouter_get_interface(router, req->vifr_idx);
 
     if (!vif) {
+        vr_printf("Vrouter: %s:%d vif is NULL for vifr_idx: %d \n",
+                   __func__, __LINE__, req->vifr_idx);
         ret = -ENOENT;
         goto generate_response;
     }
@@ -4784,6 +4797,8 @@ vif_fat_flow_add(struct vr_interface *vif, vr_interface_req *req)
         vif->vif_fat_flow_ipv4_exclude_list_size = 0;
     } else {
         if (req->vifr_fat_flow_exclude_ip_list_size > FAT_FLOW_IPV4_EXCLUDE_LIST_MAX_SIZE) {
+            vr_printf("Vrouter: %s:%d vifr_idx: %d vifr_fat_flow_exclude_ip_list_size=%d \n",
+                       __func__, __LINE__, req->vifr_idx, req->vifr_fat_flow_exclude_ip_list_size);
             return -EINVAL;
         }
         /* copy the exclude list and size */
@@ -4809,6 +4824,8 @@ vif_fat_flow_add(struct vr_interface *vif, vr_interface_req *req)
         if ((req->vifr_fat_flow_exclude_ip6_l_list_size != req->vifr_fat_flow_exclude_ip6_u_list_size) ||
             (req->vifr_fat_flow_exclude_ip6_l_list_size != req->vifr_fat_flow_exclude_ip6_plen_list_size) ||
             (req->vifr_fat_flow_exclude_ip6_l_list_size > FAT_FLOW_IPV6_EXCLUDE_LIST_MAX_SIZE)) {
+            vr_printf("Vrouter: %s:%d vifr_idx: %d vifr_fat_flow_exclude_ip6_l_list_size=%d \n",
+                       __func__, __LINE__, req->vifr_idx, req->vifr_fat_flow_exclude_ip6_l_list_size);
              return -EINVAL;
         }
         /* copy the exclude list and size */
