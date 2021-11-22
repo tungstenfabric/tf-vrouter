@@ -188,8 +188,8 @@ test_2_cn_same_net_encap_forward(void **state)
     assert_int_equal(tcp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_vxlan_encap *encap_action_conf =
-        (struct rte_flow_action_vxlan_encap *)
-            flow_package.actions[ACTION_VXLAN_ENCAP].conf;
+        (struct rte_flow_action_vxlan_encap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_VXLAN_ENCAP)->conf;
 
     struct rte_flow_item_eth *encap_eth_spec =
         (struct rte_flow_item_eth *)
@@ -206,11 +206,6 @@ test_2_cn_same_net_encap_forward(void **state)
     struct rte_flow_item_vxlan *encap_vxlan_spec =
         (struct rte_flow_item_vxlan *)
             encap_action_conf->definition[ENCAP_VXLAN].spec;
-
-    assert_int_equal(
-        flow_package.actions[ACTION_VXLAN_ENCAP].type,
-        RTE_FLOW_ACTION_TYPE_VXLAN_ENCAP
-    );
 
     assert_int_equal(
         encap_action_conf->definition[ENCAP_ETH].type,
@@ -258,8 +253,8 @@ test_2_cn_same_net_encap_forward(void **state)
     );
 
     struct rte_flow_action_port_id *port_action_conf =
-        (struct rte_flow_action_port_id *)
-            flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_action_conf->id, dst_port_id);
 }
@@ -610,7 +605,8 @@ test_2_cn_same_net_decap_forward(void **state)
     );
 
     struct rte_flow_action_port_id *port_id_action_conf =
-      (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_id_action_conf->id, dst_port_id);
 }
@@ -963,8 +959,8 @@ test_2_cn_same_net_encap_ipv6_forward(void **state)
     assert_int_equal(tcp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_vxlan_encap *encap_action_conf =
-        (struct rte_flow_action_vxlan_encap *)
-            flow_package.actions[ACTION_VXLAN_ENCAP].conf;
+        (struct rte_flow_action_vxlan_encap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_VXLAN_ENCAP)->conf;
 
     struct rte_flow_item_eth *encap_eth_spec =
         (struct rte_flow_item_eth *)
@@ -981,11 +977,6 @@ test_2_cn_same_net_encap_ipv6_forward(void **state)
     struct rte_flow_item_vxlan *encap_vxlan_spec =
         (struct rte_flow_item_vxlan *)
             encap_action_conf->definition[ENCAP_VXLAN].spec;
-
-    assert_int_equal(
-        flow_package.actions[ACTION_VXLAN_ENCAP].type,
-        RTE_FLOW_ACTION_TYPE_VXLAN_ENCAP
-    );
 
     assert_int_equal(
         encap_action_conf->definition[ENCAP_ETH].type,
@@ -1033,8 +1024,8 @@ test_2_cn_same_net_encap_ipv6_forward(void **state)
     );
 
     struct rte_flow_action_port_id *port_action_conf =
-        (struct rte_flow_action_port_id *)
-            flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_action_conf->id, dst_port_id);
 }
@@ -1387,7 +1378,8 @@ test_2_cn_same_net_decap_ipv6_forward(void **state)
     );
 
     struct rte_flow_action_port_id *port_id_action_conf =
-      (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_id_action_conf->id, dst_port_id);
 }

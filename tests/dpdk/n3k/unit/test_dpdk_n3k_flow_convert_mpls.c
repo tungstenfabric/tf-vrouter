@@ -223,7 +223,8 @@ test_mpls_o_udp_decap_tcp(void **state)
     assert_int_equal(tcp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_raw_decap *decap_action_conf =
-        (struct rte_flow_action_raw_decap *)flow_package.actions[ACTION_RAW_DECAP].conf;
+        (struct rte_flow_action_raw_decap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_DECAP)->conf;
 
     assert_non_null(decap_action_conf->data);
 
@@ -264,7 +265,8 @@ test_mpls_o_udp_decap_tcp(void **state)
     assert_int_equal(mpls_hdr->tag_lsb, mpls_label & 0xf);
 
     struct rte_flow_action_port_id *port_id_action_conf =
-        (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_id_action_conf->id, dst_port_id);
 }
@@ -454,7 +456,8 @@ test_mpls_o_udp_decap_udp(void **state)
     assert_int_equal(udp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_raw_decap *decap_action_conf =
-        (struct rte_flow_action_raw_decap *)flow_package.actions[ACTION_RAW_DECAP].conf;
+        (struct rte_flow_action_raw_decap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_DECAP)->conf;
 
     assert_non_null(decap_action_conf->data);
 
@@ -492,7 +495,8 @@ test_mpls_o_udp_decap_udp(void **state)
     assert_int_equal(result_label, mpls_label);
 
     struct rte_flow_action_port_id *port_id_action_conf =
-        (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_non_null(decap_action_conf-> data);
     assert_int_equal(port_id_action_conf->id, dst_port_id);
@@ -651,8 +655,8 @@ test_mpls_o_udp_encap_tcp(void **state)
     assert_int_equal(tcp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_raw_encap *encap_action_conf =
-        (struct rte_flow_action_raw_encap *)
-            flow_package.actions[ACTION_RAW_ENCAP].conf;
+        (struct rte_flow_action_raw_encap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_ENCAP)->conf;
 
     assert_non_null(encap_action_conf->data);
 
@@ -685,8 +689,8 @@ test_mpls_o_udp_encap_tcp(void **state)
     assert_int_equal(result_label, mpls_label);
 
     struct rte_flow_action_port_id *port_action_conf =
-        (struct rte_flow_action_port_id *)
-            flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_action_conf->id, dst_port_id);
 }
@@ -844,8 +848,8 @@ test_mpls_o_udp_encap_udp(void **state)
     assert_int_equal(udp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_raw_encap *encap_action_conf =
-        (struct rte_flow_action_raw_encap *)
-            flow_package.actions[ACTION_RAW_ENCAP].conf;
+        (struct rte_flow_action_raw_encap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_ENCAP)->conf;
 
     assert_non_null(encap_action_conf->data);
 
@@ -877,8 +881,8 @@ test_mpls_o_udp_encap_udp(void **state)
     assert_int_equal(mpls_hdr->tag_lsb, mpls_label & 0xf);
 
     struct rte_flow_action_port_id *port_action_conf =
-        (struct rte_flow_action_port_id *)
-            flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_action_conf->id, dst_port_id);
 }
@@ -1048,8 +1052,8 @@ test_mpls_o_udp_encap_udp_l3(void **state)
     // verify actions
 
     struct rte_flow_action_raw_decap *decap_action_conf =
-        (struct rte_flow_action_raw_decap *)
-            flow_package.actions[ACTION_RAW_DECAP].conf;
+        (struct rte_flow_action_raw_decap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_DECAP)->conf;
 
     struct rte_ether_hdr *hdr = (struct rte_ether_hdr *)(decap_action_conf->data);
     assert_memory_equal(
@@ -1059,8 +1063,8 @@ test_mpls_o_udp_encap_udp_l3(void **state)
     assert_int_equal(hdr->ether_type, RTE_BE16(RTE_ETHER_TYPE_IPV4));
 
     struct rte_flow_action_raw_encap *encap_action_conf =
-        (struct rte_flow_action_raw_encap *)
-            flow_package.actions[ACTION_RAW_ENCAP].conf;
+        (struct rte_flow_action_raw_encap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_ENCAP)->conf;
 
     assert_non_null(encap_action_conf->data);
 
@@ -1092,8 +1096,8 @@ test_mpls_o_udp_encap_udp_l3(void **state)
     assert_int_equal(mpls_hdr->tag_lsb, mpls_label & 0xf);
 
     struct rte_flow_action_port_id *port_action_conf =
-        (struct rte_flow_action_port_id *)
-            flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_action_conf->id, dst_port_id);
 }
@@ -1280,7 +1284,8 @@ test_mpls_o_udp_decap_udp_l3(void **state)
     // verify actions
 
     struct rte_flow_action_raw_decap *decap_action_conf =
-        (struct rte_flow_action_raw_decap *)flow_package.actions[ACTION_RAW_DECAP].conf;
+        (struct rte_flow_action_raw_decap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_DECAP)->conf;
 
     assert_non_null(decap_action_conf->data);
 
@@ -1312,7 +1317,8 @@ test_mpls_o_udp_decap_udp_l3(void **state)
     assert_int_equal(result_label, mpls_label);
 
     struct rte_flow_action_raw_encap *encap_action_conf =
-        (struct rte_flow_action_raw_encap *)flow_package.actions[ACTION_RAW_ENCAP].conf;
+        (struct rte_flow_action_raw_encap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_ENCAP)->conf;
 
     assert_non_null(encap_action_conf->data);
 
@@ -1322,7 +1328,8 @@ test_mpls_o_udp_decap_udp_l3(void **state)
     assert_memory_equal(ether_hdr->d_addr.addr_bytes, dst_mac, VR_ETHER_ALEN);
 
     struct rte_flow_action_port_id *port_id_action_conf =
-        (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_non_null(decap_action_conf-> data);
     assert_int_equal(port_id_action_conf->id, dst_port_id);
@@ -1515,7 +1522,8 @@ test_mpls_o_udp_decap_tcp_ipv6(void **state)
     assert_int_equal(tcp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_raw_decap *decap_action_conf =
-        (struct rte_flow_action_raw_decap *)flow_package.actions[ACTION_RAW_DECAP].conf;
+        (struct rte_flow_action_raw_decap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_DECAP)->conf;
 
     assert_non_null(decap_action_conf->data);
 
@@ -1556,7 +1564,8 @@ test_mpls_o_udp_decap_tcp_ipv6(void **state)
     assert_int_equal(mpls_hdr->tag_lsb, mpls_label & 0xf);
 
     struct rte_flow_action_port_id *port_id_action_conf =
-        (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_id_action_conf->id, dst_port_id);
 }
@@ -1747,7 +1756,8 @@ test_mpls_o_udp_decap_udp_ipv6(void **state)
     assert_int_equal(udp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_raw_decap *decap_action_conf =
-        (struct rte_flow_action_raw_decap *)flow_package.actions[ACTION_RAW_DECAP].conf;
+        (struct rte_flow_action_raw_decap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_DECAP)->conf;
 
     assert_non_null(decap_action_conf->data);
 
@@ -1785,7 +1795,8 @@ test_mpls_o_udp_decap_udp_ipv6(void **state)
     assert_int_equal(result_label, mpls_label);
 
     struct rte_flow_action_port_id *port_id_action_conf =
-        (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_non_null(decap_action_conf-> data);
     assert_int_equal(port_id_action_conf->id, dst_port_id);
@@ -1945,8 +1956,8 @@ test_mpls_o_udp_encap_tcp_ipv6(void **state)
     assert_int_equal(tcp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_raw_encap *encap_action_conf =
-        (struct rte_flow_action_raw_encap *)
-            flow_package.actions[ACTION_RAW_ENCAP].conf;
+        (struct rte_flow_action_raw_encap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_ENCAP)->conf;
 
     assert_non_null(encap_action_conf->data);
 
@@ -1979,8 +1990,8 @@ test_mpls_o_udp_encap_tcp_ipv6(void **state)
     assert_int_equal(result_label, mpls_label);
 
     struct rte_flow_action_port_id *port_action_conf =
-        (struct rte_flow_action_port_id *)
-            flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_action_conf->id, dst_port_id);
 }
@@ -2139,8 +2150,8 @@ test_mpls_o_udp_encap_udp_ipv6(void **state)
     assert_int_equal(udp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_raw_encap *encap_action_conf =
-        (struct rte_flow_action_raw_encap *)
-            flow_package.actions[ACTION_RAW_ENCAP].conf;
+        (struct rte_flow_action_raw_encap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_ENCAP)->conf;
 
     assert_non_null(encap_action_conf->data);
 
@@ -2172,8 +2183,8 @@ test_mpls_o_udp_encap_udp_ipv6(void **state)
     assert_int_equal(mpls_hdr->tag_lsb, mpls_label & 0xf);
 
     struct rte_flow_action_port_id *port_action_conf =
-        (struct rte_flow_action_port_id *)
-            flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_action_conf->id, dst_port_id);
 }
@@ -2345,8 +2356,8 @@ test_mpls_o_udp_encap_udp_ipv6_l3(void **state)
     // verify actions
 
     struct rte_flow_action_raw_decap *decap_action_conf =
-        (struct rte_flow_action_raw_decap *)
-            flow_package.actions[ACTION_RAW_DECAP].conf;
+        (struct rte_flow_action_raw_decap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_DECAP)->conf;
 
     struct rte_ether_hdr *hdr = (struct rte_ether_hdr *)(decap_action_conf->data);
     assert_memory_equal(
@@ -2356,8 +2367,8 @@ test_mpls_o_udp_encap_udp_ipv6_l3(void **state)
     assert_int_equal(hdr->ether_type, RTE_BE16(RTE_ETHER_TYPE_IPV4));
 
     struct rte_flow_action_raw_encap *encap_action_conf =
-        (struct rte_flow_action_raw_encap *)
-            flow_package.actions[ACTION_RAW_ENCAP].conf;
+        (struct rte_flow_action_raw_encap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_ENCAP)->conf;
 
     assert_non_null(encap_action_conf->data);
 
@@ -2389,8 +2400,8 @@ test_mpls_o_udp_encap_udp_ipv6_l3(void **state)
     assert_int_equal(mpls_hdr->tag_lsb, mpls_label & 0xf);
 
     struct rte_flow_action_port_id *port_action_conf =
-        (struct rte_flow_action_port_id *)
-            flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_action_conf->id, dst_port_id);
 }
@@ -2578,7 +2589,8 @@ test_mpls_o_udp_decap_udp_ipv6_l3(void **state)
     // verify actions
 
     struct rte_flow_action_raw_decap *decap_action_conf =
-        (struct rte_flow_action_raw_decap *)flow_package.actions[ACTION_RAW_DECAP].conf;
+        (struct rte_flow_action_raw_decap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_DECAP)->conf;
 
     assert_non_null(decap_action_conf->data);
 
@@ -2610,7 +2622,8 @@ test_mpls_o_udp_decap_udp_ipv6_l3(void **state)
     assert_int_equal(result_label, mpls_label);
 
     struct rte_flow_action_raw_encap *encap_action_conf =
-        (struct rte_flow_action_raw_encap *)flow_package.actions[ACTION_RAW_ENCAP].conf;
+        (struct rte_flow_action_raw_encap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_RAW_ENCAP)->conf;
 
     assert_non_null(encap_action_conf->data);
 
@@ -2620,7 +2633,8 @@ test_mpls_o_udp_decap_udp_ipv6_l3(void **state)
     assert_memory_equal(ether_hdr->d_addr.addr_bytes, dst_mac, VR_ETHER_ALEN);
 
     struct rte_flow_action_port_id *port_id_action_conf =
-        (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_non_null(decap_action_conf-> data);
     assert_int_equal(port_id_action_conf->id, dst_port_id);

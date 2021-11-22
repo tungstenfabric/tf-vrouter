@@ -89,6 +89,12 @@ static struct rte_flow_item_eth eth_mask = {
     },
 };
 
+static struct rte_flow_item_vlan vlan_spec;
+static struct rte_flow_item_vlan vlan_mask = {
+    .tci = 0xffff,
+    .inner_type = 0xffff
+};
+
 static struct rte_flow_item_ipv4 ipv4_spec;
 static struct rte_flow_item_ipv4 ipv4_mask = {
     .hdr = {
@@ -167,6 +173,12 @@ static struct rte_flow_item pattern[] = {
         .type = RTE_FLOW_ITEM_TYPE_ETH,
         .spec = &eth_spec,
         .mask = &eth_mask,
+        .last = NULL,
+    },
+    [PATTERN_VLAN] = {
+        .type = RTE_FLOW_ITEM_TYPE_VLAN,
+        .spec = &vlan_spec,
+        .mask = &vlan_mask,
         .last = NULL,
     },
     [PATTERN_IPV4] = {
@@ -268,6 +280,14 @@ set_pattern_inner_eth(const uint8_t *smac, const uint8_t *dmac)
     eth_spec.type = RTE_BE16(VR_ETH_PROTO_IP);
     memcpy(eth_spec.src.addr_bytes, smac, VR_ETHER_ALEN);
     memcpy(eth_spec.dst.addr_bytes, dmac, VR_ETHER_ALEN);
+}
+
+static void
+set_pattern_inner_vlan(const uint16_t tci, const uint16_t inner_type)
+{
+    pattern[PATTERN_VLAN].type = RTE_FLOW_ITEM_TYPE_VLAN;
+    vlan_spec.tci = RTE_BE16(tci);
+    vlan_spec.inner_type = RTE_BE16(inner_type);
 }
 
 static void
@@ -374,18 +394,21 @@ vr_dpdk_n3k_offload_entry_to_rte_flow_pattern(
 
     set_pattern_port_id(vif_port_id(entry->src_vif));
 
+    bool is_inner_eth = true;
     if (entry->src_nh->nh_type == NH_TUNNEL) {
         set_pattern_outer_headers(entry);
+        is_inner_eth = entry->dst_nh->nh_family != AF_INET;
+    }
 
-        if (entry->dst_nh->nh_family != AF_INET) {
-            set_pattern_inner_eth(
-                entry->pkt_metadata.inner_src_mac,
-                entry->pkt_metadata.inner_dst_mac);
-        }
-    } else {
+    if (is_inner_eth) {
         set_pattern_inner_eth(
             entry->pkt_metadata.inner_src_mac,
             entry->pkt_metadata.inner_dst_mac);
+
+        if ((entry->src_virtual_vif != NULL) && vif_is_vlan(entry->src_virtual_vif))
+            set_pattern_inner_vlan(entry->src_virtual_vif->vif_vlan_id,
+                entry->flow->ip.type == VR_N3K_IP_TYPE_IPV6 ?
+                    VR_ETH_PROTO_IP6 : VR_ETH_PROTO_IP);
     }
 
     const struct vr_n3k_offload_flow *flow = entry->flow;
@@ -394,6 +417,7 @@ vr_dpdk_n3k_offload_entry_to_rte_flow_pattern(
     } else {
         set_pattern_inner_ipv4(flow->ip.src.ipv4, flow->ip.dst.ipv4, flow->proto);
     }
+
     ret = set_pattern_inner_transport(flow);
     if (ret)
         return ret;

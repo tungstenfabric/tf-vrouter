@@ -156,7 +156,8 @@ test_same_cn_same_net_forward(void **state)
     assert_int_equal(tcp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_port_id *port_id_action_conf =
-        (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
     assert_int_equal(port_id_action_conf->id, dst_port_id);
 }
 
@@ -403,7 +404,8 @@ test_same_cn_same_net_ipv6_forward(void **state)
     assert_int_equal(tcp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_port_id *port_id_action_conf =
-        (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
     assert_int_equal(port_id_action_conf->id, dst_port_id);
 }
 
@@ -527,10 +529,6 @@ test_same_cn_same_net_ipv6_drop(void **state)
 
     assert_int_equal(tcp_spec->hdr.src_port, src_port);
     assert_int_equal(tcp_spec->hdr.dst_port, dst_port);
-
-    struct rte_flow_action_port_id *port_id_action_conf =
-        (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
-    assert_int_equal(port_id_action_conf->id, dst_port_id);
 }
 
 int

@@ -170,15 +170,16 @@ test_same_cn_2_net_forward(void **state)
     assert_int_equal(udp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_set_mac *vf_action_set_smac =
-        (struct rte_flow_action_set_mac *)
-            flow_package.actions[ACTION_SET_SMAC].conf;
+        (struct rte_flow_action_set_mac *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_SET_MAC_SRC)->conf;
 
     struct rte_flow_action_set_mac *vf_action_set_dmac =
-        (struct rte_flow_action_set_mac *)
-            flow_package.actions[ACTION_SET_DMAC].conf;
+        (struct rte_flow_action_set_mac *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_SET_MAC_DST)->conf;
 
     struct rte_flow_action_port_id *port_id_action_conf =
-        (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_memory_equal(
         vf_action_set_smac->mac_addr, dst_nh_data.eth_smac, VR_ETHER_ALEN);
@@ -457,15 +458,16 @@ test_same_cn_2_net_ipv6_forward(void **state)
     assert_int_equal(udp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_set_mac *vf_action_set_smac =
-        (struct rte_flow_action_set_mac *)
-            flow_package.actions[ACTION_SET_SMAC].conf;
+        (struct rte_flow_action_set_mac *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_SET_MAC_SRC)->conf;
 
     struct rte_flow_action_set_mac *vf_action_set_dmac =
-        (struct rte_flow_action_set_mac *)
-            flow_package.actions[ACTION_SET_DMAC].conf;
+        (struct rte_flow_action_set_mac *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_SET_MAC_DST)->conf;
 
     struct rte_flow_action_port_id *port_id_action_conf =
-        (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_memory_equal(
         vf_action_set_smac->mac_addr, dst_nh_data.eth_smac, VR_ETHER_ALEN);

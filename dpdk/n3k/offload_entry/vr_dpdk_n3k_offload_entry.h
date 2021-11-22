@@ -33,8 +33,10 @@ enum vr_n3k_offload_tunnel_type {
 struct vr_n3k_offload_entry {
     const struct vr_nexthop *src_nh;
     const struct vr_interface *src_vif;
+    struct vr_interface *src_virtual_vif;
     const struct vr_nexthop *dst_nh;
     const struct vr_interface *dst_vif;
+    struct vr_interface *dst_virtual_vif;
     struct vr_dpdk_n3k_packet_metadata pkt_metadata;
     struct vr_n3k_offload_flow *flow;
     struct vr_n3k_offload_flow *reverse_flow;

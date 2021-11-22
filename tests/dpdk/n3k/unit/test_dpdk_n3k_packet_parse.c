@@ -106,6 +106,7 @@ test_parse_packet_metadata_from_udp_on_vm_rx(void **state)
         .vp_nh = &test_nexthops[VIRTUAL_1_VIF.vif_nh_id],
         .vp_head = (uint8_t *)(&test_udp_packets[0]),
         .vp_data = 0,
+        .vp_priority = 4
     };
     struct vr_dpdk_n3k_packet_key key;
     struct vr_dpdk_n3k_packet_metadata metadata;
@@ -115,6 +116,7 @@ test_parse_packet_metadata_from_udp_on_vm_rx(void **state)
     int ret = vr_dpdk_n3k_parse_packet(&pkt, &key, &metadata);
 
     assert_int_equal(ret, 0);
+    assert_int_equal(metadata.tos, pkt.vp_priority);
     assert_true(metadata.eth_hdr_present);
     assert_memory_equal(
         metadata.inner_src_mac,
@@ -160,6 +162,7 @@ test_parse_packet_metadata_from_tcp_on_vm_rx(void **state)
         .vp_nh = &test_nexthops[VIRTUAL_1_VIF.vif_nh_id],
         .vp_head = (uint8_t *)(&test_tcp_packets[0]),
         .vp_data = 0,
+        .vp_priority = 4
     };
     struct vr_dpdk_n3k_packet_key key;
     struct vr_dpdk_n3k_packet_metadata metadata;
@@ -169,6 +172,7 @@ test_parse_packet_metadata_from_tcp_on_vm_rx(void **state)
     int ret = vr_dpdk_n3k_parse_packet(&pkt, &key, &metadata);
 
     assert_int_equal(ret, 0);
+    assert_int_equal(metadata.tos, pkt.vp_priority);
     assert_true(metadata.eth_hdr_present);
     assert_memory_equal(
         metadata.inner_src_mac,

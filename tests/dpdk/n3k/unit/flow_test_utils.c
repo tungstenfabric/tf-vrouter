@@ -56,6 +56,18 @@ cmp_actions(struct rte_flow_action *items,
     return items[l].type == RTE_FLOW_ACTION_TYPE_END;
 }
 
+struct rte_flow_action *
+find_action(struct rte_flow_action *actions, enum rte_flow_action_type type)
+{
+    size_t i;
+    for (i = 0; actions[i].type != RTE_FLOW_ACTION_TYPE_END; ++i) {
+        if (actions[i].type == type)
+            return &actions[i];
+    }
+
+    return NULL;
+}
+
 /* Stubbed vrouter functions */
 
 struct vr_route_req;
