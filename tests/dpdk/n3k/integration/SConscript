@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright(c) HCL TECHNOLOGIES LTD
+# Submitted on behalf of a third-party: Intel Corporation, a
+# Delaware corporation, having its principal place of business
+# at 2200 Mission College Boulevard,
+# Santa Clara, California 95052, USA
+#
+
+Import('VRouterEnv')
+Import('dpdk_lib')
+
+env = VRouterEnv.Clone()
+
+env.Append(CPPPATH = ['#vrouter/dpdk/n3k'])
+env.Append(CCFLAGS = '-Werror')
+env.Append(CCFLAGS = '-Wall')
+env.Append(CCFLAGS = '-msse4.2')
+env.Append(LIBPATH = ['../../../../dpdk/n3k'])
+env.Append(LINKFLAGS = env['DPDK_LINKFLAGS'])
+env.Replace(LIBS = ['cmocka', 'vr_dpdk_n3k', 'pthread', 'dl'])
+
+common_tests_src = [
+    '../fakes/fake_vr_offloads.c',
+    'int_test_utils.c',
+    'int_test_utils_mplsoudp.c',
+    'int_test_utils_vxlan.c',
+]
+
+common_tests_obj = [env.Object(f) for f in common_tests_src]
+for obj in common_tests_obj:
+    env.Requires(obj, dpdk_lib)
+
+int_test_base_names = [
+    'dpdk_n3k_offload_entry_agnostic',
+    'dpdk_n3k_offload_entry_vxlan',
+    'dpdk_n3k_offload_entry_mplsoudp',
+]
+
+int_tests = []
+for name in int_test_base_names:
+    test_file = 'test_{}.c'.format(name)
+    test_name = '{}_tests'.format(name)
+
+    test_obj = env.Object(test_file)
+    env.Requires(test_obj, dpdk_lib)
+
+    test = env.Program(test_name, env.Flatten([test_obj, common_tests_obj]))
+    int_tests.append(test)
+
+env.Alias('vr-dpdk-n3k-integration-tests-build-only', [int_tests])
