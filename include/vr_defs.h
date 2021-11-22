@@ -12,6 +12,16 @@
 #define MAC_FORMAT     "%02x:%02x:%02x:%02x:%02x:%02x"
 #define MAC_VALUE(x)   (x)[0],(x)[1],(x)[2],(x)[3],(x)[4],(x)[5]
 
+#define IPV4_FORMAT "%d.%d.%d.%d"
+#define IPV4_DIGIT(x, i) ((uint32_t)((const uint8_t *)(x))[i])
+#define IPV4_VALUE(x) \
+    IPV4_DIGIT(x, 0), IPV4_DIGIT(x, 1), IPV4_DIGIT(x, 2), IPV4_DIGIT(x, 3)
+
+#define IPV6_FORMAT "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x"
+#define IPV6_VALUE(x) \
+    x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], \
+    x[8], x[9], x[10], x[11], x[12], x[13], x[14], x[15]
+
 #define ARRAYSIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 #define VR_ETHER_HLEN           14
