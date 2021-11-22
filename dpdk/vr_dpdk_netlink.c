@@ -186,9 +186,9 @@ vr_netlink_uvhost_vif_del(unsigned int vif_idx)
  * Returns 0 on success, -1 otherwise.
  */
 int
-vr_netlink_uvhost_vif_add(char *vif_name, unsigned int vif_idx,
-                          unsigned int vif_gen, unsigned int vif_nrxqs,
-                          unsigned int vif_ntxqs,
+vr_netlink_uvhost_vif_add(char *vif_name, uint32_t vif_idx,
+                          uint32_t vif_gen, uint32_t vif_nrxqs,
+                          uint32_t vif_ntxqs,
                           unsigned char vif_vhostuser_mode)
 {
     vrnu_msg_t msg;

@@ -88,6 +88,12 @@ dpdk_lcore_least_used_io_get(void)
     return least_used_id;
 }
 
+size_t
+vr_dpdk_lcore_free_lcore_get(void)
+{
+    return VR_DPDK_FWD_LCORE_ID + vr_dpdk.nb_fwd_lcores;
+}
+
 /* Add a queue to a lcore
  * The moment the function is called from the NetLink lcore ATM.
  */
@@ -1470,6 +1476,10 @@ dpdk_lcore_exit(unsigned lcore_id)
     /* wait for interface operation to complete */
     vr_dpdk_if_lock();
     vr_dpdk_if_unlock();
+
+    if (lcore == NULL) {
+        return;
+    }
 
     /* lcore-specific initializations */
     if (lcore_id >= VR_DPDK_FWD_LCORE_ID) {

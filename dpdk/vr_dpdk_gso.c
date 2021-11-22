@@ -42,7 +42,6 @@
 #include <rte_tcp.h>
 #include <rte_eth_bond.h>
 
-#define TCP_CWR_FLAG 0x80
 /*
  * Structure that contains the state during the TCP segmentation
  */
@@ -363,7 +362,7 @@ dpdk_gso_segment_ip_tcp(struct rte_mbuf *pkt_in,
          */
         if (state->tcp) {
             if (i > 0)
-                state->tcp->tcp_flags &= ~TCP_CWR_FLAG;
+                state->tcp->tcp_flags &= ~RTE_TCP_CWR_FLAG;
             if (i < nsegs-1)
                 state->tcp->tcp_flags &= ~(RTE_TCP_FIN_FLAG | RTE_TCP_PSH_FLAG);
         }

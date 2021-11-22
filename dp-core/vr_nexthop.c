@@ -2049,7 +2049,7 @@ drop:
     return NH_PROCESSING_COMPLETE;
 }
 
-static nh_processing_t
+nh_processing_t
 nh_discard(struct vr_packet *pkt, struct vr_nexthop *nh,
            struct vr_forwarding_md *fmd)
 {

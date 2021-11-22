@@ -809,7 +809,7 @@ static inline char *dpdk_pktmbuf_append(struct rte_mbuf *m, struct rte_mbuf *las
 /*
  * dpdk_virtio_create_mss_sized_mbuf_chain - Create a chained mbuf where each segment
  * in the chain is of length 'mss' and copy the data pointed to by pkt_addr
- * 
+ *
  * @input -
  *    mbuf:       pointer to the mbuf where the chain needs to be created
  *    mss:        lenght of each segment in the chain
@@ -1117,8 +1117,8 @@ dpdk_virtio_from_vm_rx(void *port, struct rte_mbuf **pkts, uint32_t max_pkts)
 #endif
 
 static inline int32_t __attribute__((always_inline))
-dpdk_virtio_dev_to_vm_tx_burst_simple(struct dpdk_virtio_writer *p, 
-        vr_dpdk_virtioq_t *vq, uint16_t res_base_idx, uint16_t res_end_idx, 
+dpdk_virtio_dev_to_vm_tx_burst_simple(struct dpdk_virtio_writer *p,
+        vr_dpdk_virtioq_t *vq, uint16_t res_base_idx, uint16_t res_end_idx,
         struct rte_mbuf **pkts, uint32_t count, uint8_t mrg_hdr)
 {
     struct vring_desc *desc;
@@ -1255,10 +1255,10 @@ next_descr:
         /* Drop the packet if it is uncompleted */
         if (unlikely(uncompleted_pkt == 1))
             vq->vdv_used->ring[res_cur_idx & (vq->vdv_size - 1)].len =
-                           virtio_hdr_len; 
+                           virtio_hdr_len;
         else
             vq->vdv_used->ring[res_cur_idx & (vq->vdv_size - 1)].len =
-                            pkt_len + virtio_hdr_len; 
+                            pkt_len + virtio_hdr_len;
 
         res_cur_idx++;
         packet_success++;
@@ -1616,7 +1616,7 @@ dpdk_virtio_dev_to_vm_tx_burst_mergeable(struct dpdk_virtio_writer *p,
         }
 
         /* If there are no packets to pass to
-         * dpdk_virtio_dev_to_vm_tx_burst_simple() function, break 
+         * dpdk_virtio_dev_to_vm_tx_burst_simple() function, break
          */
         if (pkt_idx == 0)
             break;

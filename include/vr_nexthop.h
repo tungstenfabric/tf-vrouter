@@ -249,6 +249,16 @@ extern int vr_is_local_ecmp_nh(struct vr_nexthop *nh);
 extern struct vr_interface *vr_get_ecmp_first_member_dev(struct vr_nexthop *nh);
 
 extern struct vr_nexthop *vr_discard_nh;
+
+extern nh_processing_t nh_discard(struct vr_packet *pkt, struct vr_nexthop *nh,
+           struct vr_forwarding_md *fmd);
+
+/* returns whether nexthop is currently being edited by vr_nexthop_add and thus
+ * may be in inconsistent state */
+static inline bool vr_nexthop_is_being_edited(const struct vr_nexthop *nh) {
+    return nh->nh_reach_nh == nh_discard && nh->nh_type != NH_DISCARD;
+}
+
 #ifdef __cplusplus
 }
 #endif
