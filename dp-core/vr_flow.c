@@ -66,6 +66,21 @@ extern short vr_flow_major;
 uint32_t vr_hashrnd = 0;
 int hashrnd_inited = 0;
 
+static struct vr_flow_entry *vr_flow_bucket_first_entry(struct vrouter *router, struct vr_flow *key) {
+    return (struct vr_flow_entry*)
+        vr_htable_get_bucket(router->vr_flow_table, key, key->flow_key_len);
+}
+
+static void vr_flow_lock_bucket(struct vr_flow_entry *fe) {
+    while (!vr_sync_bool_compare_and_swap_8u(&fe->fe_bucket_lock, 0, 1)) {
+        vr_pause();
+    }
+}
+
+static void vr_flow_unlock_bucket(struct vr_flow_entry *fe) {
+    vr_sync_bool_compare_and_swap_8u(&fe->fe_bucket_lock, 1, 0);
+}
+
 static void vr_flush_entry(struct vrouter *, struct vr_flow_entry *,
         struct vr_flow_md *, struct vr_forwarding_md *);
 static void __vr_flow_flush_hold_queue(struct vrouter *, struct vr_flow_entry *,
@@ -1404,6 +1419,7 @@ vr_flow_tcp_digest(struct vrouter *router, struct vr_flow_entry *flow_e,
     uint8_t proto = 0, hlen = 0;
     uint16_t tcp_offset_flags;
     unsigned int length = 0;
+    uint16_t flow_tcp_flags;
 
     struct vr_ip *iph;
     struct vr_ip6 *ip6h;
@@ -1507,8 +1523,17 @@ vr_flow_tcp_digest(struct vrouter *router, struct vr_flow_entry *flow_e,
                         if (ntohl(tcph->tcp_ack) == (rflow_e->fe_tcp_seq + 1)) {
                             (void)vr_sync_fetch_and_or_16u(&rflow_e->fe_tcp_flags,
                                     VR_FLOW_TCP_ESTABLISHED);
-                            (void)vr_sync_fetch_and_or_16u(&flow_e->fe_tcp_flags,
-                                     VR_FLOW_TCP_ESTABLISHED_R);
+                            flow_tcp_flags = vr_sync_fetch_and_or_16u(
+                                &flow_e->fe_tcp_flags, VR_FLOW_TCP_ESTABLISHED_R);
+                            if (!(flow_tcp_flags & VR_FLOW_TCP_ESTABLISHED_R) &&
+                                !(flow_tcp_flags & VR_FLOW_TCP_ESTABLISHED)) {
+                                // If it wasn't established or reverse established,
+                                // it is being established now. Offload both.
+                                vr_offload_flow_set(flow_e,
+                                    flow_e->fe_hentry.hentry_index, rflow_e);
+                                vr_offload_flow_set(rflow_e,
+                                    rflow_e->fe_hentry.hentry_index, flow_e);
+                            }
                         }
                     }
                 }
@@ -1533,9 +1558,13 @@ vr_flow_tcp_digest(struct vrouter *router, struct vr_flow_entry *flow_e,
              */
             if (flow_e->fe_flags & VR_RFLOW_VALID) {
                 rflow_e = vr_flow_get_entry(router, flow_e->fe_rflow);
+                /* Delete offloaded flow on TCP FIN */
+                (void)vr_offload_flow_del(flow_e);
                 if (rflow_e) {
                     (void)vr_sync_fetch_and_or_16u(&rflow_e->fe_tcp_flags,
                             VR_FLOW_TCP_FIN_R);
+                    /* Delete offloaded reverse flow on TCP FIN */
+                    (void)vr_offload_flow_del(rflow_e);
                 }
             }
         }
@@ -1576,8 +1605,17 @@ vr_flow_tcp_digest(struct vrouter *router, struct vr_flow_entry *flow_e,
                                     VR_FLOW_TCP_ESTABLISHED_R)) {
                             (void)vr_sync_fetch_and_or_16u(&rflow_e->fe_tcp_flags,
                                     VR_FLOW_TCP_ESTABLISHED);
-                            (void)vr_sync_fetch_and_or_16u(&flow_e->fe_tcp_flags,
-                                     VR_FLOW_TCP_ESTABLISHED_R);
+                            flow_tcp_flags = vr_sync_fetch_and_or_16u(
+                                &flow_e->fe_tcp_flags, VR_FLOW_TCP_ESTABLISHED_R);
+                            if (!(flow_tcp_flags & VR_FLOW_TCP_ESTABLISHED_R) &&
+                                !(flow_tcp_flags & VR_FLOW_TCP_ESTABLISHED)) {
+                                // If it wasn't established or reverse established,
+                                // it is being established now. Offload both.
+                                vr_offload_flow_set(flow_e,
+                                    flow_e->fe_hentry.hentry_index, rflow_e);
+                                vr_offload_flow_set(rflow_e,
+                                    rflow_e->fe_hentry.hentry_index, flow_e);
+                            }
                         }
                     }
                 }
@@ -1703,18 +1741,54 @@ vr_flow_allow_new_flow(struct vrouter *router, struct vr_packet *pkt,
     return vr_flow_vif_allow_new_flow(router, pkt, drop_reason);
 }
 
+static inline struct vr_flow_entry *
+vr_flow_new_hold_flow(struct vrouter *router, struct vr_flow *key,
+                 struct vr_packet *pkt, unsigned int *fe_index,
+                 struct vr_forwarding_md *fmd) {
+    struct vr_flow_entry *bucket_fe, *flow_e;
+    unsigned short drop_reason = 0;
+    bool burst = false;
+    /* Slow path: lock, to make find+create atomic thus avoid races
+     * with another vr_flow_lookup or vr_add_flow). We also need need
+     * to retry the find, as previous one was done without locking */
+    bucket_fe = vr_flow_bucket_first_entry(router, key);
+    vr_flow_lock_bucket(bucket_fe);
+    flow_e = vr_find_flow(router, key, pkt->vp_type, fe_index);
+    if (!flow_e) {
+        if (!vr_flow_allow_new_flow(router, pkt, &drop_reason, &burst)) {
+            vr_flow_unlock_bucket(bucket_fe);
+            PKT_LOG(drop_reason, pkt, key , VR_FLOW_C, __LINE__);
+            vr_pfree(pkt, drop_reason);
+            return flow_e;
+        }
+
+        flow_e = vr_flow_get_free_entry(router, key, pkt->vp_type,
+                true, fe_index);
+        if (!flow_e) {
+            vr_flow_unlock_bucket(bucket_fe);
+            PKT_LOG(VP_DROP_FLOW_TABLE_FULL, pkt, key, VR_FLOW_C, __LINE__);
+            vr_pfree(pkt, VP_DROP_FLOW_TABLE_FULL);
+            return flow_e;
+        }
+
+        flow_e->fe_vrf = fmd->fmd_dvrf;
+        /* mark as hold */
+        vr_flow_entry_set_hold(router, flow_e, burst);
+    }
+    vr_flow_unlock_bucket(bucket_fe);
+    return flow_e;
+}
+
 flow_result_t
 vr_flow_lookup(struct vrouter *router, struct vr_flow *key,
                struct vr_packet *pkt, struct vr_forwarding_md *fmd)
 {
     unsigned int fe_index;
     struct vr_flow_entry *flow_e;
-    unsigned short drop_reason = 0;
-    bool burst = false;
-
     pkt->vp_flags |= VP_FLAG_FLOW_SET;
 
     if (!fmd->fmd_fe) {
+        /* Happy path: without locking */
         flow_e = vr_find_flow(router, key, pkt->vp_type,  &fe_index);
         if (!flow_e) {
             if (pkt->vp_nh &&
@@ -1722,23 +1796,9 @@ vr_flow_lookup(struct vrouter *router, struct vr_flow *key,
                  (NH_FLAG_RELAXED_POLICY | NH_FLAG_FLOW_LOOKUP)))
                 return FLOW_FORWARD;
 
-            if (!vr_flow_allow_new_flow(router, pkt, &drop_reason, &burst)) {
-                PKT_LOG(drop_reason, pkt, key , VR_FLOW_C, __LINE__);
-                vr_pfree(pkt, drop_reason);
+            flow_e = vr_flow_new_hold_flow(router, key, pkt, &fe_index, fmd);
+            if (!flow_e)
                 return FLOW_CONSUMED;
-            }
-
-            flow_e = vr_flow_get_free_entry(router, key, pkt->vp_type,
-                    true, &fe_index);
-            if (!flow_e) {
-                PKT_LOG(VP_DROP_FLOW_TABLE_FULL, pkt, key, VR_FLOW_C, __LINE__);
-                vr_pfree(pkt, VP_DROP_FLOW_TABLE_FULL);
-                return FLOW_CONSUMED;
-            }
-
-            flow_e->fe_vrf = fmd->fmd_dvrf;
-            /* mark as hold */
-            vr_flow_entry_set_hold(router, flow_e, burst);
         }
     } else {
         flow_e = fmd->fmd_fe;
@@ -2302,14 +2362,18 @@ vr_add_flow(unsigned int rid, struct vr_flow *key, uint8_t type,
     struct vr_flow_entry *flow_e;
     struct vrouter *router = vrouter_get(rid);
 
+    struct vr_flow_entry *bucket_fe = vr_flow_bucket_first_entry(router, key);
+    vr_flow_lock_bucket(bucket_fe);
     flow_e = vr_find_flow(router, key, type, fe_index);
     if (flow_e) {
+        vr_flow_unlock_bucket(bucket_fe);
         *fe_gen_id = flow_e->fe_gen_id;
         /* a race between agent and dp. allow agent to handle this error */
         return NULL;
     } else {
         flow_e = vr_flow_get_free_entry(router, key, type,
                 need_hold_queue, fe_index);
+        vr_flow_unlock_bucket(bucket_fe);
     }
 
     return flow_e;
@@ -2912,6 +2976,18 @@ vr_flow_table_data_get(vr_flow_table_data *ref)
     return ftable;
 }
 
+void
+update_flow_entry(vr_htable_t table __attribute__unused__, vr_hentry_t *ent ,
+        unsigned int index, void *data __attribute__unused__)
+{
+    struct vr_flow_entry *fe = (struct vr_flow_entry *)ent;
+
+    if (fe == NULL)
+        return;
+
+    vr_offload_flow_stats_update(fe);
+}
+
 /*
  * sandesh handler for vr_flow_table_data
  */
@@ -2925,6 +3001,9 @@ vr_flow_table_data_process(void *s_req)
     vr_flow_table_data *resp, *ftable = (vr_flow_table_data *)s_req;
 
     router = vrouter_get(ftable->ftable_rid);
+
+    vr_htable_trav(router->vr_flow_table, 0, update_flow_entry, NULL);
+
     resp = vr_flow_table_data_get(ftable);
     if (!resp) {
         ret = -ENOMEM;

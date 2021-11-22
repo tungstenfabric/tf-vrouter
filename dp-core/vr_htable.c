@@ -825,3 +825,13 @@ vr_htable_create(struct vrouter *router, unsigned int entries,
     return __vr_htable_create(router, entries, NULL, oentries, NULL,
             entry_size, key_size, bucket_size, get_entry_key);
 }
+
+vr_hentry_t *vr_htable_get_bucket(vr_htable_t htable, void *key,
+        unsigned int key_len)
+{
+	struct vr_htable *table = (struct vr_htable *)htable;
+	unsigned int hash = vr_hash(key, key_len, 0);
+	unsigned int tmp_hash = hash % table->ht_hentries;
+	tmp_hash &= ~(table->ht_bucket_size - 1);
+	return vr_btable_get(table->ht_htable, tmp_hash);
+}

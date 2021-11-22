@@ -50,4 +50,8 @@ void vr_htable_release_hentry(vr_htable_t, vr_hentry_t *);
 unsigned int vr_htable_size(vr_htable_t);
 void *vr_htable_get_address(vr_htable_t, uint64_t);
 
+/* Gets the first entry of the bucket associated with key. Note: it
+ * might be not VALID */
+vr_hentry_t *vr_htable_get_bucket(vr_htable_t, void * key, unsigned int key_len);
+
 #endif

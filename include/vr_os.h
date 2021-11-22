@@ -37,6 +37,7 @@
 #define vr_ffs_32(a)                                    __builtin_ffs(a)
 #define vr_likely(a)                                    __builtin_expect(!!(a), 1)
 #define vr_unlikely(a)                                  __builtin_expect(!!(a), 0)
+#define vr_pause                                        __builtin_ia32_pause
 
 #if defined(__linux__)
 #ifdef __KERNEL__
