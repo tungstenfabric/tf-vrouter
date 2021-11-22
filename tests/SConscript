@@ -1,0 +1,16 @@
+#
+# Copyright (c) 2014 Juniper Networks, Inc. All rights reserved.
+#
+
+import platform
+
+Import('VRouterEnv')
+Import('dpdk_lib')
+env = VRouterEnv.Clone()
+
+if not GetOption('without-dpdk') and 'enableN3K' in env['ADD_OPTS']:
+    env.SConscript(
+        'dpdk/n3k/SConscript',
+        exports = ['VRouterEnv', 'dpdk_lib'],
+        duplicate = 0
+    )
