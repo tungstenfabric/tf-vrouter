@@ -441,6 +441,11 @@ vr_mirror(struct vrouter *router, uint8_t mirror_id, struct vr_packet *pkt,
                 mirror_md_len = pkt->vp_nh->nh_dev->vif_out_mirror_md_len;
                 mirror_md = pkt->vp_nh->nh_dev->vif_out_mirror_md;
             } else {
+                if (!pkt->vp_nh) {
+                    PKT_LOG(VP_DROP_INVALID_IF, pkt, 0, VR_MIRROR_C, __LINE__);
+                    drop_reason = VP_DROP_INVALID_NH;
+                    goto fail;
+                }
                 if (pkt->vp_nh->nh_type != NH_TUNNEL) {
                     if (!pkt->vp_nh->nh_dev) {
                         PKT_LOG(VP_DROP_INVALID_IF, pkt, 0, VR_MIRROR_C, __LINE__);
