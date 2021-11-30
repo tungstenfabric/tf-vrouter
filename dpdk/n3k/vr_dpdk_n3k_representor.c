@@ -440,7 +440,7 @@ static enum vr_dpdk_representor_op_res
 n3k_representor_fabric_add(struct vr_interface *vif)
 {
     strncpy((char *)vif->vif_name, vr_dpdk_n3k_config_get_phy_repr_name(),
-        RTE_DIM(vif->vif_name));
+        RTE_DIM(vif->vif_name) - 1);
 
     enum vr_dpdk_representor_op_res res = n3k_representor_init(vif, (const char *)vif->vif_name);
     if (res != REPR_OP_OK) {
