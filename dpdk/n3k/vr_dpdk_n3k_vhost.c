@@ -132,20 +132,15 @@ configure_vhost_socket_dir(void)
 }
 
 static int
-get_vhost_socket_path(struct vr_interface *vif, size_t pathlen, char (*path)[pathlen])
+get_vhost_socket_path(struct vr_interface *vif, char *path, size_t pathlen)
 {
     if (path == NULL || vif == NULL) {
         RTE_LOG(ERR, VROUTER, "%s(): invalid args", __func__);
         return -1;
     }
 
-    strncpy(*path, vr_socket_dir, sizeof(*path) - 1);
-    strncat(*path,
-            "/" VR_UVH_VIF_PFX,
-            pathlen - strlen(*path) - 1);
-    strncat(*path,
-            (char*)vif->vif_name,
-            pathlen - strlen(*path) - 1);
+    snprintf(path, pathlen, "%s/%s%s",
+        vr_socket_dir, VR_UVH_VIF_PFX, (char*)vif->vif_name);
 
     return 0;
 }
@@ -165,7 +160,7 @@ vr_dpdk_n3k_vhost_unregister(struct vr_interface *vif)
     RTE_LOG(INFO, VROUTER,
         "%s(): id - %u; name - %s;\n", __func__, vif->vif_idx, vif->vif_name);
 
-    int ret = get_vhost_socket_path(vif, RTE_DIM(vhost_socket_path), &vhost_socket_path);
+    int ret = get_vhost_socket_path(vif, vhost_socket_path, RTE_DIM(vhost_socket_path));
     if (ret != 0) {
         RTE_LOG(ERR, VROUTER, "%s(): failed to construct vhost_socket_path", __func__);
         return;
@@ -189,7 +184,7 @@ vr_dpdk_n3k_vhost_register(struct vr_interface *vif, uint32_t vif_vdpa_did)
     RTE_LOG(INFO, VROUTER,
         "%s(): id - %u; name - %s;\n", __func__, vif->vif_idx, vif->vif_name);
 
-    ret = get_vhost_socket_path(vif, RTE_DIM(vhost_socket_path), &vhost_socket_path);
+    ret = get_vhost_socket_path(vif, vhost_socket_path, RTE_DIM(vhost_socket_path));
     if (ret != 0) {
         RTE_LOG(ERR, VROUTER, "%s(): failed to construct vhost_socket_path", __func__);
         return ret;
