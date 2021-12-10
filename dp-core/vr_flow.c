@@ -2998,12 +2998,23 @@ vr_flow_table_data_process(void *s_req)
     uint64_t hold_count = 0;
     struct vrouter *router;
     struct vr_flow_table_info *infop;
-    vr_flow_table_data *resp, *ftable = (vr_flow_table_data *)s_req;
+    vr_flow_table_data *resp = NULL, *ftable = (vr_flow_table_data *)s_req;
 
+    if (!ftable) {
+        ret = -ENOMEM;
+        goto send_response;
+    }
     router = vrouter_get(ftable->ftable_rid);
+    if (! router) {
+        ret = -ENOMEM;
+        goto send_response;
+    }
 
-    vr_htable_trav(router->vr_flow_table, 0, update_flow_entry, NULL);
-
+    if(EINVAL == vr_htable_trav(router->vr_flow_table, 0, update_flow_entry, NULL))
+    {
+        ret = -ENOMEM;
+        goto send_response;
+    }
     resp = vr_flow_table_data_get(ftable);
     if (!resp) {
         ret = -ENOMEM;

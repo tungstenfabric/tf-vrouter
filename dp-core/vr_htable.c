@@ -61,17 +61,18 @@ vr_htable_trav_range(vr_htable_t htable, unsigned int start,
     return hindex;
 }
 
-void
+int
 vr_htable_trav(vr_htable_t htable, unsigned int marker,
         htable_trav_cb cb, void *data)
 {
     unsigned int range;
     struct vr_htable *table = (struct vr_htable *)htable;
+    if(!table)
+       return -EINVAL;
 
     range = (table->ht_hentries + table->ht_oentries - marker);
-    vr_htable_trav_range(htable, marker, range, cb, data);
+    return vr_htable_trav_range(htable, marker, range, cb, data);
 
-    return;
 }
 
 static vr_hentry_t *
