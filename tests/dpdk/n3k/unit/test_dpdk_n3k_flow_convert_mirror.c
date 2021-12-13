@@ -171,13 +171,14 @@ test_same_cn_same_net_forward(void **state)
     assert_int_equal(udp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_port_id *port_id_action_conf =
-        (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_id_action_conf->id, dst_port_id);
 
     struct rte_flow_action_mirror *mirror_action_conf =
-        (struct rte_flow_action_mirror *)
-            flow_package.actions[ACTION_MIRROR].conf;
+        (struct rte_flow_action_mirror *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_MIRROR)->conf;
 
     assert_int_equal(mirror_action_conf->port, mirror_vf_port);
     assert_int_equal(mirror_action_conf->mirror_modified, 0);
@@ -392,13 +393,14 @@ test_2_cn_same_net_decap_forward(void **state)
     );
 
     struct rte_flow_action_port_id *port_id_action_conf =
-      (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+      (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_id_action_conf->id, dst_port_id);
 
     struct rte_flow_action_mirror *mirror_action_conf =
-        (struct rte_flow_action_mirror *)
-            flow_package.actions[ACTION_MIRROR].conf;
+        (struct rte_flow_action_mirror *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_MIRROR)->conf;
 
     assert_int_equal(mirror_action_conf->port, mirror_vf_port);
     assert_int_equal(mirror_action_conf->mirror_modified, 1);
@@ -538,13 +540,14 @@ test_same_cn_same_net_ipv6_forward(void **state)
     assert_int_equal(udp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_port_id *port_id_action_conf =
-        (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_id_action_conf->id, dst_port_id);
 
     struct rte_flow_action_mirror *mirror_action_conf =
-        (struct rte_flow_action_mirror *)
-            flow_package.actions[ACTION_MIRROR].conf;
+        (struct rte_flow_action_mirror *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_MIRROR)->conf;
 
     assert_int_equal(mirror_action_conf->port, mirror_vf_port);
     assert_int_equal(mirror_action_conf->mirror_modified, 0);
@@ -760,13 +763,14 @@ test_2_cn_same_net_decap_ipv6_forward(void **state)
     );
 
     struct rte_flow_action_port_id *port_id_action_conf =
-      (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+      (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(port_id_action_conf->id, dst_port_id);
 
     struct rte_flow_action_mirror *mirror_action_conf =
-        (struct rte_flow_action_mirror *)
-            flow_package.actions[ACTION_MIRROR].conf;
+        (struct rte_flow_action_mirror *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_MIRROR)->conf;
 
     assert_int_equal(mirror_action_conf->port, mirror_vf_port);
     assert_int_equal(mirror_action_conf->mirror_modified, 1);

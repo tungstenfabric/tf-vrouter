@@ -48,6 +48,7 @@ struct vr_dpdk_n3k_packet_metadata {
     uint8_t inner_src_mac[VR_ETHER_ALEN];
     uint8_t inner_dst_mac[VR_ETHER_ALEN];
     time_t creation_timestamp;
+    uint8_t tos;
 };
 
 int vr_dpdk_n3k_packet_metadata_init(size_t);

@@ -1071,6 +1071,8 @@ vlan_rx(struct vr_interface *vif, struct vr_packet *pkt,
     if (vif->vif_flags & VIF_FLAG_MIRROR_NOTAG)
         vif_mirror(vif, pkt, NULL, vif->vif_flags & VIF_FLAG_MIRROR_RX);
 
+    vr_offload_packet_parse(pkt);
+
     return vr_virtual_input(vif->vif_vrf, vif, pkt, &fmd, VLAN_ID_INVALID);
 }
 

@@ -536,6 +536,9 @@ parse_packet_vm_rx(struct vr_packet *pkt,
     memcpy(&metadata->inner_dst_mac[0], &eth_hdr->eth_dmac[0], VR_ETHER_ALEN);
     memcpy(&metadata->inner_src_mac[0], &eth_hdr->eth_smac[0], VR_ETHER_ALEN);
 
+    if (pkt->vp_priority != VP_PRIORITY_INVALID)
+        metadata->tos = pkt->vp_priority;
+
     ret = vr_dpdk_n3k_fill_packet_key_data(key, pkt->vp_if->vif_nh_id, &ip_hdr);
     if (ret < 0)
         return ret;
@@ -557,7 +560,8 @@ vr_dpdk_n3k_parse_packet(struct vr_packet *pkt,
     if (pkt->vp_if->vif_type == VIF_TYPE_PHYSICAL)
         return parse_packet_fabric(pkt, key, metadata);
 
-    if (pkt->vp_if->vif_type != VIF_TYPE_VIRTUAL)
+    if ((pkt->vp_if->vif_type != VIF_TYPE_VIRTUAL) &&
+            (pkt->vp_if->vif_type != VIF_TYPE_VIRTUAL_VLAN))
         return -EINVAL;
 
     return parse_packet_vm_rx(pkt, key, metadata);

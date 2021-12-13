@@ -30,6 +30,9 @@ bool
 cmp_actions(struct rte_flow_action *items,
             enum rte_flow_action_type *expected_types);
 
+struct rte_flow_action *
+find_action(struct rte_flow_action *actions, enum rte_flow_action_type type);
+
 /* Helper struct for simulating vr_nexthop with non-empty nh_data */
 struct vr_nexthop_with_data {
     struct vr_nexthop nh;

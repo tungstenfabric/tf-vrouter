@@ -62,16 +62,30 @@ static bool is_vif_supported(const struct vr_interface *vif) {
 }
 
 const struct vr_interface *
-vr_dpdk_n3k_offload_interface_get(uint16_t id)
+vr_dpdk_n3k_offload_interface_get(uint16_t id,struct vr_interface **used_as_virtual)
 {
+    /* Using intermediate variable to avoid changing used_as_virtual on fail */
+    struct vr_interface *virtual_vif = NULL;
+
     /* Note: Using `__vrouter_get_interface` instead of
      * `vrouter_get_interface`, as we don't need nor want to touch the
      * refcount. See the comment on `vr_dpdk_n3k_offload_nexthop_get */
-    const struct vr_interface *vif = __vrouter_get_interface(vrouter_get(0), id);
+    struct vr_interface *vif = __vrouter_get_interface(vrouter_get(0), id);
 
-    if ((vif == NULL) || (!is_vif_supported(vif))) {
+    if (vif == NULL)
         return NULL;
+
+    /* For virtual VLAN, use parent interface */
+    if (vif_is_vlan(vif) && (vif->vif_parent != NULL)) {
+        virtual_vif = vif;
+        vif = __vrouter_get_interface(vrouter_get(0), vif->vif_parent->vif_idx);
     }
+
+    if (vif == NULL || !is_vif_supported(vif))
+        return NULL;
+
+    if (used_as_virtual != NULL)
+        *used_as_virtual = virtual_vif;
 
     return vif;
 }

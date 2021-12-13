@@ -17,7 +17,7 @@ int vr_dpdk_n3k_offload_interface_init(uint16_t count);
 void vr_dpdk_n3k_offload_interface_exit(void);
 
 /* Note: Do not persist the returned pointer across the callback boundary. */
-const struct vr_interface *vr_dpdk_n3k_offload_interface_get(uint16_t id);
+const struct vr_interface *vr_dpdk_n3k_offload_interface_get(uint16_t id,struct vr_interface **used_as_virtual);
 
 /* Returns port_id of interface. Assumes vif->vif_os points to non-NULL
  * vr_dpdk_ethdev */

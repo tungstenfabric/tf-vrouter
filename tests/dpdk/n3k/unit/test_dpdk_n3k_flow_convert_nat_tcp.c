@@ -173,11 +173,12 @@ test_same_cn_same_net_snat(void **state)
     assert_int_equal(tcp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_set_ipv4 *set_ipv4_src =
-        (struct rte_flow_action_set_ipv4 *)
-            flow_package.actions[ACTION_IPV4_SRC].conf;
+        (struct rte_flow_action_set_ipv4 *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_SET_IPV4_SRC)->conf;
 
     struct rte_flow_action_port_id *port_id_action_conf =
-        (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(set_ipv4_src->ipv4_addr, nat_src_ip.value);
     assert_int_equal(port_id_action_conf->id, dst_port_id);
@@ -318,11 +319,12 @@ test_same_cn_same_net_dnat(void **state)
     assert_int_equal(tcp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_set_ipv4 *set_ipv4_dst =
-        (struct rte_flow_action_set_ipv4 *)
-            flow_package.actions[ACTION_IPV4_DST].conf;
+        (struct rte_flow_action_set_ipv4 *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_SET_IPV4_DST)->conf;
 
     struct rte_flow_action_port_id *port_id_action_conf =
-        (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(set_ipv4_dst->ipv4_addr, nat_dst_ip.value);
     assert_int_equal(port_id_action_conf->id, dst_port_id);
@@ -493,8 +495,8 @@ test_2_cn_same_net_snat(void **state)
     assert_int_equal(tcp_spec->hdr.dst_port, dst_port);
 
     struct rte_flow_action_vxlan_encap *encap_action_conf =
-        (struct rte_flow_action_vxlan_encap *)
-            flow_package.actions[ACTION_VXLAN_ENCAP].conf;
+        (struct rte_flow_action_vxlan_encap *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_VXLAN_ENCAP)->conf;
 
     struct rte_flow_item_eth *encap_eth_spec =
         (struct rte_flow_item_eth *)
@@ -511,11 +513,6 @@ test_2_cn_same_net_snat(void **state)
     struct rte_flow_item_vxlan *encap_vxlan_spec =
         (struct rte_flow_item_vxlan *)
             encap_action_conf->definition[ENCAP_VXLAN].spec;
-
-    assert_int_equal(
-        flow_package.actions[ACTION_VXLAN_ENCAP].type,
-        RTE_FLOW_ACTION_TYPE_VXLAN_ENCAP
-    );
 
     assert_int_equal(
         encap_action_conf->definition[ENCAP_ETH].type,
@@ -563,12 +560,12 @@ test_2_cn_same_net_snat(void **state)
     );
 
     struct rte_flow_action_set_ipv4 *set_ipv4_src =
-        (struct rte_flow_action_set_ipv4 *)
-            flow_package.actions[ACTION_IPV4_SRC].conf;
+        (struct rte_flow_action_set_ipv4 *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_SET_IPV4_SRC)->conf;
 
     struct rte_flow_action_port_id *port_action_conf =
-        (struct rte_flow_action_port_id *)
-            flow_package.actions[ACTION_PORT_ID].conf;
+        (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(set_ipv4_src->ipv4_addr, nat_src_ip.value);
     assert_int_equal(port_action_conf->id, dst_port_id);
@@ -785,11 +782,12 @@ test_2_cn_same_net_dnat(void **state)
     );
 
     struct rte_flow_action_set_ipv4 *set_ipv4_dst =
-        (struct rte_flow_action_set_ipv4 *)
-            flow_package.actions[ACTION_IPV4_DST].conf;
+        (struct rte_flow_action_set_ipv4 *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_SET_IPV4_DST)->conf;
 
     struct rte_flow_action_port_id *port_id_action_conf =
-      (struct rte_flow_action_port_id *)flow_package.actions[ACTION_PORT_ID].conf;
+      (struct rte_flow_action_port_id *)find_action(
+            flow_package.actions, RTE_FLOW_ACTION_TYPE_PORT_ID)->conf;
 
     assert_int_equal(set_ipv4_dst->ipv4_addr, nat_dst_ip.value);
     assert_int_equal(port_id_action_conf->id, dst_port_id);
