@@ -44,7 +44,7 @@ vr_hentry_t *__vr_htable_get_hentry_by_index(vr_htable_t , unsigned int );
 vr_hentry_t *vr_htable_find_free_hentry(vr_htable_t , void *, unsigned int );
 int vr_htable_trav_range(vr_htable_t, unsigned int, unsigned int,
         htable_trav_cb , void *);
-void vr_htable_trav(vr_htable_t, unsigned int , htable_trav_cb , void *);
+int vr_htable_trav(vr_htable_t, unsigned int , htable_trav_cb , void *);
 void vr_htable_reset(vr_htable_t, htable_trav_cb , void *);
 void vr_htable_release_hentry(vr_htable_t, vr_hentry_t *);
 unsigned int vr_htable_size(vr_htable_t);
