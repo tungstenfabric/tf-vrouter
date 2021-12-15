@@ -269,7 +269,9 @@ linux_inet_fragment(struct vr_interface *vif, struct sk_buff *skb,
 
     features = netif_skb_features(skb);
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0))
-    features &= (~(NETIF_F_ALL_TSO | NETIF_F_GSO));
+    features &= (~(NETIF_F_ALL_TSO | NETIF_F_GSO | NETIF_F_GSO_PARTIAL));
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0))
+    features &= (~(NETIF_F_ALL_TSO | NETIF_F_UFO | NETIF_F_GSO | NETIF_F_GSO_PARTIAL));
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,39))
     features &= (~(NETIF_F_ALL_TSO | NETIF_F_UFO | NETIF_F_GSO));
 #else
