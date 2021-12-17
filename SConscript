@@ -329,6 +329,7 @@ if sys.platform != 'darwin':
             '-lrte_pmd_enic',
             '-lrte_pmd_i40e',
             '-lrte_pmd_ixgbe',
+            '-lrte_pmd_ice',
             '-lrte_pmd_nfp',
             '-lrte_pmd_e1000',
             '-lrte_pmd_ring',
