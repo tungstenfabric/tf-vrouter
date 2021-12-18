@@ -1310,6 +1310,8 @@ parse_long_opts(int option_index, char *opt_arg)
     int i = 0;
     char *sep_arg;
     errno = 0;
+   int retVal = -1;
+   
 
     if (!*(long_options[option_index].flag))
         *(long_options[option_index].flag) = 1;
@@ -1457,7 +1459,11 @@ parse_long_opts(int option_index, char *opt_arg)
                     /*Incase of DPDK platform, vif_idx is passed for xconnect */
                     if_xconnect_kindex[i++] = safer_strtoul(sep_arg, NULL, 0);
                 } else {
-                    if_xconnect_kindex[i++] = if_nametoindex(sep_arg);
+                    retVal = if_nametoindex(sep_arg);
+                    if(0 == retVal) {
+                       break;
+                    }
+                    if_xconnect_kindex[i++] = retVal;
                 }
                 if (isdigit(sep_arg[0])) {
                     if_pmdindex = strtol(sep_arg, NULL, 0);

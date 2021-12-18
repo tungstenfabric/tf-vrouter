@@ -1028,10 +1028,10 @@ vhost_drv_add(struct vr_interface *vif,
     for (i = 0; i < VR_MAX_PHY_INF; i++) {
         if (vif->vif_bridge[i]) {
             ret = hif_ops->hif_add_tap(vif->vif_bridge[i], vifr);
+            if (ret)
+                return ret;
         }
     }
-    if (ret)
-        return ret;
 
     return 0;
 }

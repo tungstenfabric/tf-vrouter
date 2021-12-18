@@ -1180,7 +1180,7 @@ linux_rx_handler(struct sk_buff **pskb)
     unsigned int curr_cpu;
     u16 rxq;
     int rpsdev = 0;
-    struct vrouter *router;
+    struct vrouter *router = NULL;
 
     /*
      * If we did RPS immediately after the packet was received from the
