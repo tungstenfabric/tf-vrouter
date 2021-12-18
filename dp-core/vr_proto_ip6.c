@@ -694,10 +694,11 @@ vr_neighbor_reply(struct vr_icmp *icmp6, struct vr_packet *pkt,
         cloned_pkt = pkt_cow(pkt, AGENT_PKT_HEAD_SPACE);
         if (cloned_pkt) {
             vr_preset(cloned_pkt);
-            vif_xconnect(vif, cloned_pkt, fmd);
+            vif_xconnect(vif, pkt, fmd);
+            vr_trap(cloned_pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
+        } else {
+           vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
         }
-
-        vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
 
         return handled;
     }

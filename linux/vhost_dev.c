@@ -549,8 +549,8 @@ vhost_dellink(struct net_device *dev, struct list_head *head)
             if (vp->vp_phys_dev[i]) {
                 vhost_del_tap_phys(vp->vp_phys_dev[i]);
                 vp->vp_phys_dev[i] = NULL;
+                vp->vp_phys_name[i][0] = '\0';
             }
-            vp->vp_phys_name[i][0] = '\0';
         }
     }
 

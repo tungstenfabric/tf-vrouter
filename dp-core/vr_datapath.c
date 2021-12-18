@@ -350,7 +350,7 @@ vr_handle_arp_reply(struct vr_arp *sarp, struct vr_packet *pkt,
         /* If fabric: Agent and kernel are interested in it */
         cloned_pkt = pkt_cow(pkt, AGENT_PKT_HEAD_SPACE);
         if (cloned_pkt) {
-            vr_preset(pkt);
+            vr_preset(cloned_pkt);
             vif_xconnect(vif, pkt, fmd);
             vr_trap(cloned_pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
         } else {

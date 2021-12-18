@@ -32,7 +32,7 @@
 
 static int8_t src_mac[3][6], dst_mac[3][6], l3_vxlan_mac[6];
 static uint16_t sport, dport;
-static uint32_t nh_id, if_id[3] = {-1}, vrf_id, flags;
+static uint32_t nh_id, if_id[3] = {-1, -1, -1}, vrf_id, flags;
 static int nh_set, command, type, dump_marker = -1;
 static int family = AF_INET, count = 0;
 

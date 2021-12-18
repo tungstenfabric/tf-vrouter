@@ -422,6 +422,7 @@ struct vrouter {
     struct vr_pkt_drop_st *vr_pkt_drop;
     unsigned char vr_num_phy_interfaces:2;
     unsigned char vr_l3mh_intf_bitpos:3;
+    unsigned char unused:3;
 };
 
 static inline int
