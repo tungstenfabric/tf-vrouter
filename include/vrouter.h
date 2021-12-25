@@ -50,6 +50,8 @@ extern unsigned int vr_num_cpus;
 #define VR_LOG_INFO     7U
 #define VR_LOG_DEBUG    8U
 
+#define VR_RX_HANDLER_PASS 255
+
 enum vr_malloc_objects_t {
     VR_ASSEMBLER_TABLE_OBJECT,
     VR_BRIDGE_MAC_OBJECT,
