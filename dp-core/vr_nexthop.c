@@ -3946,6 +3946,10 @@ vr_nexthop_add(vr_nexthop_req *req)
     if (NULL == req->nhr_encap_oif_id) {
         req->nhr_encap_oif_id = vr_zalloc(sizeof(unsigned int),
                                 VR_NEXTHOP_REQ_LIST_OBJECT);
+        if (!req->nhr_encap_oif_id) {
+            ret = -ENOMEM;
+            goto generate_resp;
+        }
         req->nhr_encap_oif_id[0] = 0;
     }
 
