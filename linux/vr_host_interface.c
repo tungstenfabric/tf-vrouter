@@ -1285,7 +1285,7 @@ linux_rx_handler(struct sk_buff **pskb)
     if (!ret)
         ret = RX_HANDLER_CONSUMED;
 
-    if (pkt->vp_rx_pass) {
+    if (VR_RX_HANDLER_PASS == ret) {
         ret = RX_HANDLER_PASS;
         pkt->vp_rx_pass = 0;
     }
@@ -2462,7 +2462,7 @@ linux_if_rx_pass(struct vr_interface *vif, struct vr_packet *pkt)
     skb->pkt_type = PACKET_HOST;
     // Pass the pkt to upper protocol layers of linux
     pkt->vp_rx_pass = 1;
-    return RX_HANDLER_PASS;
+    return VR_RX_HANDLER_PASS;
 }
 
 
