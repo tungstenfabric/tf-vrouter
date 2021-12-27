@@ -217,7 +217,7 @@ static int
 vr_handle_arp_request(struct vr_arp *sarp, struct vr_packet *pkt,
                       struct vr_forwarding_md *fmd, unsigned char *eth_dmac)
 {
-    bool handled = true;
+    int handled = true;
     unsigned char dmac[VR_ETHER_ALEN];
     mac_response_t arp_result;
 
@@ -239,7 +239,7 @@ vr_handle_arp_request(struct vr_arp *sarp, struct vr_packet *pkt,
         pkt_c = vr_pclone(pkt);
         if (pkt_c) {
             vr_trap(pkt_c, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
-            vif_xconnect(pkt->vp_if, pkt, fmd);
+            handled = vif_xconnect(pkt->vp_if, pkt, fmd);
         } else {
             vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
         }
@@ -351,7 +351,7 @@ vr_handle_arp_reply(struct vr_arp *sarp, struct vr_packet *pkt,
         cloned_pkt = pkt_cow(pkt, AGENT_PKT_HEAD_SPACE);
         if (cloned_pkt) {
             vr_preset(cloned_pkt);
-            vif_xconnect(vif, pkt, fmd);
+            handled = vif_xconnect(vif, pkt, fmd);
             vr_trap(cloned_pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
         } else {
             vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
@@ -828,6 +828,8 @@ vr_fabric_input(struct vr_interface *vif, struct vr_packet *pkt,
     if (!handled) {
         pkt_push(pkt, pull_len);
         return vif_xconnect(vif, pkt, fmd);
+    } else if (VR_RX_HANDLER_PASS == handled) {
+        return handled;
     }
 
     return 0;
