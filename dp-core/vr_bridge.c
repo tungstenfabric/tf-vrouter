@@ -925,6 +925,8 @@ vr_bridge_input(struct vrouter *router, struct vr_packet *pkt,
                 handled = 0;
                 if (pkt->vp_type == VP_TYPE_ARP) {
                     handled = vr_arp_input(pkt, fmd, dmac);
+                    if (VR_RX_HANDLER_PASS == handled)
+                        return handled;
                 } else if (l4_type == L4_TYPE_NEIGHBOUR_SOLICITATION) {
                     handled = vr_neighbor_input(pkt, fmd, dmac);
                 }

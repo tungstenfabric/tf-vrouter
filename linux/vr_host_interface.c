@@ -1287,14 +1287,13 @@ linux_rx_handler(struct sk_buff **pskb)
     }
 
     ret = vif->vif_rx(vif, pkt, vlan_id);
-    if (!ret)
-        ret = RX_HANDLER_CONSUMED;
 
     if (VR_RX_HANDLER_PASS == ret) {
         ret = RX_HANDLER_PASS;
         pkt->vp_rx_pass = 0;
+    } else {
+        ret = RX_HANDLER_CONSUMED;
     }
-
     return ret;
 
 error:
@@ -2466,7 +2465,7 @@ linux_if_rx_pass(struct vr_interface *vif, struct vr_packet *pkt)
     skb->protocol = eth_type_trans(skb, dev);
     skb->pkt_type = PACKET_HOST;
     // Pass the pkt to upper protocol layers of linux
-    pkt->vp_rx_pass = 1;
+    pkt->vp_rx_pass = 0;
     return VR_RX_HANDLER_PASS;
 }
 
