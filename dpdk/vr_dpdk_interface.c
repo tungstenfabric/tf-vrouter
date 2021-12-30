@@ -491,7 +491,9 @@ vr_ethdev_inner_cksum_capable(struct vr_dpdk_ethdev *ethdev)
             if ((strncmp(dev_info.driver_name, "net_ixgbe",
                         strlen("net_ixgbe")) != 0) &&
                 (strncmp(dev_info.driver_name, "net_i40e",
-                        strlen("net_i40e")) != 0)) {
+                        strlen("net_i40e")) != 0) &&
+                (strncmp(dev_info.driver_name, "net_ice",
+                        strlen("net_ice")) != 0)) {
                     return 0;
             }
         } else {
