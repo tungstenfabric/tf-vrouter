@@ -232,7 +232,9 @@ vr_handle_arp_request(struct vr_arp *sarp, struct vr_packet *pkt,
         break;
 
     case MR_XCONNECT:
-        vif_xconnect(pkt->vp_if, pkt, fmd);
+        handled = vif_xconnect(pkt->vp_if, pkt, fmd);
+        if (VR_RX_HANDLER_PASS != handled)
+            handled = true;
         break;
 
     case MR_TRAP_X:
@@ -240,6 +242,8 @@ vr_handle_arp_request(struct vr_arp *sarp, struct vr_packet *pkt,
         if (pkt_c) {
             vr_trap(pkt_c, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
             handled = vif_xconnect(pkt->vp_if, pkt, fmd);
+            if (VR_RX_HANDLER_PASS != handled)
+                handled = true;
         } else {
             vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
         }
@@ -299,7 +303,9 @@ vr_handle_arp_reply(struct vr_arp *sarp, struct vr_packet *pkt,
      * packet
      */
     if (vif_mode_xconnect(vif) || vif->vif_type == VIF_TYPE_HOST) {
-        vif_xconnect(vif, pkt, fmd);
+        handled = vif_xconnect(vif, pkt, fmd);
+        if (VR_RX_HANDLER_PASS != handled)
+            handled = 1;
         return handled;
     }
 
@@ -352,6 +358,8 @@ vr_handle_arp_reply(struct vr_arp *sarp, struct vr_packet *pkt,
         if (cloned_pkt) {
             vr_preset(cloned_pkt);
             handled = vif_xconnect(vif, pkt, fmd);
+            if (VR_RX_HANDLER_PASS != handled)
+                handled = 1;
             vr_trap(cloned_pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
         } else {
             vr_trap(pkt, fmd->fmd_dvrf, AGENT_TRAP_ARP, NULL);
@@ -656,6 +664,7 @@ vr_virtual_input(unsigned short vrf, struct vr_interface *vif,
     unsigned short *t_hdr;
     struct vr_icmp *icmph;
     bool check_trap_macipl = false;
+    unsigned int ret = 0;
 
     fmd->fmd_vlan = vlan_id;
     fmd->fmd_dvrf = vrf;
@@ -771,9 +780,9 @@ vr_virtual_input(unsigned short vrf, struct vr_interface *vif,
     if (!vr_flow_forward(pkt->vp_if->vif_router, pkt, fmd))
         return 0;
 
-    vr_bridge_input(vif->vif_router, pkt, fmd);
+    ret = vr_bridge_input(vif->vif_router, pkt, fmd);
 
-    return 0;
+    return ret;
 }
 
 unsigned int
@@ -817,6 +826,8 @@ vr_fabric_input(struct vr_interface *vif, struct vr_packet *pkt,
     } else if (pkt->vp_type == VP_TYPE_ARP) {
         VR_MAC_COPY(eth_dmac, data);
         handled = vr_arp_input(pkt, fmd, eth_dmac);
+        if(VR_RX_HANDLER_PASS == handled)
+            return handled;
     } else if (pkt->vp_type == VP_TYPE_IP6) {
         if (is_ipv6_nd_packet) {
             handled = vr_ipv6_nd_input(pkt, fmd);
@@ -828,8 +839,6 @@ vr_fabric_input(struct vr_interface *vif, struct vr_packet *pkt,
     if (!handled) {
         pkt_push(pkt, pull_len);
         return vif_xconnect(vif, pkt, fmd);
-    } else if (VR_RX_HANDLER_PASS == handled) {
-        return handled;
     }
 
     return 0;
