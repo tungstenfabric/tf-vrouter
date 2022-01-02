@@ -1961,6 +1961,14 @@ vr_send_pbb_tunnel_add(struct nl_client *cl, unsigned int router_id, int
     req.nhr_flags = flags;
     req.nhr_type = NH_TUNNEL;
 
+    req.nhr_encap_oif_id_size = 1;
+    req.nhr_encap_oif_id = calloc(req.nhr_encap_oif_id_size, sizeof(unsigned int));
+    if (!req.nhr_encap_oif_id) {
+        ret = -ENOMEM;
+        goto fail;
+    }
+    req.nhr_encap_oif_id[0] = 0;
+
     req.nhr_nh_list_size = 1;
     req.nhr_nh_list = calloc(1, sizeof(uint32_t));
     if (!req.nhr_nh_list) {
