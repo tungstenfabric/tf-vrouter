@@ -3941,19 +3941,6 @@ vr_nexthop_add(vr_nexthop_req *req)
     struct vr_nexthop *nh;
     struct vrouter *router = vrouter_get(req->nhr_rid);
 
-    /* nhr_encap_oif_id can be NULL before soft reset,
-     * So, allocating it here with first index as ZERO */
-    if (0 == req->nhr_encap_oif_id_size) {
-        req->nhr_encap_oif_id = vr_zalloc(sizeof(unsigned int),
-                                VR_NEXTHOP_REQ_LIST_OBJECT);
-        if (!req->nhr_encap_oif_id) {
-            ret = -ENOMEM;
-            goto generate_resp;
-        }
-        req->nhr_encap_oif_id_size = 1;
-        req->nhr_encap_oif_id[0] = 0;
-    }
-
     if (!vr_nexthop_valid_request(req) && (ret = -EINVAL))
         goto generate_resp;
 
