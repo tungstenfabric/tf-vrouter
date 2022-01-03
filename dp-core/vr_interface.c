@@ -709,10 +709,6 @@ vhost_mac_request(struct vr_interface *vif, struct vr_packet *pkt,
 
         mr = vm_mac_request(vif, pkt, fmd, dmac);
         if ((mr != MR_XCONNECT) && (mr != MR_PROXY)) {
-            vr_printf("Vrouter: Vhost arp request Mr %d Dst %x src %x"
-                    " converting to Xconnect\n", mr, sarp->arp_dpa,
-                    sarp->arp_spa);
-
             mr = MR_XCONNECT;
         }
     } else {
@@ -1336,10 +1332,6 @@ eth_mac_request(struct vr_interface *vif, struct vr_packet *pkt,
 
     mr = vm_mac_request(vif, pkt, fmd, dmac);
     if (underlay_arp && (mr != MR_XCONNECT) && (mr != MR_PROXY)) {
-        vr_printf("Vrouter: Vhost arp request Mr %d Dst %x src %x"
-                    " converting to Xconnect\n",
-                    mr, sarp->arp_dpa, sarp->arp_spa);
-
         mr = MR_XCONNECT;
     }
 
