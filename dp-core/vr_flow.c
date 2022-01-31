@@ -552,6 +552,8 @@ vr_flow_get_free_entry(struct vrouter *router, struct vr_flow *key, uint8_t type
             if (!fe->fe_hold_list) {
                 vr_flow_reset_entry(router, fe);
                 fe = NULL;
+                vr_printf("%s:%d flow reset\n", __func__, __LINE__);
+                return fe;
             } else {
                 fe->fe_hold_list->vfq_index = *fe_index;
             }
@@ -1677,7 +1679,6 @@ vr_flow_allow_new_flow(struct vrouter *router, struct vr_packet *pkt,
     unsigned int hold_count;
 
     struct vr_flow_table_info *infop = router->vr_flow_table_info;
-
 
     *drop_reason = VP_DROP_FLOW_UNUSABLE;
     if (burst)
