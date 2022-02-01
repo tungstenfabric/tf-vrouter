@@ -56,6 +56,7 @@ volatile bool vr_not_ready = true;
 /* Below hugepage req recv and resp variables are added for debug purpose */
 int vr_hpage_req_recv = 0;
 int vr_hpage_req_resp = 0;
+int vr_hpage_mem_fail = 0;
 int vr_genetlink_group_id = 0;
 
 unsigned int vr_memory_alloc_checks = 0;
@@ -80,12 +81,6 @@ static struct vr_module modules[] = {
         .mod_name       =       "Stats",
         .init           =       vr_stats_init,
         .exit           =       vr_stats_exit,
-    },
-    {
-        .mod_name       =       "Interface",
-        .init           =       vr_interface_init,
-        .exit           =       vr_interface_exit,
-        .shut           =       vr_interface_shut,
     },
     {
         .mod_name       =       "Nexthop",
@@ -133,6 +128,12 @@ static struct vr_module modules[] = {
         .mod_name       =       "Vrf",
         .init           =       vr_vrf_table_init,
         .exit           =       vr_vrf_table_exit,
+    },
+    {
+        .mod_name       =       "Interface",
+        .init           =       vr_interface_init,
+        .exit           =       vr_interface_exit,
+        .shut           =       vr_interface_shut,
     },
 };
 
@@ -549,7 +550,7 @@ vrouter_init(void)
             vr_printf("vrouter module %u init error (%d)\n", i, ret);
             goto init_fail;
         }
-        if (!vr_huge_page_config) {
+        if (vr_hpage_mem_fail || !vr_huge_page_config) {
             if (modules[i].mem) {
                 ret = modules[i].mem(&router);
                 if (ret) {
@@ -559,7 +560,7 @@ vrouter_init(void)
             }
         }
     }
-
+    vr_hpage_mem_fail = 0;
     module_under_init = NULL;
     vr_not_ready = false;
     return 0;
@@ -700,6 +701,13 @@ vr_hugepage_config_process(void *s_req)
     if (mret) {
         hcfg_resp.vhp_resp = VR_HPAGE_CFG_RESP_MEM_FAILURE;
         ret = mret;
+        /* cleaning up partially allocated memory. */
+        for (i = 0; i < (int)VR_NUM_MODULES; i++) {
+            if (modules[i].mem)  {
+                modules[i].exit(router, false);
+            }
+        }
+        vr_hpage_mem_fail = mret;
     }
 
     /* Debug purpose: Increment below variable before sending response */
