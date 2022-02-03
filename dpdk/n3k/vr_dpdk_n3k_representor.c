@@ -18,8 +18,10 @@
 #include "vr_dpdk_n3k_representor_map.h"
 #include "vr_dpdk_n3k_config.h"
 
-#include <rte_port_ethdev.h>
+#include <rte_eth_bond.h>
+#include <rte_eth_bond_8023ad.h>
 #include <rte_pmd_n3k.h>
+#include <rte_port_ethdev.h>
 
 #define REPR_OP_OK       VR_DPDK_REPRESENTOR_OP_RES_HANDLED_OK
 #define REPR_OP_ERR      VR_DPDK_REPRESENTOR_OP_RES_HANDLED_ERR
@@ -439,10 +441,18 @@ n3k_representor_virtual_del(struct vr_interface *vif)
 static enum vr_dpdk_representor_op_res
 n3k_representor_fabric_add(struct vr_interface *vif)
 {
+    uint16_t slaves[RTE_MAX_ETHPORTS];
+    enum vr_dpdk_representor_op_res res;
+    struct vr_dpdk_ethdev *ethdev;
+    uint16_t rep_port_id;
+    int slaves_cnt;
+    int ret;
+    int i;
+
     strncpy((char *)vif->vif_name, vr_dpdk_n3k_config_get_phy_repr_name(),
         RTE_DIM(vif->vif_name) - 1);
 
-    enum vr_dpdk_representor_op_res res = n3k_representor_init(vif, (const char *)vif->vif_name);
+    res = n3k_representor_init(vif, (const char *)vif->vif_name);
     if (res != REPR_OP_OK) {
         RTE_LOG(ERR, VROUTER,
             "    %s(): %s: error while initializing representor\n",
@@ -450,12 +460,29 @@ n3k_representor_fabric_add(struct vr_interface *vif)
         return res;
     }
 
-    struct vr_dpdk_ethdev *ethdev = vif->vif_os;
-    uint16_t rep_port_id = ethdev->ethdev_port_id;
+    ethdev = vif->vif_os;
+    rep_port_id = ethdev->ethdev_port_id;
 
-    int ret = vr_dpdk_interface_queue_setup(vif);
+    ret = vr_dpdk_interface_queue_setup(vif);
     if (ret < 0)
         return REPR_OP_ERR;
+
+    if (rte_eth_bond_mode_get(rep_port_id) == BONDING_MODE_8023AD) {
+        slaves_cnt = rte_eth_bond_slaves_get(rep_port_id, slaves, RTE_MAX_ETHPORTS);
+
+        for (i = 0; i < slaves_cnt; ++i) {
+            ret = rte_pmd_n3k_enable_dedicated_queue_on_repr(
+                &rte_eth_devices[slaves[i]]);
+            RTE_ASSERT(ret == 0);
+        }
+
+        if (rte_eth_bond_8023ad_dedicated_queues_enable(rep_port_id) != 0) {
+            RTE_LOG(ERR, VROUTER,
+                    "    %s(): %s: Failed to add dedicated queue\n",
+                    __func__, vif->vif_name);
+            return REPR_OP_ERR;
+        }
+    }
 
     ret = rte_eth_dev_start(rep_port_id);
     if (ret < 0) {
@@ -475,6 +502,38 @@ n3k_representor_fabric_add(struct vr_interface *vif)
     if (ret)
         return REPR_OP_ERR;
     return REPR_OP_OK;
+}
+
+static void
+n3k_lacp_disable_dedicated_queue(struct vr_interface *vif)
+{
+    struct vr_dpdk_ethdev *ethdev;
+    uint16_t rep_port_id;
+    int __rte_unused ret;
+    uint16_t slaves[RTE_MAX_ETHPORTS];
+    int slaves_cnt;
+    int i;
+
+    if (vif->vif_os == NULL)
+        return;
+
+    ethdev = vif->vif_os;
+    rep_port_id = ethdev->ethdev_port_id;
+
+    if (rte_eth_bond_mode_get(rep_port_id) != BONDING_MODE_8023AD)
+        return;
+
+    rte_eth_dev_stop(rep_port_id);
+
+    ret = rte_eth_bond_8023ad_dedicated_queues_disable(rep_port_id);
+    RTE_ASSERT(ret == 0);
+
+    slaves_cnt = rte_eth_bond_slaves_get(rep_port_id, slaves, RTE_MAX_ETHPORTS);
+
+    for (i = 0; i < slaves_cnt; ++i) {
+        ret = rte_pmd_n3k_disable_dedicated_queue_on_repr(&rte_eth_devices[slaves[i]]);
+        RTE_ASSERT(ret == 0);
+    }
 }
 
 static enum vr_dpdk_representor_op_res
@@ -534,9 +593,12 @@ vr_dpdk_n3k_representor_del(struct vr_interface *vif)
         return REPR_OP_ERR;
     }
 
-    if (vif_is_vm(vif)) {
+    if (vif_is_fabric(vif)) {
+        // deleting fabric vif should be transparent and return REPR_NOT_HANDLED
+        // which will force vrouter to handle the rest of the deletion
+        n3k_lacp_disable_dedicated_queue(vif);
+    } else if (vif_is_vm(vif)) {
         int ret = n3k_representor_virtual_del(vif);
-
         return ret == 0 ? REPR_OP_OK : REPR_OP_ERR;
     }
 
