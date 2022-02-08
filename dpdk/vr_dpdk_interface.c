@@ -873,7 +873,8 @@ dpdk_fabric_af_packet_if_del(struct vr_interface *vif)
     dpdk_vif_queue_free(vif);
 
     /* release eth device */
-    return vr_dpdk_ethdev_release(ethdev);
+    vr_dpdk_ethdev_release(ethdev);
+    return rte_vdev_uninit(name);
 }
 
 /* Add vhost interface */
