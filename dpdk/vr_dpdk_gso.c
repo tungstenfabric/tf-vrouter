@@ -182,6 +182,7 @@ dpdk_split_chained_mbuf(struct rte_mbuf *pkt_in, struct rte_mbuf **pkts_out,
                      * fragments may not have vr_packet info
                      */
                     rte_pktmbuf_free(pkts_out[j]);
+                rte_pktmbuf_free(curr_pkt);
                 rte_pktmbuf_free(next_pkt);
                 return -1;
             }
