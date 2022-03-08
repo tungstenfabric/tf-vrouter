@@ -1530,6 +1530,11 @@ flow_dump_table(struct flow_table *ft)
             }
 
             next_index = ofe->fe_hentry.hentry_next_index;
+            /* CEM-24972: memory mapped area for flow is pointing to incorrect memory location so next_index coming as 0 */
+            if(!next_index) {
+                printf("\nERROR:flow file corrupted,reload vRouter module to recover\n");
+                return;
+            }
         }
 
         if ((fe->fe_flags & VR_FLOW_FLAG_ACTIVE) || (j != -1))
