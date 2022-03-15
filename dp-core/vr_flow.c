@@ -1473,7 +1473,18 @@ vr_flow_tcp_digest(struct vrouter *router, struct vr_flow_entry *flow_e,
                 }
                 if (rflow_e) {
                     rflow_ack = rflow_e->fe_tcp_ack;
-                    if (ntohl(tcph->tcp_seq) != rflow_ack) {
+                /* Implementing rfc-5961 (section 3.2),
+                 * In the SYN-SENT state (a RST received in response to an initial SYN),
+                 * the RST is acceptable if the ACK field acknowledges the SYN.  In all
+                 * other cases the receiver MUST silently discard the segment. */
+                    if ((tcp_offset_flags & VR_TCP_FLAG_ACK)
+                         && (rflow_e->fe_tcp_flags & VR_FLOW_TCP_SYN)) {
+                         if (ntohl(tcph->tcp_ack) != (rflow_e->fe_tcp_seq + 1)) {
+                            /* Ignore the RST */
+                            return;
+                         }
+                    }
+                    else if (ntohl(tcph->tcp_seq) != rflow_ack) {
                         /* Ignore the RST */
                         return;
                     }
