@@ -188,10 +188,6 @@ vr_dpdk_n3k_service_core_flr_sim_enable(void)
 int
 vr_dpdk_n3k_service_core_init(void)
 {
-    if (!vr_dpdk_n3k_config_is_n3k_enabled()) {
-        return 0;
-    }
-
     FOREACH_ENABLED_N3K_SERVICE_CORE(i, service_core) {
         int ret = service_core->routine ? register_service(service_core)
                                         : get_service_id(service_core);
@@ -210,10 +206,6 @@ vr_dpdk_n3k_service_core_init(void)
 int
 vr_dpdk_n3k_service_core_exit(void)
 {
-    if (!vr_dpdk_n3k_config_is_n3k_enabled()) {
-        return 0;
-    }
-
     FOREACH_ENABLED_N3K_SERVICE_CORE(i, service_core) {
         if (service_core->routine && service_core->service_id != (uint32_t)-1) {
             rte_service_component_runstate_set(service_core->service_id, 0);
@@ -241,10 +233,6 @@ vr_dpdk_n3k_service_core_lcore_request(char *lcores_str,
                                        size_t lcores_str_sz,
                                        char *service_core_cpu_mapping_str)
 {
-    if (!vr_dpdk_n3k_config_is_n3k_enabled()) {
-        return 0;
-    }
-
     char n3k_lcores_str[VR_DPDK_STR_BUF_SZ];
     size_t n3k_lcores_str_sz = RTE_DIM(n3k_lcores_str);
     size_t free_lcore_id = vr_dpdk_lcore_free_lcore_get();
@@ -276,10 +264,6 @@ vr_dpdk_n3k_service_core_lcore_request(char *lcores_str,
 int
 vr_dpdk_n3k_service_core_stop(void)
 {
-    if (!vr_dpdk_n3k_config_is_n3k_enabled()) {
-        return 0;
-    }
-
     FOREACH_ENABLED_N3K_SERVICE_CORE(i, service_core) {
         int ret = rte_service_runstate_set(service_core->service_id, 0);
         if (ret) {
@@ -327,10 +311,6 @@ vr_dpdk_n3k_service_core_stop(void)
 int
 vr_dpdk_n3k_service_core_launch(void)
 {
-    if (!vr_dpdk_n3k_config_is_n3k_enabled()) {
-        return 0;
-    }
-
     FOREACH_ENABLED_N3K_SERVICE_CORE(i, service_core) {
         int ret = rte_service_lcore_add(service_core->mapped_lcore_id);
         if (ret || service_core->mapped_lcore_id < 0) {

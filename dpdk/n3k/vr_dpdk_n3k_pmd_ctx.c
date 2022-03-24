@@ -45,6 +45,12 @@ vr_dpdk_n3k_pmd_ctx_parse_opt(int vr_argc,
     return vr_dpdk_n3k_config_parse_opt(vr_argc, vr_argv, opt);
 }
 
+bool
+vr_dpdk_n3k_pmd_ctx_is_enabled(void)
+{
+    return vr_dpdk_n3k_config_is_n3k_enabled();
+}
+
 int
 vr_dpdk_n3k_pmd_ctx_init(int eal_argc, char *eal_argv[])
 {
@@ -177,6 +183,7 @@ struct vr_dpdk_pmd_ctx n3k_ctx = {
     .exit = vr_dpdk_n3k_pmd_ctx_exit,
     .lcore_request = vr_dpdk_n3k_pmd_ctx_lcore_request,
     .launch_lcores = vr_dpdk_n3k_pmd_ctx_launch_lcores,
+    .is_enabled = vr_dpdk_n3k_pmd_ctx_is_enabled,
 };
 
 RTE_FINI(vr_dpdk_n3k_pmd_ctx_deregister)
