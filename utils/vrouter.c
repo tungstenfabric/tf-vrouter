@@ -728,6 +728,7 @@ parse_long_opts(int opt_index, char *opt_arg)
         assert_platform_for_option(LINUX_PLATFORM, opt_index);
         vrouter_op = SANDESH_OP_ADD;
         perfr = (int)strtol(opt_arg, NULL, 0);
+        perfr = (perfr>=1) ? perfr=1 : NULL;
         if (errno != 0) {
             printf("vrouter: Error parsing perfr: %s: %s (%d)\n", opt_arg,
                     strerror(errno), errno);
@@ -765,11 +766,12 @@ parse_long_opts(int opt_index, char *opt_arg)
             Usage();
         }
         break;
-
+    
     case SET_PERFR1_INDEX:
         assert_platform_for_option(LINUX_PLATFORM, opt_index);
         vrouter_op = SANDESH_OP_ADD;
         perfr1 = (int)strtol(opt_arg, NULL, 0);
+        perfr1 = (perfr1>=1) ? perfr1=1 : NULL;
         if (errno != 0) {
             printf("vrouter: Error parsing perfr1: %s: %s (%d)\n", opt_arg,
                     strerror(errno), errno);
@@ -781,6 +783,7 @@ parse_long_opts(int opt_index, char *opt_arg)
         assert_platform_for_option(LINUX_PLATFORM, opt_index);
         vrouter_op = SANDESH_OP_ADD;
         perfr2 = (int)strtol(opt_arg, NULL, 0);
+        perfr2 = (perfr2>=1) ? perfr2=1 : NULL;
         if (errno != 0) {
             printf("vrouter: Error parsing perfr2: %s: %s (%d)\n", opt_arg,
                     strerror(errno), errno);
@@ -792,6 +795,7 @@ parse_long_opts(int opt_index, char *opt_arg)
         assert_platform_for_option(LINUX_PLATFORM, opt_index);
         vrouter_op = SANDESH_OP_ADD;
         perfr3 = (int)strtol(opt_arg, NULL, 0);
+        perfr3 = (perfr3>=1) ? perfr3=1 : NULL;
         if (errno != 0) {
             printf("vrouter: Error parsing perfr3: %s: %s (%d)\n", opt_arg,
                     strerror(errno), errno);
