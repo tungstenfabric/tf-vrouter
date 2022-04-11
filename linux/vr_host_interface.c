@@ -1766,6 +1766,7 @@ linux_if_del(struct vr_interface *vif)
         /* Unregister netfilter hook for lo */
         vr_nf_hook_exit();
         vhost_if_del((struct net_device *)vif->vif_os);
+        vr_l3mh_loip = 0;
     }
     else if (vif->vif_type == VIF_TYPE_PHYSICAL)
         vhost_if_del_phys((struct net_device *)vif->vif_os);
@@ -1799,8 +1800,6 @@ linux_if_del(struct vr_interface *vif)
     vif->vif_os = NULL;
     vif->vif_os_idx = 0;
     vif->vif_l3mh_loip = 0;
-    vr_l3mh_loip = 0;
-
 
     return 0;
 }
