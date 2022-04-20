@@ -330,7 +330,7 @@ dpdk_find_port_id_by_pci_addr(const struct rte_pci_addr *addr)
 uint8_t
 find_sub_str(const char *dest, const char *src)
 {
-    char str[10];
+    char str[10] = {0};
     memcpy(str, src, 5);
 
     if(strstr(dest, str))
