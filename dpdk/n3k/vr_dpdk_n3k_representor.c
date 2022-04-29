@@ -614,10 +614,6 @@ static struct vr_dpdk_representor_ops n3k_representor_ops = {
 void
 vr_dpdk_n3k_representor_init(void)
 {
-    if (!vr_dpdk_n3k_config_is_n3k_enabled()) {
-        return;
-    }
-
     vr_dpdk_n3k_representor_map_init();
 
     vr_dpdk_representor_ops_register(&n3k_representor_ops);
@@ -626,10 +622,6 @@ vr_dpdk_n3k_representor_init(void)
 void
 vr_dpdk_n3k_representor_exit(void)
 {
-    if (!vr_dpdk_n3k_config_is_n3k_enabled()) {
-        return;
-    }
-
     vr_dpdk_n3k_representor_map_exit();
 
     vr_dpdk_representor_ops_deregister();

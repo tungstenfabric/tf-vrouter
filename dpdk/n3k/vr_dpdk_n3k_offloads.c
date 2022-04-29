@@ -299,10 +299,7 @@ error:
 void
 vr_dpdk_n3k_offload_exit(void)
 {
-    bool offload_enabled = vr_dpdk_n3k_config_is_n3k_enabled() &&
-        datapath_offloads;
-
-    if (!offload_enabled) {
+    if (!datapath_offloads) {
         return;
     }
 
@@ -313,10 +310,7 @@ vr_dpdk_n3k_offload_exit(void)
 int
 vr_dpdk_n3k_offload_init(void)
 {
-    bool offload_enabled = vr_dpdk_n3k_config_is_n3k_enabled() &&
-        datapath_offloads;
-
-    if (!offload_enabled) {
+    if (!datapath_offloads) {
         return 0;
     }
 

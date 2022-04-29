@@ -10,6 +10,7 @@
 #define __VR_DPDK_PMD_CONTEXT_H__
 
 #include <stddef.h>
+#include <stdbool.h>
 
 typedef int (*vr_dpdk_lcore_launch_cb_t)(void *);
 /*
@@ -25,6 +26,7 @@ struct vr_dpdk_pmd_ctx {
     int (*lcore_request)(char *, size_t, char *);
     int (*launch_lcores)(vr_dpdk_lcore_launch_cb_t);
     int (*print_usage)(void);
+    bool (*is_enabled)(void);
 };
 
 void vr_dpdk_pmd_ctx_register(struct vr_dpdk_pmd_ctx *ctx);
