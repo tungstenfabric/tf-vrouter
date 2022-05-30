@@ -85,10 +85,11 @@ vr_sum(unsigned char *buf, unsigned int length)
 {
    int num_words;
    uint32_t total;
-   uint16_t *ptr;
+   typedef uint16_t __attribute__((__may_alias__)) u16_p;
+   u16_p *ptr;
 
    total = 0;
-   ptr = (uint16_t *)buf;
+   ptr = (u16_p *)buf;
    num_words = (length + 1) / 2;
 
    while (num_words--)
