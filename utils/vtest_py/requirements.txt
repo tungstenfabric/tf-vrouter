@@ -1,6 +1,6 @@
 atomicwrites==1.3.0
 attrs==19.3.0
-bottle==0.12.18
+bottle==0.12.20
 configparser==4.0.2
 contextlib2==0.6.0.post1
 entrypoints==0.3
