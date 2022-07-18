@@ -2087,7 +2087,6 @@ dpdk_if_get_bond_info(struct vr_interface *vif,
 
     uint8_t port_id = 0, i = 0;
     struct vr_dpdk_ethdev *ethdev = ((struct vr_dpdk_ethdev*)(vif->vif_os));
-    uint32_t dev_flags = 0;
     struct rte_eth_link link;
 
     if(vif->vif_flags & VIF_FLAG_MOCK_DEVICE) {
@@ -2096,19 +2095,11 @@ dpdk_if_get_bond_info(struct vr_interface *vif,
 
     memset(bond_info, 0, sizeof(*bond_info));
 
-    dev_flags = rte_eth_devices[port_id].data->dev_flags;
-
     /* To get fabric info */
     bond_info->vif_fab_drv_name = rte_eth_devices[ethdev->ethdev_port_id].device->driver->name;
     bond_info->vif_fab_name = rte_eth_devices[ethdev->ethdev_port_id].data->name;
     rte_eth_link_get_nowait(ethdev->ethdev_port_id, &link);
     bond_info->vif_intf_link_status = link.link_status;
-
-    /* Check bond slave is configured */
-    if (!(dev_flags & RTE_ETH_DEV_BONDED_SLAVE)) {
-        bond_info->vif_num_slave = 0;
-        return 0;
-    }
 
     for (i = 0; i < ethdev->ethdev_nb_slaves; i++) {
         port_id = ethdev->ethdev_slaves[i];
