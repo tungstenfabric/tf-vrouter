@@ -3703,6 +3703,35 @@ vr_interface_stats_reset(struct vr_interface *vif, int core)
 }
 
 static int
+vr_interface_dropstats_reset(struct vr_interface *vif, int core)
+{
+    int reason = 0, cpu = 0;
+    uint8_t *data;
+
+    if (core == -1) {
+        memset(vif->vif_drop_stats, 0, sizeof(uint64_t) * VP_DROP_MAX);
+        for (cpu = 0; cpu < vr_num_cpus; cpu++) {
+            for (reason = 0; reason < VP_DROP_MAX; reason++) {
+                data = vr_btable_get(vif->vif_pcpu_drop_stats,
+                                    ((cpu * VP_DROP_MAX) + reason));
+                *data = 0;
+            }
+        }
+    } else {
+        if (core > (vr_num_cpus - 1)) {
+            vr_printf("vif clear dropstats: invalid core id: %d\n", core);
+            return -1;
+        }
+        for (reason = 0; reason < VP_DROP_MAX; reason++) {
+            data = vr_btable_get(vif->vif_pcpu_drop_stats,
+                                ((core * VP_DROP_MAX) + reason));
+            *data = 0;
+        }
+    }
+    return 0;
+}
+
+static int
 vr_interface_clear_stats(vr_interface_req *r)
 {
     int i, ret = 0;
@@ -3722,6 +3751,9 @@ vr_interface_clear_stats(vr_interface_req *r)
                 ret = vr_interface_stats_reset(vif, core);
                 if(ret < 0)
                     goto exit_get;
+		ret = vr_interface_dropstats_reset(vif, core);
+                if (ret < 0)
+                    goto exit_get;
             }
         }
     } else {
@@ -3729,6 +3761,9 @@ vr_interface_clear_stats(vr_interface_req *r)
         if (vif) {
             ret = vr_interface_stats_reset(vif, core);
             if(ret < 0)
+                goto exit_get;
+	    ret = vr_interface_dropstats_reset(vif, core);
+            if (ret < 0)
                 goto exit_get;
 
             response->vifr_name = vr_zalloc(VR_INTERFACE_NAME_LEN,
