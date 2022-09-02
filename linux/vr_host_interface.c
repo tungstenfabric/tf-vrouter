@@ -2328,14 +2328,6 @@ vr_napi_poll(struct napi_struct *napi, int budget)
     struct vr_interface *gro_vif = NULL;
     struct vr_interface_stats *gro_vif_stats = NULL;
     struct sk_buff_head *head;
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3,2,0))
-    /*
-     * Return value of napi_gro_receive() changed across Linux versions.
-     */
-    int ret, napi_gro_err = NET_RX_DROP;
-#else
-    gro_result_t ret, napi_gro_err = GRO_DROP;
-#endif
 
 
     if (napi->dev == pkt_gro_dev) {
@@ -2354,11 +2346,7 @@ vr_napi_poll(struct napi_struct *napi, int budget)
     while ((skb = skb_dequeue(head))) {
         vr_skb_set_rxhash(skb, 0);
 
-        ret = napi_gro_receive(napi, skb);
-        if (ret == napi_gro_err) {
-            if (gro_vif_stats)
-                gro_vif_stats->vis_ierrors++;
-        }
+        napi_gro_receive(napi, skb);
 
         quota++;
         if (quota == budget) {

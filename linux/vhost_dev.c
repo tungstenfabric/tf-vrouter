@@ -14,6 +14,9 @@
 #include <linux/types.h>
 #include <net/rtnetlink.h>
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,4,0))
+#include <linux/ethtool.h>
+#endif
 #include <asm/bug.h>
 
 #include "vr_os.h"
