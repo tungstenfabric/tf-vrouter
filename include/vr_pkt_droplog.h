@@ -3,6 +3,9 @@
  *
  * Copyright (c) 2018 Juniper Networks, Inc. All rights reserved.
  */
+
+#include <linux/version.h>
+
 #ifndef __VR_PKT_DROPLOG_H__
 #define __VR_PKT_DROPLOG_H__
 
@@ -18,6 +21,10 @@ extern "C" {
 #include "vr_bridge.h"
 #include "vr_mirror.h"
 #include "vr_os.h"
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,4,0))
+#include <linux/time64.h>
+#endif
 
 /* All *.c *.h files inside vrouter folder are listed here */
 
@@ -337,7 +344,12 @@ struct vr_drop_loc
 };
 
 typedef struct vr_pkt_drop_log {
+
+ #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,4,0))
+    time64_t  timestamp;
+ #else
     time_t timestamp;
+ #endif
     unsigned char   vp_type;
     unsigned short  drop_reason;
     unsigned short  vif_idx;

@@ -4,6 +4,16 @@
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
 
+#if !defined(__fallthrough) && defined(__has_attribute)
+  #if GCC_VERSION >= 70000 && __has_attribute(__fallthrough__)
+    #define __fallthrough __attribute__((__fallthrough__))
+  #endif
+#endif
+
+#if !defined(__fallthrough) /* well, we tried */
+  #define __fallthrough ((void)0)
+#endif
+
 #ifndef _VR_HASH_H
 #define _VR_HASH_H
 
@@ -117,27 +127,27 @@ static inline uint32_t vr_hash(const void *key, uint32_t length, uint32_t initva
     /* All the case statements fall through */
     switch (length) {
     case 12: c += (uint32_t)k[11]<<24;
-             /* FALLTHRU */
+             __fallthrough;
     case 11: c += (uint32_t)k[10]<<16;
-             /* FALLTHRU */
+             __fallthrough;
     case 10: c += (uint32_t)k[9]<<8;
-             /* FALLTHRU */
+             __fallthrough;
     case 9:  c += k[8];
-             /* FALLTHRU */
+             __fallthrough;
     case 8:  b += (uint32_t)k[7]<<24;
-             /* FALLTHRU */
+             __fallthrough;
     case 7:  b += (uint32_t)k[6]<<16;
-             /* FALLTHRU */
+             __fallthrough;
     case 6:  b += (uint32_t)k[5]<<8;
-             /* FALLTHRU */
+             __fallthrough;
     case 5:  b += k[4];
-             /* FALLTHRU */
+             __fallthrough;
     case 4:  a += (uint32_t)k[3]<<24;
-             /* FALLTHRU */
+             __fallthrough;
     case 3:  a += (uint32_t)k[2]<<16;
-             /* FALLTHRU */
+             __fallthrough;
     case 2:  a += (uint32_t)k[1]<<8;
-             /* FALLTHRU */
+             __fallthrough;
     case 1:  a += k[0];
          __vr_hash_final(a, b, c);
              /* FALLTHRU */
