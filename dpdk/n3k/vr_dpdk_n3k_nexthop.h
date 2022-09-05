@@ -33,18 +33,52 @@ const struct vr_nexthop * vr_dpdk_n3k_offload_nexthop_get(uint32_t id);
 
 extern const uint8_t vr_n3k_offload_zero_mac[VR_ETHER_ALEN];
 
-static inline const uint8_t *nh_src_mac(const struct vr_nexthop* nh) {
-    if (nh->nh_data_size >= 2 * VR_ETHER_ALEN) {
-        struct vr_eth *eth = (struct vr_eth *)nh->nh_data;
+static const uint8_t get_first_valid_ecmp_index(const struct vr_nexthop* nh) {
+    int i;
+    for (i = 0; i < VR_MAX_PHY_INF; ++i) {
+        if (!nh->nh_encap_valid[i])
+            continue;
+        return i;
+    }
+    return 0;
+}
+
+static inline const uint8_t nh_validate_underlay_index(const struct vr_nexthop* nh, int8_t underlay_ecmp_index) {
+    if( !(nh->nh_flags & NH_FLAG_TUNNEL_UNDERLAY_ECMP) ) {
+        return get_first_valid_ecmp_index(nh);
+    }
+
+    if( underlay_ecmp_index < 0 ) {
+        return get_first_valid_ecmp_index(nh);
+    }
+
+    if( underlay_ecmp_index >= VR_MAX_PHY_INF ) {
+        return get_first_valid_ecmp_index(nh);
+    }
+
+    if( !nh->nh_encap_valid[underlay_ecmp_index] ) {
+        return get_first_valid_ecmp_index(nh);
+    }
+
+    return underlay_ecmp_index;
+}
+
+static inline const uint8_t *nh_src_mac(const struct vr_nexthop* nh, int8_t underlay_ecmp_index) {
+    uint8_t loc_ecmp_index = nh_validate_underlay_index(nh, underlay_ecmp_index);
+
+    if (nh->nh_data_size >= ((2 * VR_ETHER_ALEN)+(loc_ecmp_index*VR_ETHER_HLEN))) {
+        struct vr_eth *eth = (struct vr_eth *)(nh->nh_data + (loc_ecmp_index*(VR_ETHER_HLEN)));
         return eth->eth_smac;
     } else {
         return vr_n3k_offload_zero_mac;
     }
 }
 
-static inline const uint8_t *nh_dst_mac(const struct vr_nexthop* nh) {
-    if (nh->nh_data_size >= 2 * VR_ETHER_ALEN) {
-        struct vr_eth *eth = (struct vr_eth *)nh->nh_data;
+static inline const uint8_t *nh_dst_mac(const struct vr_nexthop* nh, int8_t underlay_ecmp_index) {
+    uint8_t loc_ecmp_index = nh_validate_underlay_index(nh, underlay_ecmp_index);
+
+    if (nh->nh_data_size >= ((2 * VR_ETHER_ALEN)+(loc_ecmp_index*VR_ETHER_HLEN))) {
+        struct vr_eth *eth = (struct vr_eth *)(nh->nh_data + (loc_ecmp_index*(VR_ETHER_HLEN)));
         return eth->eth_dmac;
     } else {
         return vr_n3k_offload_zero_mac;
@@ -71,8 +105,10 @@ static inline rte_be32_t nh_tunnel_dst_ip(const struct vr_nexthop* nh) {
     return nh->nh_type == NH_TUNNEL ? nh->nh_vxlan_tun_dip : 0;
 }
 
-static inline uint16_t nh_interface_id(const struct vr_nexthop* nh) {
-    return nh->nh_dev != NULL ? nh->nh_dev->vif_idx : -1;
+static inline uint16_t nh_interface_id(const struct vr_nexthop* nh, int8_t underlay_ecmp_index) {
+    uint8_t loc_ecmp_index = nh_validate_underlay_index(nh, underlay_ecmp_index);
+
+    return nh->nh_dev_arr[loc_ecmp_index] != NULL ? nh->nh_dev_arr[loc_ecmp_index]->vif_idx : -1;
 }
 
 int vr_dpdk_n3k_offload_nexthop_get_cnh_idx(

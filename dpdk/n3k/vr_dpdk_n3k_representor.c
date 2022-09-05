@@ -22,6 +22,8 @@
 #include <rte_eth_bond_8023ad.h>
 #include <rte_pmd_n3k.h>
 #include <rte_port_ethdev.h>
+#include <rte_pci.h>
+#include <string.h>
 
 #define REPR_OP_OK       VR_DPDK_REPRESENTOR_OP_RES_HANDLED_OK
 #define REPR_OP_ERR      VR_DPDK_REPRESENTOR_OP_RES_HANDLED_ERR
@@ -286,6 +288,8 @@ n3k_representor_init(struct vr_interface *vif, const char *repr_name)
 {
     uint16_t port_id = 0;
     struct vr_dpdk_ethdev *ethdev = NULL;
+    struct rte_ether_addr mac_addr;
+    char tmpLogBuff[RTE_DEV_NAME_MAX_LEN];
 
     int rc = rte_eth_dev_get_port_by_name(repr_name, &port_id);
     if (rc) {
@@ -294,6 +298,14 @@ n3k_representor_init(struct vr_interface *vif, const char *repr_name)
             __func__, repr_name);
         return REPR_OP_ERR;
     }
+
+    RTE_LOG(INFO, VROUTER, "    VIF eth dev %s with MAC "
+                        MAC_FORMAT "\n",
+                        vif->vif_name, MAC_VALUE(vif->vif_mac));
+
+    rte_eth_macaddr_get(port_id, &mac_addr);
+    rte_ether_format_addr(tmpLogBuff, RTE_DEV_NAME_MAX_LEN, &mac_addr);
+    RTE_LOG(INFO, VROUTER, "    Representor <%s> with MAC <%s>\n", repr_name, tmpLogBuff);
 
     ethdev = &vr_dpdk.ethdevs[port_id];
     if (ethdev->ethdev_ptr != NULL) {
@@ -449,10 +461,12 @@ n3k_representor_fabric_add(struct vr_interface *vif)
     int ret;
     int i;
 
-    strncpy((char *)vif->vif_name, vr_dpdk_n3k_config_get_phy_repr_name(),
-        RTE_DIM(vif->vif_name) - 1);
+    const char *ptr_phy_repr_name;
 
-    res = n3k_representor_init(vif, (const char *)vif->vif_name);
+    ptr_phy_repr_name = vr_dpdk_n3k_config_get_phy_repr_name(vif);
+    RTE_LOG(INFO, VROUTER, "    %s(): vif: <%s> phy_repr: <%s>\n", __func__, (const char *)vif->vif_name, ptr_phy_repr_name);
+
+    res = n3k_representor_init(vif, ptr_phy_repr_name);
     if (res != REPR_OP_OK) {
         RTE_LOG(ERR, VROUTER,
             "    %s(): %s: error while initializing representor\n",

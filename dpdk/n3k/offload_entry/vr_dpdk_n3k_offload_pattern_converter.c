@@ -355,7 +355,8 @@ static void
 set_pattern_outer_headers(
     const struct vr_n3k_offload_entry *entry)
 {
-    set_pattern_outer_eth(nh_dst_mac(entry->src_nh), nh_src_mac(entry->src_nh));
+    set_pattern_outer_eth(nh_dst_mac(entry->src_nh, entry->flow->underlay_ecmp_index),
+                          nh_src_mac(entry->src_nh, entry->flow->underlay_ecmp_index));
 
     set_pattern_outer_ipv4(
         nh_tunnel_dst_ip(entry->src_nh),
