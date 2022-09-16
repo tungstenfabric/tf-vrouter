@@ -21,7 +21,7 @@ AddOption('--dpdk-jobs', dest='dpdk-jobs', action='store', default=1, type=int,
 AddOption('--system-header-path', dest='system-header-path', action='store',
           help='Linux kernel headers for applications')
 
-AddOption('--add-opts', dest='add-opts', action='store',
+AddOption('--add-opts', dest='add-opts', action='append',
           help='Additional options for vrouter compilation')
 
 env = DefaultEnvironment().Clone()
