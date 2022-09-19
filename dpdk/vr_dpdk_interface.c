@@ -1877,6 +1877,8 @@ dpdk_if_rx(struct vr_interface *vif, struct vr_packet *pkt)
 
     if (likely(tx_queue->txq_ops.f_tx != NULL)) {
         tx_queue->txq_ops.f_tx(tx_queue->q_queue_h, m);
+        if (unlikely(lcore_id < VR_DPDK_FWD_LCORE_ID))
+            tx_queue->txq_ops.f_flush(tx_queue->q_queue_h);
     } else {
         RTE_LOG_DP(DEBUG, VROUTER,"%s: error TXing to interface %s: no queue for lcore %u\n",
                 __func__, vif->vif_name, lcore_id);
