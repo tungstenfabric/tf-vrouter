@@ -12,6 +12,8 @@
 #include <sys/queue.h>
 
 #include <rte_eal.h>
+#include <rte_dev.h>
+#include <string.h>
 
 #include "vr_dpdk.h"
 #include "vr_dpdk_n3k_config.h"
@@ -21,6 +23,8 @@
     {                                                                          \
         .match_str = (match), .handler_routine = (routine)                     \
     }
+
+#define REPRESENTORS_MAX_NUMBER 2
 
 struct vr_dpdk_n3k_eal_opt {
     STAILQ_ENTRY(vr_dpdk_n3k_eal_opt) next;
@@ -32,17 +36,20 @@ struct vr_dpdk_n3k_eal_opt {
 STAILQ_HEAD(vr_dpdk_n3k_eal_opts, vr_dpdk_n3k_eal_opt);
 
 struct vr_dpdk_n3k_config {
-    char *phy_representor_name;
+    char phy_representor_name[REPRESENTORS_MAX_NUMBER][RTE_DEV_NAME_MAX_LEN];
+    size_t phy_representor_name_nbr;
     bool drop_offload_enabled;
     bool aging_service_core_enabled;
     bool force_vdpa_mapping;
+    bool multihoming_enabled;
     struct vr_dpdk_n3k_eal_opts eal_opts;
 };
 
-struct vr_dpdk_n3k_config n3k_config = { .phy_representor_name = NULL,
+struct vr_dpdk_n3k_config n3k_config = { .phy_representor_name_nbr = 0,
                                          .drop_offload_enabled = true,
                                          .aging_service_core_enabled = false,
                                          .force_vdpa_mapping = false,
+                                         .multihoming_enabled = false,
                                          .eal_opts = STAILQ_HEAD_INITIALIZER(
                                            n3k_config.eal_opts) };
 
@@ -193,19 +200,86 @@ handle_opt_whitelist(struct vr_dpdk_n3k_config *cfg,
     return new_eal_opt(cfg, whitelist_eal_opt, value);
 }
 
+static unsigned int
+get_subarg_len(char *ptrStr,
+               unsigned int idx)
+{
+    unsigned int i = 0;
+    char *strTmp = NULL;
+
+    for(i=0; ptrStr; i++) {
+        strTmp = strstr(ptrStr, ",");
+        if(i == idx) {
+            if(!strTmp) return strlen(ptrStr);
+            else {
+                return strTmp - ptrStr;
+            }
+        }
+        if(!strTmp) break;
+
+        ptrStr = strTmp + 1;
+    }
+
+    return 0;
+}
+
+static char*
+get_subarg_val(char *ptrStr,
+               unsigned int idx)
+{
+    unsigned int i = 0;
+    char *strTmp = NULL;
+
+    for(i=0; ptrStr; i++) {
+        strTmp = strstr(ptrStr, ",");
+        if(i == idx) {
+            return ptrStr;
+        }
+        if(!strTmp) break;
+
+        ptrStr = strTmp + 1;
+    }
+
+    return NULL;
+}
+
 static int
 handle_opt_enable_n3k(struct vr_dpdk_n3k_config *cfg,
                       size_t vr_argc,
                       char **vr_argv)
 {
-    cfg->phy_representor_name = get_provided_opt_value(vr_argc, vr_argv);
+    int i;
+    unsigned int subLen = 0;
+    char *tmpStr = get_provided_opt_value(vr_argc, vr_argv);
 
-    if (!cfg->phy_representor_name) {
+    if(!tmpStr) {
         RTE_LOG(ERR, VROUTER, "N3K Config: Missing representor name\n");
         return -EINVAL;
     }
 
     RTE_LOG(INFO, VROUTER, "N3K Config: Enabling N3K offloads\n");
+
+    cfg->phy_representor_name_nbr = 0;
+    for(i=0; i<REPRESENTORS_MAX_NUMBER; i++) {
+        subLen = get_subarg_len(tmpStr, i);
+        if(subLen) {
+            subLen = (subLen>(RTE_DEV_NAME_MAX_LEN-1))?RTE_DEV_NAME_MAX_LEN-1:subLen;
+            strncpy(cfg->phy_representor_name[i], get_subarg_val(tmpStr, i), subLen);
+            cfg->phy_representor_name[i][subLen] = 0;
+            cfg->phy_representor_name_nbr++;
+        } else {
+            break;
+        }
+        RTE_LOG(INFO, VROUTER, "N3K Config: Representor[%d]: %s\n", i, cfg->phy_representor_name[i]);
+    }
+
+    if(!strcmp("l3mh", cfg->phy_representor_name[0])) {
+        cfg->multihoming_enabled = true;
+        for(i=0; i<REPRESENTORS_MAX_NUMBER; i++) {
+            snprintf(cfg->phy_representor_name[i], RTE_DEV_NAME_MAX_LEN, "net_n3k0_phy%d", i);
+        }
+        RTE_LOG(INFO, VROUTER, "N3K Config: Multihomming enabled\n");
+    }
 
     return 0;
 }
@@ -358,7 +432,7 @@ vr_dpdk_n3k_config_is_aging_service_core_enabled(void)
 bool
 vr_dpdk_n3k_config_is_n3k_enabled(void)
 {
-    return n3k_config.phy_representor_name != NULL;
+    return n3k_config.phy_representor_name_nbr != 0;
 }
 
 bool
@@ -373,8 +447,53 @@ vr_dpdk_n3k_config_vdpa_mapping_enabled(void)
     return n3k_config.force_vdpa_mapping;
 }
 
-const char *
-vr_dpdk_n3k_config_get_phy_repr_name(void)
+static int get_mac_by_name(const char *ptr_name, struct rte_ether_addr *ptr_mac_addr)
 {
-    return n3k_config.phy_representor_name;
+    int rc = -1;
+    uint16_t port_id = 0;
+
+    rc = rte_eth_dev_get_port_by_name(ptr_name, &port_id);
+    if (!rc) {
+        rc = rte_eth_macaddr_get(port_id, ptr_mac_addr);
+    }
+
+    return rc;
+}
+
+static const char* get_multihoming_representor(struct vr_interface *vif)
+{
+    int i;
+    const char *representor_name = NULL;
+    struct rte_ether_addr mac_addr;
+
+    if( !vif ) {
+        return NULL;
+    }
+
+    for(i=0; i<REPRESENTORS_MAX_NUMBER; i++) {
+        if( !get_mac_by_name(n3k_config.phy_representor_name[i], &mac_addr) ) {
+            if(!memcmp(vif->vif_mac, mac_addr.addr_bytes, sizeof(vif->vif_mac))) {
+                representor_name = n3k_config.phy_representor_name[i];
+                RTE_LOG(INFO, VROUTER, "Vif <%s> match to representor <%s>\n", vif->vif_name, representor_name);
+                break;
+            }
+        }
+    }
+
+    return representor_name;
+}
+
+const char *
+vr_dpdk_n3k_config_get_phy_repr_name(struct vr_interface *vif)
+{
+    const char *representor_name = NULL;
+
+    if( n3k_config.multihoming_enabled ) {
+        representor_name = get_multihoming_representor(vif);
+    }
+    else {
+       representor_name = n3k_config.phy_representor_name[0];
+    }
+
+    return representor_name;
 }

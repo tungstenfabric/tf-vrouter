@@ -300,8 +300,8 @@ vr_dpdk_n3k_packet_metadata_fill_vm_rx_value_from_offload_entry(
     const uint8_t *dst_mac = NULL;
 
     if (entry->route_traffic) {
-        src_mac = nh_dst_mac(entry->dst_nh);
-        dst_mac = nh_src_mac(entry->dst_nh);
+        src_mac = nh_dst_mac(entry->dst_nh, entry->flow->underlay_ecmp_index);
+        dst_mac = nh_src_mac(entry->dst_nh, entry->flow->underlay_ecmp_index);
     } else {
         if (entry->pkt_metadata.eth_hdr_present) {
             src_mac = entry->pkt_metadata.inner_dst_mac;
