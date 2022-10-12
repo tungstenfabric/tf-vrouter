@@ -10,7 +10,7 @@ Import('dpdk_lib')
 
 env = VRouterEnv.Clone()
 
-if 'enableN3K' in env['ADD_OPTS']:
+if 'enableN3K' in env['ADD_OPTS'] or 'n3k-tests:test' in COMMAND_LINE_TARGETS:
     env.SConscript('n3k/SConscript', exports = ['VRouterEnv', 'dpdk_lib'], duplicate = 0)
 
 # Flags
@@ -35,7 +35,7 @@ env.Append(LIBPATH = ['../host', '../sandesh', '../dp-core', 'n3k'])
 # Libraries
 env.Replace(LIBS = ['dp_core', 'dp_sandesh_c', 'dp_core', 'sandesh-c'])
 env.Append(LIBS = ['rt', 'dl', 'pthread', 'urcu-qsbr', 'urcu-bp'])
-if 'enableN3K' in env['ADD_OPTS']:
+if 'enableN3K' in env['ADD_OPTS'] or 'n3k-tests:test' in COMMAND_LINE_TARGETS:
 # Force n3k library build using --whole-archive option
     env.Append(LIBS = ['vr_dpdk_n3k'])
     env.Append(LINKFLAGS = ['-Wl,--whole-archive', '-lvr_dpdk_n3k', '-Wl,--no-whole-archive'])

@@ -267,6 +267,8 @@ if sys.platform != 'darwin':
             os.system(make_cmd + 'clean')
 
     if link_dpdk:
+        env.Append(DPDK_TARGET = DPDK_TARGET)
+
         subdirs.append('tests')
         subdirs.append('dpdk')
         exports.append('dpdk_lib')
