@@ -2,6 +2,41 @@
 
 This module adds support for Intel PAC N3000 board. It implements GOM (General Offload Module) API to introduce full hardware flow offload into the vRouter-DPDK.
 
+## Hardware prerequisites
+Ensure that network node(switch, router) port where N3K card is directly connected has FEC mode set to none.
+
+N3K FEC mode can be checked with command:
+```
+> fecmode
+FEC mode in configuration: no
+FEC mode in current driver: no
+FEC mode in current hardware: no
+```
+To set N3K FEC mode to none:
+```
+> fecmode -B 1c no
+```
+Detailed description of `fecmode` can be found here:
+https://www.intel.com/content/www/us/en/docs/programmable/683362/1-3-1/setting-forward-error-correction-fec-mode.html
+
+Bus number of PCIe device can be found with command:
+```
+> fpgainfo phy
+Board Management Controller, MAX10 NIOS FW version D.2.0.19
+Board Management Controller, MAX10 Build version D.2.0.6
+//****** PHY ******//
+Object Id                     : 0xEF00000
+PCIe s:b:d.f                  : 0000:1c:00.0
+Device Id                     : 0x0b30
+Numa Node                     : 0
+...
+//****** Intel C827 Retimer ******//
+Port0 25G                     : Up
+Port1 25G                     : Down
+...
+```
+Above command will also show actual link status of N3K physical interfaces.
+
 ## Building
 
 The `enableN3K` option must be passed to vRouter's SConscript using `--add-opts=enableN3K` option to compile and link n3k-specific vRouter code. Without this option N3K PMD context will not be registered.

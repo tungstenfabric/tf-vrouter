@@ -531,7 +531,7 @@ handle_ingress_mpls_l3(
     push_action_raw_encap(action);
     set_action_raw_encap_ether_hdr(
         (struct rte_ether_addr*) VROUTER_MAC,
-        (struct rte_ether_addr*) nh_dst_mac(entry->dst_nh));
+        (struct rte_ether_addr*) nh_dst_mac(entry->dst_nh, entry->flow->underlay_ecmp_index));
 }
 
 static void
@@ -541,10 +541,10 @@ handle_vxlan_encap(
     push_action_vxlan_encap(action);
 
     memcpy(
-        outer_eth_spec.src.addr_bytes, nh_src_mac(entry->dst_nh), VR_ETHER_ALEN);
+        outer_eth_spec.src.addr_bytes, nh_src_mac(entry->dst_nh, entry->flow->underlay_ecmp_index), VR_ETHER_ALEN);
 
     memcpy(
-        outer_eth_spec.dst.addr_bytes, nh_dst_mac(entry->dst_nh), VR_ETHER_ALEN);
+        outer_eth_spec.dst.addr_bytes, nh_dst_mac(entry->dst_nh, entry->flow->underlay_ecmp_index), VR_ETHER_ALEN);
 
     outer_ipv4_spec.hdr.src_addr = nh_tunnel_src_ip(entry->dst_nh);
     outer_ipv4_spec.hdr.dst_addr = nh_tunnel_dst_ip(entry->dst_nh);
@@ -569,8 +569,8 @@ handle_mpls_encap(
     push_action_raw_encap(action);
 
     set_action_raw_encap_ether_hdr(
-        (struct rte_ether_addr *)nh_src_mac(entry->dst_nh),
-        (struct rte_ether_addr *)nh_dst_mac(entry->dst_nh));
+        (struct rte_ether_addr *)nh_src_mac(entry->dst_nh, entry->flow->underlay_ecmp_index),
+        (struct rte_ether_addr *)nh_dst_mac(entry->dst_nh, entry->flow->underlay_ecmp_index));
 
     set_action_raw_encap_ipv4_hdr(
         nh_tunnel_src_ip(entry->dst_nh),
@@ -614,8 +614,8 @@ push_action_mpls_over_udp_decap(
 
     push_action_raw_decap(action);
     set_action_raw_decap_ether_hdr(
-        (struct rte_ether_addr *)nh_dst_mac(entry->src_nh),
-        (struct rte_ether_addr *)nh_src_mac(entry->src_nh));
+        (struct rte_ether_addr *)nh_dst_mac(entry->src_nh, entry->flow->underlay_ecmp_index),
+        (struct rte_ether_addr *)nh_src_mac(entry->src_nh, entry->flow->underlay_ecmp_index));
     set_action_raw_decap_ipv4_hdr(
         nh_tunnel_dst_ip(entry->src_nh),
         nh_tunnel_src_ip(entry->src_nh));
@@ -657,8 +657,8 @@ handle_local(
     if (entry->route_traffic)
         push_action_route(
             action,
-            nh_src_mac(entry->dst_nh),
-            nh_dst_mac(entry->dst_nh));
+            nh_src_mac(entry->dst_nh, entry->flow->underlay_ecmp_index),
+            nh_dst_mac(entry->dst_nh, entry->flow->underlay_ecmp_index));
 
     handle_vlan(action, entry);
     handle_nat(action, entry);

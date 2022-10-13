@@ -188,6 +188,7 @@ vr_dpdk_n3k_offload_flow_construct(
     oflow->nh_id = fe->fe_key.flow_nh_id;
     oflow->src_vrf_id = fe->fe_vrf;
     oflow->ecmp_nh_idx = fe->fe_ecmp_nh_index;
+    oflow->underlay_ecmp_index = fe->fe_underlay_ecmp_index;
 
     // There is a flag in vr_flow_entry to determine if mirroring is enabled.
     // At the same time VR_MAX_MIRROR_INDICES is an invalid value that

@@ -6,6 +6,8 @@
  * Santa Clara, California 95052, USA
  */
 
+#include "vr_dpdk_n3k_representor_impl.h"
+
 #include <errno.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -13,11 +15,6 @@
 #include <rte_malloc.h>
 #include <rte_hash.h>
 #include <rte_port_ethdev.h>
-
-#include "vr_dpdk.h"
-#include "vr_interface.h"
-
-#include "vr_dpdk_n3k_representor_map.h"
 
 #define N3K_MAX_REPRESENTOR_COUNT 128
 #define N3K_MAX_REPRESENTOR_COUNT_STRING RTE_STR(N3K_MAX_REPRESENTOR_COUNT)
@@ -43,7 +40,7 @@ get_unused_n3k_repr(void)
 {
     bool found = false;
     char *name = rte_malloc("n3k_repr_map_value",
-        N3K_REPRESENTOR_NAME_LENGTH + sizeof(*name), 0);
+        (N3K_REPRESENTOR_NAME_LENGTH + 1) * sizeof(*name), 0);
     struct n3k_representor_entry repr = {
         .id = N3K_REPRESENTOR_INVALID_VF_ID,
         .name = name,
@@ -97,12 +94,12 @@ put_unused_n3k_repr(struct n3k_representor_entry repr)
 }
 
 const char *
-vr_dpdk_n3k_representor_map_add(struct vr_interface *vif)
+vr_dpdk_n3k_representor_map_create_mapping(struct vr_interface *vif)
 {
     struct n3k_representor_entry repr = get_unused_n3k_repr();
     if (repr.id >= N3K_REPRESENTOR_INVALID_VF_ID) {
         RTE_LOG(ERR, VROUTER,
-            "%s(): error: Cannot get unused VF\n", __func__);
+            "%s(): error: No available VF found\n", __func__);
         return NULL;
     }
 
@@ -112,7 +109,7 @@ vr_dpdk_n3k_representor_map_add(struct vr_interface *vif)
 }
 
 void
-vr_dpdk_n3k_representor_map_delete(struct vr_interface *vif)
+vr_dpdk_n3k_representor_map_delete_mapping(struct vr_interface *vif)
 {
     struct n3k_representor_entry repr = vif_to_repr_mapping[vif->vif_idx];
     if (repr.id >= N3K_REPRESENTOR_INVALID_VF_ID) {

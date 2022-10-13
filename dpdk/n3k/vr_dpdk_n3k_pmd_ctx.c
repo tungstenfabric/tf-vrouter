@@ -18,8 +18,7 @@
 #include "vr_dpdk_n3k_config.h"
 #include "vr_dpdk_n3k_offloads.h"
 #include "vr_dpdk_n3k_service_core.h"
-#include "vr_dpdk_n3k_representor.h"
-#include "vr_dpdk_n3k_vhost.h"
+#include "representor/vr_dpdk_n3k_representor.h"
 
 int
 vr_dpdk_n3k_pmd_ctx_print_usage(void)
@@ -93,13 +92,6 @@ vr_dpdk_n3k_pmd_ctx_init(int eal_argc, char *eal_argv[])
         return ret;
     }
 
-    ret = vr_dpdk_n3k_vhost_init();
-    if (ret) {
-        RTE_LOG(ERR, VROUTER,
-            "%s(): vhost init failed; Error: %d\n", __func__, ret);
-        return ret;
-    }
-
     RTE_LOG(INFO, VROUTER, "%s(): succeeded\n", __func__);
 
     return 0;
@@ -109,8 +101,6 @@ int
 vr_dpdk_n3k_pmd_ctx_exit(void)
 {
     RTE_LOG(INFO, VROUTER, "%s(): start\n", __func__);
-
-    vr_dpdk_n3k_vhost_exit();
 
     int ret = vr_dpdk_n3k_service_core_exit();
     if (ret) {

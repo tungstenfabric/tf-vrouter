@@ -38,6 +38,7 @@ struct vr_n3k_offload_flow {
     uint16_t src_vrf_id;
     uint8_t mirror_id;
     int8_t ecmp_nh_idx;
+    int8_t underlay_ecmp_index;
 
     struct vr_n3k_offload_stats stats;
     size_t handle_count;
