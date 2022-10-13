@@ -37,7 +37,7 @@ extern struct vr_nexthop * __attribute__((weak)) __vrouter_get_nexthop(struct vr
 extern void vr_compute_size_oflow_table(void);
 
 size_t __attribute__((weak)) vr_dpdk_lcore_free_lcore_get(void);
-void __attribute__((weak)) vr_htable_trav(vr_htable_t, unsigned int , htable_trav_cb , void *);
+int __attribute__((weak)) vr_htable_trav(vr_htable_t, unsigned int , htable_trav_cb , void *);
 void __attribute__((weak)) update_flow_entry(vr_htable_t table __attribute__unused__, vr_hentry_t *ent,
         unsigned int index, void *data __attribute__unused__);
 
@@ -136,11 +136,14 @@ vr_dpdk_lcore_free_lcore_get(void)
     fail_msg("Weak version of %s(); should not be called because of mocking", __func__);
     return 0;
 }
-void
+
+int
 vr_htable_trav(vr_htable_t htable, unsigned int marker, htable_trav_cb cb, void *data)
 {
     fail_msg("Weak version of %s(); should not be called because of mocking", __func__);
+    return 0;
 }
+
 void
 update_flow_entry(vr_htable_t table __attribute__unused__, vr_hentry_t *ent,
         unsigned int index, void *data __attribute__unused__)

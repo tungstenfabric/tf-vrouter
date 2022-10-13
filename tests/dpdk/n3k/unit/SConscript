@@ -44,7 +44,8 @@ unit_test_base_names = [
     'dpdk_n3k_flow_convert_nat_tcp',
     'dpdk_n3k_flow_convert_mirror',
     'dpdk_n3k_flow_convert_mpls',
-    'dpdk_n3k_flow_convert_vlan'
+    'dpdk_n3k_flow_convert_vlan',
+    'dpdk_n3k_config'
 ]
 
 unit_tests = []

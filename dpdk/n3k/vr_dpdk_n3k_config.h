@@ -27,6 +27,6 @@ bool vr_dpdk_n3k_config_is_aging_service_core_enabled(void);
 bool vr_dpdk_n3k_config_is_n3k_enabled(void);
 bool vr_dpdk_n3k_config_is_drop_offload_enabled(void);
 bool vr_dpdk_n3k_config_vdpa_mapping_enabled(void);
-const char *vr_dpdk_n3k_config_get_phy_repr_name(void);
+const char *vr_dpdk_n3k_config_get_phy_repr_name(struct vr_interface *vif);
 
 #endif //__VR_DPDK_N3K_CONFIG_H__

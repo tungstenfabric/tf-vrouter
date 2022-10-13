@@ -464,7 +464,7 @@ set_nh(struct vr_n3k_offload_entry *entry)
 static int set_dst_vif(struct vr_n3k_offload_entry* entry)
 {
     entry->dst_vif = vr_dpdk_n3k_offload_interface_get(
-        nh_interface_id(entry->dst_nh), &entry->dst_virtual_vif);
+        nh_interface_id(entry->dst_nh, entry->flow->underlay_ecmp_index), &entry->dst_virtual_vif);
     if (!entry->dst_vif) {
         RTE_LOG(ERR, VROUTER, "vr_dpdk_n3k_fill_offload_entry: "
             "dst_vif == NULL for dst_nh->id == %d.\n", entry->dst_nh->nh_id);
@@ -476,7 +476,7 @@ static int set_dst_vif(struct vr_n3k_offload_entry* entry)
 static int set_src_vif(struct vr_n3k_offload_entry* entry)
 {
     entry->src_vif = vr_dpdk_n3k_offload_interface_get(
-        nh_interface_id(entry->src_nh), &entry->src_virtual_vif);
+        nh_interface_id(entry->src_nh, entry->flow->underlay_ecmp_index), &entry->src_virtual_vif);
     if (!entry->src_vif) {
         RTE_LOG(ERR, VROUTER, "vr_dpdk_n3k_fill_offload_entry: "
             "src_vif == NULL for src_nh->id == %d.\n", entry->src_nh->nh_id);
@@ -638,15 +638,15 @@ get_vif_for_mirror_id(uint8_t mirror_id, uint32_t flow_id)
     }
 
     const struct vr_interface * mirror_vif =
-        vr_dpdk_n3k_offload_interface_get(nh_interface_id(nh), NULL);
+        vr_dpdk_n3k_offload_interface_get(nh_interface_id(nh, -1), NULL);
     if (mirror_vif == NULL) {
         RTE_LOG(ERR, VROUTER, "get_vif_for_mirror_id failed: "
             "vif with id %d couldn't be found.\n",
-            nh_interface_id(nh));
+            nh_interface_id(nh, -1));
 
         if (flow_id != VR_INVALID_HENTRY_INDEX) {
             vr_dpdk_n3k_offload_missing_mirror_vifs_add_unlocked(
-                nh_interface_id(nh), flow_id);
+                nh_interface_id(nh, -1), flow_id);
         }
         return NULL;
     }
