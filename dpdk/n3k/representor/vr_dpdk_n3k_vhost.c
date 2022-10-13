@@ -6,11 +6,14 @@
  * Santa Clara, California 95052, USA
  */
 
+#include "vr_dpdk_n3k_representor_impl.h"
+
 #include <sys/poll.h>
 
-#include "vr_dpdk.h"
-#include "nl_util.h"
-#include "vr_dpdk_n3k_vhost.h"
+#include <vr_dpdk.h>
+#include <nl_util.h>
+
+#include "../../vr_dpdk_virtio.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -52,8 +55,14 @@ register_and_start_vhost_driver(const char *vhost_socket_path,
                                 struct vr_interface *vif,
                                 uint32_t vif_vdpa_did)
 {
+    /* agent attaches info in the vif about what role
+    will orchestrator configure hypervisor to perform in regards to setup of
+    vhost user socket so tell the vhost dpdk the opposite, otherwise
+    both orchestrator and vRouter will perform the same role and won't connect */
+    uint64_t vif_vhost_connection_type =
+        vif->vif_vhostuser_mode == VHOSTUSER_SERVER ? RTE_VHOST_USER_CLIENT : 0;
     int ret = rte_vhost_driver_register(vhost_socket_path,
-        vif->vif_vhostuser_mode == VHOSTUSER_SERVER ? RTE_VHOST_USER_CLIENT : 0);
+        vif_vhost_connection_type);
     if (ret != 0) {
         RTE_LOG(ERR, VROUTER,
             "%s(): rte_vhost_driver_register failure.\n", __func__);
@@ -157,7 +166,7 @@ vr_dpdk_n3k_vhost_unregister(struct vr_interface *vif)
         return;
     }
 
-    RTE_LOG(INFO, VROUTER,
+    RTE_LOG(DEBUG, VROUTER,
         "%s(): id - %u; name - %s;\n", __func__, vif->vif_idx, vif->vif_name);
 
     int ret = get_vhost_socket_path(vif, vhost_socket_path, RTE_DIM(vhost_socket_path));
@@ -181,7 +190,7 @@ vr_dpdk_n3k_vhost_register(struct vr_interface *vif, uint32_t vif_vdpa_did)
         return ret;
     }
 
-    RTE_LOG(INFO, VROUTER,
+    RTE_LOG(DEBUG, VROUTER,
         "%s(): id - %u; name - %s;\n", __func__, vif->vif_idx, vif->vif_name);
 
     ret = get_vhost_socket_path(vif, vhost_socket_path, RTE_DIM(vhost_socket_path));
@@ -195,7 +204,7 @@ vr_dpdk_n3k_vhost_register(struct vr_interface *vif, uint32_t vif_vdpa_did)
         return ret;
     }
 
-    RTE_LOG(INFO, VROUTER, "%s(): vr_dpdk_n3k_vhost_register(vif: %d)\n",
+    RTE_LOG(DEBUG, VROUTER, "%s(): succeeded; vif: %d\n",
         __func__, vif->vif_idx);
 
     return 0;
@@ -203,9 +212,7 @@ vr_dpdk_n3k_vhost_register(struct vr_interface *vif, uint32_t vif_vdpa_did)
 
 int vr_dpdk_n3k_vhost_init(void)
 {
-    int ret = configure_vhost_socket_dir();
-
-    return ret;
+    return configure_vhost_socket_dir();
 }
 
 void vr_dpdk_n3k_vhost_exit(void)

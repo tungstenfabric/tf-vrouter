@@ -18,7 +18,7 @@ if env['OPT'] == 'debug':
 env.Append(CCFLAGS = '-Werror -Wall')
 env.Append(CCFLAGS = '-msse4.2')
 
-objs = env.Object(Glob('*.c')) + env.Object(Glob('offload_entry/*.c'))
+objs = env.Object(Glob('*.c')) + env.Object(Glob('offload_entry/*.c')) + env.Object(Glob('representor/*.c'))
 
 env.Requires(objs, dpdk_lib)
 
