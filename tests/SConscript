@@ -8,9 +8,14 @@ Import('VRouterEnv')
 Import('dpdk_lib')
 env = VRouterEnv.Clone()
 
-if not GetOption('without-dpdk') and 'enableN3K' in env['ADD_OPTS']:
+if not GetOption('without-dpdk') or (not GetOption('without-dpdk') and GetOption("describe-tests")):
     env.SConscript(
         'dpdk/n3k/SConscript',
         exports = ['VRouterEnv', 'dpdk_lib'],
         duplicate = 0
     )
+    env.Alias('n3k-tests:test',[
+      'vr-dpdk-n3k-ut',
+      'dpdk-n3k-ut',
+      'vr-dpdk-n3k-int-tests'
+    ])

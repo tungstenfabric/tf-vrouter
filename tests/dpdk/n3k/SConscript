@@ -22,3 +22,11 @@ env.SConscript(
     exports = ['VRouterEnv', 'dpdk_lib'],
     duplicate = 0
 )
+
+DPDK_TARGET = env['DPDK_TARGET']
+build_dir = Dir(env['TOP']).abspath
+dpdk_build_dir = '{}/vrouter/dpdk/{}'.format(build_dir, DPDK_TARGET)
+dpdk_n3k_ut_app =  '{}/app/n3k-ut'.format(dpdk_build_dir)
+exec_ut = env.Command("dpdk-n3k-ut", [], dpdk_n3k_ut_app)
+env.Requires(exec_ut, dpdk_lib)
+env.Alias("dpdk-n3k-ut", exec_ut)

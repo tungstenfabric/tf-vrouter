@@ -59,4 +59,4 @@ for name in unit_test_base_names:
     test = env.UnitTest(test_name, env.Flatten([test_obj, common_tests_obj]))
     unit_tests.append(test)
 
-vr_dpdk_n3k_unit_tests = env.TestSuite('vr-dpdk-n3k-tests', unit_tests)
+vr_dpdk_n3k_unit_tests = env.TestSuite('vr-dpdk-n3k-ut', unit_tests)

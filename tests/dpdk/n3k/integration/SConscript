@@ -47,4 +47,8 @@ for name in int_test_base_names:
     test = env.Program(test_name, env.Flatten([test_obj, common_tests_obj]))
     int_tests.append(test)
 
-env.Alias('vr-dpdk-n3k-integration-tests-build-only', [int_tests])
+src_root = Dir('#').srcnode().abspath
+build = env.Alias('vr-dpdk-n3k-integration-tests-build-only', [int_tests])
+vrouter_run_int_n3k_tests_cmd = env.Command("vr-dpdk-n3k-int-tests-command", [], "{}/vrouter/tests/dpdk/n3k/integration/run_tests.sh".format(src_root))
+env.Requires(vrouter_run_int_n3k_tests_cmd, build)
+env.Alias("vr-dpdk-n3k-int-tests", vrouter_run_int_n3k_tests_cmd)
