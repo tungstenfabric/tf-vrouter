@@ -389,7 +389,6 @@ struct vr_dummy_flow_entry {
     struct vr_mirror_meta_entry *fe_mme;
     unsigned int fe_tcp_ack;
     int8_t fe_underlay_ecmp_index;
-    uint8_t fe_bucket_lock;
 } __attribute__packed__close__;
 
 /*
@@ -432,10 +431,6 @@ struct vr_flow_entry {
     struct vr_mirror_meta_entry *fe_mme;
     unsigned int fe_tcp_ack;
     int8_t fe_underlay_ecmp_index;
-    /* Note: Used only in the first entry of the bucket. May be used even if
-     * the whole entry is invalid. This is a spinlock to synchronize
-     * vr_add_flow and vr_flow_lookup and avoid duplicate entries. */
-    uint8_t fe_bucket_lock;
     unsigned char fe_pack[VR_FLOW_ENTRY_PACK];
 } __attribute__packed__close__;
 
