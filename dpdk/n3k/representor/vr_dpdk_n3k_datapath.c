@@ -10,17 +10,15 @@
 
 #include <stdbool.h>
 
-#include <rte_pmd_n3k.h>
-
 #include "../vr_dpdk_n3k_config.h"
 
 static const char *
 datapath_type_to_string(enum vr_dpdk_n3k_datapath_type dp_type)
 {
     switch(dp_type) {
-    case N3K_DATAPATH_DETERMINISTIC_UNVERIFIED:
+    case N3K_DATAPATH_UNVERIFIED:
         return "PCI passthru or vDPA without mapping (vif name deduced to be representor name)";
-    case N3K_DATAPATH_DETERMINISTIC_PCI_PASSTHRU:
+    case N3K_DATAPATH_PCI_PASSTHRU:
         return "PCI passthru";
     case N3K_DATAPATH_DETERMINISTIC_VDPA:
         return "vDPA without mapping";
@@ -50,6 +48,7 @@ vr_dpdk_n3k_datapath_deduce(struct vr_interface *vif, const char **repr_name)
     uint16_t port_id;
     int ret;
     enum vr_dpdk_n3k_datapath_type dp_type = N3K_DATAPATH_UNKNOWN;
+    struct vr_dpdk_n3k_representor_map_entry repr;
 
     if (repr_name == NULL || vif == NULL) {
         RTE_LOG(ERR, VROUTER,
@@ -63,7 +62,7 @@ vr_dpdk_n3k_datapath_deduce(struct vr_interface *vif, const char **repr_name)
     if (!ret) {
         *repr_name = (const char *)vif->vif_name;
 
-        dp_type = N3K_DATAPATH_DETERMINISTIC_UNVERIFIED;
+        dp_type = N3K_DATAPATH_UNVERIFIED;
         goto found;
     }
 
@@ -76,7 +75,7 @@ vr_dpdk_n3k_datapath_deduce(struct vr_interface *vif, const char **repr_name)
         goto found;
     }
 
-    *repr_name = vr_dpdk_n3k_representor_map_create_mapping(vif);
+    *repr_name = vr_dpdk_n3k_representor_map_create_entry(vif);
     if (*repr_name == NULL) {
         RTE_LOG(ERR, VROUTER,
             "%s(): could not create representor mapping for vif: %s\n",
@@ -86,7 +85,11 @@ vr_dpdk_n3k_datapath_deduce(struct vr_interface *vif, const char **repr_name)
         goto found;
     }
 
-    dp_type = N3K_DATAPATH_MAPPED_VDPA;
+    repr = vr_dpdk_n3k_representor_map_get_entry(vif);
+    RTE_LOG(INFO, VROUTER, "%s(): mapped vif %u(name: %s, VF id: %"PRIu16", repr: %s)\n",
+        __func__, vif->vif_idx, repr.vif_name, repr.id, repr.repr_name);
+
+    return N3K_DATAPATH_MAPPED_VDPA;
 found:
     n3k_datapath_print_info(vif, dp_type, __func__);
 
@@ -96,7 +99,7 @@ found:
 int
 vr_dpdk_n3k_datapath_setup(struct vr_interface *vif, const char *repr_name)
 {
-    enum vr_dpdk_n3k_datapath_type dp_type = N3K_DATAPATH_DETERMINISTIC_PCI_PASSTHRU;
+    enum vr_dpdk_n3k_datapath_type dp_type = N3K_DATAPATH_PCI_PASSTHRU;
     int ret = -EINVAL, did = rte_pmd_n3k_get_vdpa_did_by_repr_name(repr_name);
     bool is_mapped = vr_dpdk_n3k_config_vdpa_mapping_enabled();
 
@@ -128,8 +131,23 @@ vr_dpdk_n3k_datapath_setup(struct vr_interface *vif, const char *repr_name)
 void
 vr_dpdk_n3k_datapath_teardown(struct vr_interface *vif)
 {
-    vr_dpdk_n3k_vhost_unregister(vif);
+    struct vr_dpdk_n3k_representor_map_entry repr;
+    uint16_t id;
 
-    if (vr_dpdk_n3k_config_vdpa_mapping_enabled())
-        vr_dpdk_n3k_representor_map_delete_mapping(vif);
+    RTE_LOG(INFO, VROUTER, "%s(): vif %u: started\n",
+        __func__, vif->vif_idx);
+
+    if (vr_dpdk_n3k_config_vdpa_mapping_enabled()) {
+        repr = vr_dpdk_n3k_representor_map_get_entry(vif);
+        id = repr.id;
+        RTE_LOG(INFO, VROUTER, "%s(): vif %u(name: %s, VF id: %"PRIu16", repr: %s): started\n",
+            __func__, vif->vif_idx, repr.vif_name, id, repr.repr_name);
+
+        vr_dpdk_n3k_vhost_unregister(repr.vif_name);
+
+        vr_dpdk_n3k_representor_map_delete_entry(vif);
+    }
+
+    RTE_LOG(INFO, VROUTER, "%s(): vif %u: finished\n",
+        __func__, vif->vif_idx);
 }

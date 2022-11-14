@@ -25,35 +25,38 @@
 #define N3K_REPRESENTOR_LAST_VF_ID N3K_MAX_REPRESENTOR_COUNT
 #define N3K_REPRESENTOR_INVALID_VF_ID N3K_REPRESENTOR_LAST_VF_ID + 1
 
-struct n3k_representor_entry {
-    uint16_t id;
-    const char *name;
+static struct vr_dpdk_n3k_representor_map_entry vif_to_repr_mapping[] = {
+    [0 ... VR_MAX_INTERFACES] = {
+        .id = N3K_REPRESENTOR_INVALID_VF_ID,
+        .repr_name = NULL,
+        .vif_name = NULL,
+    },
 };
 
-static struct n3k_representor_entry vif_to_repr_mapping[] = {
-    [0 ... VR_MAX_INTERFACES] = { .id = N3K_REPRESENTOR_INVALID_VF_ID, .name = NULL },
-};
 static const char *used_vfs[N3K_REPRESENTOR_INVALID_VF_ID] = {  0  };
 
-static struct n3k_representor_entry
+static struct vr_dpdk_n3k_representor_map_entry
 get_unused_n3k_repr(void)
 {
     bool found = false;
-    char *name = rte_malloc("n3k_repr_map_value",
-        (N3K_REPRESENTOR_NAME_LENGTH + 1) * sizeof(*name), 0);
-    struct n3k_representor_entry repr = {
+    int did;
+    uint16_t port_id;
+    size_t i;
+    char *repr_name = rte_malloc("n3k_repr_map_value",
+        (N3K_REPRESENTOR_NAME_LENGTH + 1) * sizeof(*repr_name), 0);
+    struct vr_dpdk_n3k_representor_map_entry ent = {
         .id = N3K_REPRESENTOR_INVALID_VF_ID,
-        .name = name,
+        .repr_name = repr_name,
     };
-    if (!name) {
+
+    if (!repr_name) {
         RTE_LOG(ERR, VROUTER,
             "%s(): error: memory allocation failed\n", __func__);
-        return repr;
+        return ent;
     }
 
-    size_t i = N3K_REPRESENTOR_FIRST_VF_ID;
-    for (; i < N3K_REPRESENTOR_INVALID_VF_ID; ++i) {
-        int ret = snprintf(name, N3K_REPRESENTOR_NAME_LENGTH,
+    for (i = N3K_REPRESENTOR_FIRST_VF_ID; i < N3K_REPRESENTOR_INVALID_VF_ID; ++i) {
+        int ret = snprintf(repr_name, N3K_REPRESENTOR_NAME_LENGTH,
                            N3K_REPRESENTOR_PREFIX "%zu", i);
 
         if (ret < 0 || ret > N3K_REPRESENTOR_NAME_LENGTH) {
@@ -62,60 +65,89 @@ get_unused_n3k_repr(void)
             goto cleanup;
         }
 
-        uint16_t port_id;
-        ret = rte_eth_dev_get_port_by_name(name, &port_id);
-        if (ret == 0 && used_vfs[i] == NULL) {
+        ret = rte_eth_dev_get_port_by_name(repr_name, &port_id);
+        did = rte_pmd_n3k_get_vdpa_did_by_repr_name(repr_name);
+        if (ret == 0 && did >= 0 && used_vfs[i] == NULL) {
             found = true;
             break;
         }
     }
 
     if (found) {
-        used_vfs[i] = repr.name;
-        repr.id = i;
+        used_vfs[i] = ent.repr_name;
+        ent.id = i;
     }
 
-    return repr;
+    return ent;
 cleanup:
-    rte_free(name);
-    repr.name = NULL;
-    return repr;
+    rte_free(repr_name);
+    ent.repr_name = NULL;
+    return ent;
 }
 
 static void
-put_unused_n3k_repr(struct n3k_representor_entry repr)
+put_unused_n3k_repr(struct vr_dpdk_n3k_representor_map_entry repr)
 {
     if (repr.id >= N3K_REPRESENTOR_INVALID_VF_ID) {
         return;
     }
 
-    rte_free((void *)used_vfs[repr.id]);
+    rte_free((void *)used_vfs[repr.id]); //repr_name
+    free((void *)repr.vif_name);
+
     used_vfs[repr.id] = NULL;
 }
 
 const char *
-vr_dpdk_n3k_representor_map_create_mapping(struct vr_interface *vif)
+vr_dpdk_n3k_representor_map_create_entry(struct vr_interface *vif)
 {
-    struct n3k_representor_entry repr = get_unused_n3k_repr();
+    struct vr_dpdk_n3k_representor_map_entry repr;
+    if (vif == NULL) {
+        RTE_LOG(ERR, VROUTER,
+            "%s(): NULL vif name", __func__);
+        return NULL;
+    }
+
+    repr = get_unused_n3k_repr();
     if (repr.id >= N3K_REPRESENTOR_INVALID_VF_ID) {
         RTE_LOG(ERR, VROUTER,
             "%s(): error: No available VF found\n", __func__);
         return NULL;
     }
 
+    repr.vif_name = strdup((const char *)vif->vif_name);
+    if (repr.vif_name == NULL) {
+        RTE_LOG(ERR, VROUTER,
+            "%s(): error: cannot duplicate vif name: %s", __func__, vif->vif_name);
+        return NULL;
+    }
+
     vif_to_repr_mapping[vif->vif_idx] = repr;
 
-    return repr.name;
+    return repr.repr_name;
+}
+
+struct vr_dpdk_n3k_representor_map_entry
+vr_dpdk_n3k_representor_map_get_entry(struct vr_interface *vif)
+{
+    struct vr_dpdk_n3k_representor_map_entry repr = vif_to_repr_mapping[vif->vif_idx];
+    if (repr.id >= N3K_REPRESENTOR_INVALID_VF_ID) {
+        RTE_LOG(WARNING, VROUTER,
+            "%s(): was called, but no mapping for vif: %u exists\n",
+            __func__, vif->vif_idx);
+    }
+
+    return repr;
 }
 
 void
-vr_dpdk_n3k_representor_map_delete_mapping(struct vr_interface *vif)
+vr_dpdk_n3k_representor_map_delete_entry(struct vr_interface *vif)
 {
-    struct n3k_representor_entry repr = vif_to_repr_mapping[vif->vif_idx];
+    struct vr_dpdk_n3k_representor_map_entry repr = vif_to_repr_mapping[vif->vif_idx];
     if (repr.id >= N3K_REPRESENTOR_INVALID_VF_ID) {
         RTE_LOG(WARNING, VROUTER,
-            "%s(): was called, but no mapping for vif: %s exists\n",
-            __func__, vif->vif_name);
+            "%s(): was called, but no mapping for vif: %u exists\n",
+            __func__, vif->vif_idx);
         return;
     }
 
@@ -129,7 +161,8 @@ vr_dpdk_n3k_representor_map_reset(void)
     for(; i < VR_MAX_INTERFACES; ++i) {
         put_unused_n3k_repr(vif_to_repr_mapping[i]);
         vif_to_repr_mapping[i].id = N3K_REPRESENTOR_INVALID_VF_ID;
-        vif_to_repr_mapping[i].name = NULL;
+        vif_to_repr_mapping[i].repr_name = NULL;
+        vif_to_repr_mapping[i].vif_name = NULL;
     }
 }
 

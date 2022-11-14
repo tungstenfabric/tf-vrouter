@@ -57,12 +57,21 @@ register_and_start_vhost_driver(const char *vhost_socket_path,
 {
     /* agent attaches info in the vif about what role
     will orchestrator configure hypervisor to perform in regards to setup of
-    vhost user socket so tell the vhost dpdk the opposite, otherwise
-    both orchestrator and vRouter will perform the same role and won't connect */
+    vhost user socket so tell the DPDK's librte_vhost the opposite, otherwise
+    both hypervisor and vRouter (via DPDK) will perform the same role and won't connect
     uint64_t vif_vhost_connection_type =
         vif->vif_vhostuser_mode == VHOSTUSER_SERVER ? RTE_VHOST_USER_CLIENT : 0;
+
     int ret = rte_vhost_driver_register(vhost_socket_path,
-        vif_vhost_connection_type);
+        RTE_VHOST_USER_CLIENT);
+
+        However, the vif_vhostuser_mode is not always filled, i.e.
+    it is default initialized, that is, to value 0 (== VHOSTUSER_CLIENT).
+    As the vif_vhostuser_mode is unreliable, limit vhost socket mode to
+    client only.
+    */
+    int ret = rte_vhost_driver_register(vhost_socket_path,
+        RTE_VHOST_USER_CLIENT);
     if (ret != 0) {
         RTE_LOG(ERR, VROUTER,
             "%s(): rte_vhost_driver_register failure.\n", __func__);
@@ -141,42 +150,55 @@ configure_vhost_socket_dir(void)
 }
 
 static int
-get_vhost_socket_path(struct vr_interface *vif, char *path, size_t pathlen)
+get_vhost_socket_path(const char *name, char *path, size_t pathlen)
 {
-    if (path == NULL || vif == NULL) {
+    if (path == NULL) {
         RTE_LOG(ERR, VROUTER, "%s(): invalid args", __func__);
         return -1;
     }
 
     snprintf(path, pathlen, "%s/%s%s",
-        vr_socket_dir, VR_UVH_VIF_PFX, (char*)vif->vif_name);
+        vr_socket_dir, VR_UVH_VIF_PFX, name);
 
     return 0;
 }
 
 void
-vr_dpdk_n3k_vhost_unregister(struct vr_interface *vif)
+vr_dpdk_n3k_vhost_unregister(const char *name)
 {
+    int ret;
     char vhost_socket_path[VR_UNIX_PATH_MAX];
     memset(vhost_socket_path, 0, sizeof(vhost_socket_path));
 
-    if (vif == NULL) {
-        RTE_LOG(ERR, VROUTER,
-            "%s(): invalid vif;\n", __func__);
-        return;
-    }
-
     RTE_LOG(DEBUG, VROUTER,
-        "%s(): id - %u; name - %s;\n", __func__, vif->vif_idx, vif->vif_name);
+        "%s(name - %s): called\n", __func__, name);
 
-    int ret = get_vhost_socket_path(vif, vhost_socket_path, RTE_DIM(vhost_socket_path));
+    ret = get_vhost_socket_path(name, vhost_socket_path, RTE_DIM(vhost_socket_path));
     if (ret != 0) {
-        RTE_LOG(ERR, VROUTER, "%s(): failed to construct vhost_socket_path", __func__);
-        return;
+        RTE_LOG(ERR, VROUTER, "%s(name - %s): failed to construct vhost_socket_path\n",
+            __func__, name);
+        goto out;
     }
 
-    rte_vhost_driver_detach_vdpa_device(vhost_socket_path);
-    rte_vhost_driver_unregister(vhost_socket_path);
+    RTE_LOG(INFO, VROUTER,
+        "%s(name - %s): started: socket - %s\n", __func__, name, vhost_socket_path);
+
+    ret = rte_vhost_driver_detach_vdpa_device(vhost_socket_path);
+    if (ret != 0) {
+        RTE_LOG(ERR, VROUTER, "%s(name - %s): rte_vhost_driver_detach_vdpa_device failed\n",
+            __func__, name);
+    }
+
+    ret = rte_vhost_driver_unregister(vhost_socket_path);
+    if (ret != 0) {
+        RTE_LOG(ERR, VROUTER, "%s(name - %s): rte_vhost_driver_unregister failed\n",
+            __func__, name);
+        goto out;
+    }
+
+    ret = 0;
+out:
+    RTE_LOG(INFO, VROUTER, "%s(): %s\n", __func__, ret ? "failed" : "success");
 }
 
 int
@@ -193,7 +215,7 @@ vr_dpdk_n3k_vhost_register(struct vr_interface *vif, uint32_t vif_vdpa_did)
     RTE_LOG(DEBUG, VROUTER,
         "%s(): id - %u; name - %s;\n", __func__, vif->vif_idx, vif->vif_name);
 
-    ret = get_vhost_socket_path(vif, vhost_socket_path, RTE_DIM(vhost_socket_path));
+    ret = get_vhost_socket_path((char *)vif->vif_name, vhost_socket_path, RTE_DIM(vhost_socket_path));
     if (ret != 0) {
         RTE_LOG(ERR, VROUTER, "%s(): failed to construct vhost_socket_path", __func__);
         return ret;

@@ -12,7 +12,6 @@
 #include <rte_eth_bond_8023ad.h>
 #include <rte_port_ethdev.h>
 #include <rte_errno.h>
-#include <rte_pmd_n3k.h>
 
 struct rte_eth_conf n3k_representor_ethdev_conf = {
     .link_speeds = ETH_LINK_SPEED_AUTONEG,
@@ -75,10 +74,10 @@ n3k_representor_show_info(struct vr_interface *vif, struct vr_dpdk_ethdev *ethde
 
     rte_eth_dev_info_get(ethdev->ethdev_port_id, &dev_info);
 
-    RTE_LOG(DEBUG, VROUTER, "%s(%s): dev_info: driver_name=%s if_index=%u"
+    RTE_LOG(DEBUG, VROUTER, "%s(%s): dev_info: driver_name=%s"
         " max_rx_queues=%" PRIu16 " max_tx_queues=%" PRIu16
         " rx_offload_capa=%" PRIx64 " tx_offload_capa=%" PRIx64 "\n",
-        __func__, vif->vif_name, dev_info.driver_name, dev_info.if_index,
+        __func__, vif->vif_name, dev_info.driver_name,
         dev_info.max_rx_queues, dev_info.max_tx_queues,
         dev_info.rx_offload_capa, dev_info.tx_offload_capa);
 }

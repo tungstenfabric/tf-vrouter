@@ -129,7 +129,7 @@ n3k_representor_virtual_add(struct vr_interface *vif)
     switch(dp) {
     case N3K_DATAPATH_UNKNOWN:
     case N3K_DATAPATH_NO_VDPA_VHOST_USER:
-        RTE_LOG(WARNING, VROUTER, "%s(): virtual vif %s not handled\n",
+        RTE_LOG(WARNING, VROUTER, "%s(vif: %s): not handled\n",
             __func__, vif->vif_name);
 
         return REPR_OP_NOT_HANDLED;
@@ -146,13 +146,13 @@ n3k_representor_virtual_add(struct vr_interface *vif)
         goto err;
 
     RTE_LOG(DEBUG, VROUTER,
-        "%s(): %s: configuration succeeded\n",
+        "%s(vif: %s): configuration succeeded\n",
         __func__, vif->vif_name);
 
     return REPR_OP_OK;
 err:
     RTE_LOG(ERR, VROUTER,
-        "%s(): %s: configuration failed\n",
+        "%s(vif: %s): configuration failed\n",
         __func__, vif->vif_name);
 
     return res;
@@ -161,7 +161,9 @@ err:
 static int
 n3k_representor_virtual_del(struct vr_interface *vif)
 {
-    RTE_LOG(INFO, VROUTER, "%s(): Deleting vif %u virtual device\n",
+    int ret;
+
+    RTE_LOG(INFO, VROUTER, "%s(vif: %u): called\n",
         __func__, vif->vif_idx);
 
     if (vif->vif_os == NULL) {
@@ -171,8 +173,14 @@ n3k_representor_virtual_del(struct vr_interface *vif)
     }
 
     vr_dpdk_n3k_datapath_teardown(vif);
+    ret = n3k_representor_vif_teardown(vif);
+    if (ret) {
+        RTE_LOG(INFO, VROUTER, "%s(vif: %u): vif teardown failed\n",
+            __func__, vif->vif_idx);
+        return ret;
+    }
 
-    return n3k_representor_vif_teardown(vif);
+    return 0;
 }
 
 static enum vr_dpdk_representor_op_res
@@ -183,13 +191,13 @@ n3k_representor_fabric_add(struct vr_interface *vif)
         n3k_representor_vif_setup(vif, repr_name);
     if (res != REPR_OP_OK) {
         RTE_LOG(ERR, VROUTER,
-            "%s(): %s: configuration failed\n",
+            "%s(vif: %s): configuration failed\n",
             __func__, vif->vif_name);
         return res;
     }
 
     RTE_LOG(DEBUG, VROUTER,
-        "%s(): %s: configuration succeeded\n",
+        "%s(vif: %s): configuration succeeded\n",
         __func__, vif->vif_name);
 
     return REPR_OP_OK;
@@ -198,12 +206,13 @@ n3k_representor_fabric_add(struct vr_interface *vif)
 static int
 n3k_representor_fabric_del(struct vr_interface *vif)
 {
-    RTE_LOG(INFO, VROUTER, "%s(): Deleting vif %u fabric device\n",
+    RTE_LOG(INFO, VROUTER, "%s(vif: %u): deleting\n",
         __func__, vif->vif_idx);
 
     if (vif->vif_os == NULL) {
         RTE_LOG(ERR, VROUTER,
-            "%s(): error deleting fabric dev: already removed\n", __func__);
+            "%s(vif: %u): error deleting fabric dev: already removed\n",
+            __func__, vif->vif_idx);
         return -EEXIST;
     }
 
@@ -239,7 +248,7 @@ vr_dpdk_n3k_representor_add(struct vr_interface *vif)
         n3k_representor_*_del is called.
     */
 
-    RTE_LOG(DEBUG, VROUTER, "%s(): called for vif: %s\n",
+    RTE_LOG(DEBUG, VROUTER, "%s(vif: %s): called\n",
         __func__, vif->vif_name ? (char*)vif->vif_name : "(unknown name)");
 
     if (!vif) {
@@ -270,6 +279,9 @@ vr_dpdk_n3k_representor_del(struct vr_interface *vif)
 
         return REPR_OP_ERR;
     }
+
+    RTE_LOG(DEBUG, VROUTER, "%s(vif: %s): called\n",
+        __func__, vif->vif_name ? (char*)vif->vif_name : "(unknown name)");
 
     if (vif_is_fabric(vif)) {
         ret = n3k_representor_fabric_del(vif);
