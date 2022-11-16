@@ -248,6 +248,8 @@ struct host_os {
     void (*hos_offload_prepare)(struct vr_packet *pkt, struct vr_forwarding_md *fmd);
     void (*hos_set_dump_packets)(int);
     int (*hos_get_dump_packets)(void);
+    void (*hos_flow_bucket_lock)(struct vr_flow_entry *);
+    void (*hos_flow_bucket_unlock)(struct vr_flow_entry *);
     /* Register vr_info callback functions. */
     FOREACH_VR_INFO_CB_DECLARATION();
 };
@@ -318,6 +320,8 @@ FOREACH_VR_INFO_DECLARATION_COMMON()
 #define vr_offload_prepare              vrouter_host->hos_offload_prepare
 #define vr_set_dump_packets             vrouter_host->hos_set_dump_packets
 #define vr_get_dump_packets             vrouter_host->hos_get_dump_packets
+#define vr_flow_bucket_lock             vrouter_host->hos_flow_bucket_lock
+#define vr_flow_bucket_unlock           vrouter_host->hos_flow_bucket_unlock
 
 extern struct host_os *vrouter_host;
 
