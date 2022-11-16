@@ -1374,6 +1374,20 @@ dpdk_register_nic(struct vr_interface* vif __attribute__((unused)),
 {
 }
 
+static void
+dpdk_flow_bucket_lock(struct vr_flow_entry *fe)
+{
+    while (!vr_sync_bool_compare_and_swap_8u(&fe->fe_bucket_lock, 0, 1)) {
+        vr_pause();
+    }
+}
+
+static void
+dpdk_flow_bucket_unlock(struct vr_flow_entry *fe)
+{
+    vr_sync_bool_compare_and_swap_8u(&fe->fe_bucket_lock, 1, 0);
+}
+
 struct host_os dpdk_host = {
     .hos_printf                     =    dpdk_printf,
     .hos_malloc                     =    dpdk_malloc,
@@ -1433,6 +1447,8 @@ struct host_os dpdk_host = {
     .hos_offload_flow_create        =    dpdk_offload_flow_create,
     .hos_offload_flow_destroy       =    dpdk_offload_flow_destroy,
     .hos_offload_prepare            =    dpdk_offload_prepare,
+    .hos_flow_bucket_lock           =    dpdk_flow_bucket_lock,
+    .hos_flow_bucket_unlock         =    dpdk_flow_bucket_unlock,
     /* Below macro would be expanded for each callbacks registered in vr_info.h.
      * this would map the actual dpdk callback function with
      * vrouter_host(.hos_<fn. name>) */
