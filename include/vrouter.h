@@ -445,6 +445,7 @@ struct vr_defer_data {
 };
 
 extern volatile bool vr_not_ready;
+extern volatile bool vr_shutdown_started;
 
 extern struct vrouter *vrouter_get(unsigned int);
 extern unsigned int vrouter_generation_num_get(struct vrouter *router);

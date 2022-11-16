@@ -53,6 +53,7 @@ extern unsigned int vr_uncond_close_flow_on_tcp_rst;
 void vrouter_exit(bool);
 
 volatile bool vr_not_ready = true;
+volatile bool vr_shutdown_started = false;
 
 /* Below hugepage req recv and resp variables are added for debug purpose */
 int vr_hpage_req_recv = 0;
@@ -507,11 +508,14 @@ vrouter_exit(bool soft_reset)
 {
     int i;
 
+    vr_shutdown_started = true;
+
     for (i = 0; i < (int)VR_NUM_MODULES; i++)
         if (modules[i].shut)
             modules[i].shut(&router);
 
     /* Mark that vrouter is no more ready as shut is already done */
+    vr_shutdown_started = false;
     vr_not_ready = true;
 
     /* Flush the previous ashynchronous events, before init */

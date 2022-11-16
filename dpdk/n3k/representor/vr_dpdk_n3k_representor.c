@@ -96,19 +96,19 @@ n3k_representor_vif_teardown(struct vr_interface *vif)
 
 static enum vr_dpdk_representor_op_res
 n3k_vf_datapath_setup(struct vr_interface *vif,
-                      const char* repr_name)
+                      const char** repr_name)
 {
     int ret = vr_dpdk_n3k_datapath_setup(vif, repr_name);
     if (ret) {
         RTE_LOG(ERR, VROUTER,
             "%s(): %s(%s): failed\n",
-            __func__, vif->vif_name, repr_name);
+            __func__, vif->vif_name, *repr_name);
         return REPR_OP_ERR;
     }
 
     RTE_LOG(DEBUG, VROUTER,
         "%s(): %s(%s): succeeded\n",
-        __func__, vif->vif_name, repr_name);
+        __func__, vif->vif_name, *repr_name);
 
     return REPR_OP_OK;
 }
@@ -124,7 +124,7 @@ n3k_representor_virtual_add(struct vr_interface *vif)
     const char *repr_name = NULL;
     enum vr_dpdk_representor_op_res res;
     enum vr_dpdk_n3k_datapath_type dp =
-        vr_dpdk_n3k_datapath_deduce(vif, &repr_name);
+        vr_dpdk_n3k_datapath_deduce(vif);
 
     switch(dp) {
     case N3K_DATAPATH_UNKNOWN:
@@ -137,11 +137,11 @@ n3k_representor_virtual_add(struct vr_interface *vif)
         break;
     }
 
-    res = n3k_representor_vif_setup(vif, repr_name);
+    res = n3k_vf_datapath_setup(vif, &repr_name);
     if (res != REPR_OP_OK)
         goto err;
 
-    res = n3k_vf_datapath_setup(vif, repr_name);
+    res = n3k_representor_vif_setup(vif, repr_name);
     if (res != REPR_OP_OK)
         goto err;
 

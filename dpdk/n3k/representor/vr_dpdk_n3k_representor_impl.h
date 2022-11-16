@@ -14,6 +14,8 @@
 
 #include <rte_pmd_n3k.h>
 
+#include <stdbool.h>
+
 enum vr_dpdk_n3k_datapath_type {
     N3K_DATAPATH_UNVERIFIED = 0,
     N3K_DATAPATH_DETERMINISTIC_VDPA,
@@ -27,6 +29,7 @@ struct vr_dpdk_n3k_representor_map_entry {
     uint16_t id;
     const char *repr_name;
     const char *vif_name;
+    bool soft_reset;
 };
 
 #define VR_UVH_VIF_PFX "uvh_vif_"
@@ -41,8 +44,8 @@ void vr_dpdk_n3k_representor_queue_lcore_disconnect(struct vr_interface *);
 
 //datapath
 enum vr_dpdk_n3k_datapath_type
-vr_dpdk_n3k_datapath_deduce(struct vr_interface *, const char **);
-int vr_dpdk_n3k_datapath_setup(struct vr_interface *, const char *);
+vr_dpdk_n3k_datapath_deduce(struct vr_interface *);
+int vr_dpdk_n3k_datapath_setup(struct vr_interface *, const char **);
 void vr_dpdk_n3k_datapath_teardown(struct vr_interface *);
 
 //map
@@ -50,6 +53,8 @@ const char *vr_dpdk_n3k_representor_map_create_entry(struct vr_interface *);
 
 struct vr_dpdk_n3k_representor_map_entry
 vr_dpdk_n3k_representor_map_get_entry(struct vr_interface *);
+void vr_dpdk_n3k_representor_map_entry_mark_soft_reset(struct vr_interface *);
+void vr_dpdk_n3k_representor_map_entry_unmark_soft_reset(struct vr_interface *);
 
 void vr_dpdk_n3k_representor_map_delete_entry(struct vr_interface *);
 

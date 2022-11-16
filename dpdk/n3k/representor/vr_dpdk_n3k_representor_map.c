@@ -30,6 +30,7 @@ static struct vr_dpdk_n3k_representor_map_entry vif_to_repr_mapping[] = {
         .id = N3K_REPRESENTOR_INVALID_VF_ID,
         .repr_name = NULL,
         .vif_name = NULL,
+        .soft_reset = false,
     },
 };
 
@@ -130,14 +131,7 @@ vr_dpdk_n3k_representor_map_create_entry(struct vr_interface *vif)
 struct vr_dpdk_n3k_representor_map_entry
 vr_dpdk_n3k_representor_map_get_entry(struct vr_interface *vif)
 {
-    struct vr_dpdk_n3k_representor_map_entry repr = vif_to_repr_mapping[vif->vif_idx];
-    if (repr.id >= N3K_REPRESENTOR_INVALID_VF_ID) {
-        RTE_LOG(WARNING, VROUTER,
-            "%s(): was called, but no mapping for vif: %u exists\n",
-            __func__, vif->vif_idx);
-    }
-
-    return repr;
+    return vif_to_repr_mapping[vif->vif_idx];
 }
 
 void
@@ -159,11 +153,27 @@ vr_dpdk_n3k_representor_map_reset(void)
 {
     int i = 0;
     for(; i < VR_MAX_INTERFACES; ++i) {
+        if (vif_to_repr_mapping[i].vif_name) {
+            vr_dpdk_n3k_vhost_unregister(vif_to_repr_mapping[i].vif_name);
+        }
         put_unused_n3k_repr(vif_to_repr_mapping[i]);
         vif_to_repr_mapping[i].id = N3K_REPRESENTOR_INVALID_VF_ID;
         vif_to_repr_mapping[i].repr_name = NULL;
         vif_to_repr_mapping[i].vif_name = NULL;
+        vif_to_repr_mapping[i].soft_reset = false;
     }
+}
+
+void
+vr_dpdk_n3k_representor_map_entry_mark_soft_reset(struct vr_interface *vif)
+{
+    vif_to_repr_mapping[vif->vif_idx].soft_reset = true;
+}
+
+void
+vr_dpdk_n3k_representor_map_entry_unmark_soft_reset(struct vr_interface *vif)
+{
+    vif_to_repr_mapping[vif->vif_idx].soft_reset = false;
 }
 
 int
