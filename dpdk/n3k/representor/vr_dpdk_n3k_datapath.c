@@ -94,7 +94,7 @@ n3k_datapath_get_representor_name(struct vr_interface *vif, bool is_mapped,
         goto out;
     }
 
-    repr = vr_dpdk_n3k_representor_map_get_entry(vif);
+    repr = vr_dpdk_n3k_representor_map_get_entry_by_name(vif);
     if (repr.soft_reset) {
         repr_name = repr.repr_name;
 
@@ -114,7 +114,7 @@ n3k_datapath_get_representor_name(struct vr_interface *vif, bool is_mapped,
             goto out;
         }
 
-        repr = vr_dpdk_n3k_representor_map_get_entry(vif);
+        repr = vr_dpdk_n3k_representor_map_get_entry_by_name(vif);
     }
 
     RTE_LOG(INFO, VROUTER, "%s(): mapped vif %u(name: %s, VF id: %"PRIu16", repr: %s)\n",
@@ -140,8 +140,10 @@ vr_dpdk_n3k_datapath_setup(struct vr_interface *vif, const char **repr_name)
         goto out;
     }
 
-    if (datapath_already_setup)
+    if (datapath_already_setup) {
+        dp_type = N3K_DATAPATH_MAPPED_VDPA;
         goto out;
+    }
 
     did = rte_pmd_n3k_get_vdpa_did_by_repr_name(rname);
     if (did >= 0) {
@@ -182,7 +184,7 @@ vr_dpdk_n3k_datapath_teardown(struct vr_interface *vif)
     if (!vr_dpdk_n3k_config_vdpa_mapping_enabled())
         goto out;
 
-    repr = vr_dpdk_n3k_representor_map_get_entry(vif);
+    repr = vr_dpdk_n3k_representor_map_get_entry_by_id(vif);
     id = repr.id;
     RTE_LOG(INFO, VROUTER, "%s(): vif %u(name: %s, VF id: %"PRIu16", repr: %s): started\n",
         __func__, vif->vif_idx, repr.vif_name, id, repr.repr_name);

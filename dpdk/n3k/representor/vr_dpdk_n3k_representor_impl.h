@@ -52,7 +52,10 @@ void vr_dpdk_n3k_datapath_teardown(struct vr_interface *);
 const char *vr_dpdk_n3k_representor_map_create_entry(struct vr_interface *);
 
 struct vr_dpdk_n3k_representor_map_entry
-vr_dpdk_n3k_representor_map_get_entry(struct vr_interface *);
+vr_dpdk_n3k_representor_map_get_entry_by_id(struct vr_interface *);
+struct vr_dpdk_n3k_representor_map_entry
+vr_dpdk_n3k_representor_map_get_entry_by_name(struct vr_interface *);
+
 void vr_dpdk_n3k_representor_map_entry_mark_soft_reset(struct vr_interface *);
 void vr_dpdk_n3k_representor_map_entry_unmark_soft_reset(struct vr_interface *);
 

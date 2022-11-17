@@ -26,7 +26,7 @@
 #define N3K_REPRESENTOR_INVALID_VF_ID N3K_REPRESENTOR_LAST_VF_ID + 1
 
 static struct vr_dpdk_n3k_representor_map_entry vif_to_repr_mapping[] = {
-    [0 ... VR_MAX_INTERFACES] = {
+    [0 ... VR_MAX_INTERFACES - 1] = {
         .id = N3K_REPRESENTOR_INVALID_VF_ID,
         .repr_name = NULL,
         .vif_name = NULL,
@@ -129,9 +129,23 @@ vr_dpdk_n3k_representor_map_create_entry(struct vr_interface *vif)
 }
 
 struct vr_dpdk_n3k_representor_map_entry
-vr_dpdk_n3k_representor_map_get_entry(struct vr_interface *vif)
+vr_dpdk_n3k_representor_map_get_entry_by_id(struct vr_interface *vif)
 {
     return vif_to_repr_mapping[vif->vif_idx];
+}
+
+struct vr_dpdk_n3k_representor_map_entry
+vr_dpdk_n3k_representor_map_get_entry_by_name(struct vr_interface *vif)
+{
+    int i = 0;
+    for(; i < VR_MAX_INTERFACES; ++i) {
+        if (vif_to_repr_mapping[i].vif_name) {
+            if (!strcmp(vif_to_repr_mapping[i].vif_name, (const char *)vif->vif_name))
+                return vif_to_repr_mapping[i];
+        }
+    }
+
+    return vif_to_repr_mapping[0];
 }
 
 void
@@ -146,6 +160,10 @@ vr_dpdk_n3k_representor_map_delete_entry(struct vr_interface *vif)
     }
 
     put_unused_n3k_repr(repr);
+    vif_to_repr_mapping[vif->vif_idx].repr_name = NULL;
+    vif_to_repr_mapping[vif->vif_idx].vif_name = NULL;
+    vif_to_repr_mapping[vif->vif_idx].id = N3K_REPRESENTOR_INVALID_VF_ID;
+    vif_to_repr_mapping[vif->vif_idx].soft_reset = false;
 }
 
 static void
@@ -173,7 +191,13 @@ vr_dpdk_n3k_representor_map_entry_mark_soft_reset(struct vr_interface *vif)
 void
 vr_dpdk_n3k_representor_map_entry_unmark_soft_reset(struct vr_interface *vif)
 {
-    vif_to_repr_mapping[vif->vif_idx].soft_reset = false;
+    int i = 0;
+    for(; i < VR_MAX_INTERFACES; ++i) {
+        if (vif_to_repr_mapping[i].vif_name) {
+            if (!strcmp(vif_to_repr_mapping[i].vif_name, (const char *)vif->vif_name))
+                vif_to_repr_mapping[i].soft_reset = false;
+        }
+    }
 }
 
 int
