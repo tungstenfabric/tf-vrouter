@@ -28,7 +28,7 @@ pyparsing==2.4.7
 pytest==4.6.9
 scandir==1.10.0
 scapy==2.4.3
-setuptools==44.1.0
+setuptools==65.5.1
 six==1.14.0
 typing==3.7.4.1
 wcwidth==0.1.9
