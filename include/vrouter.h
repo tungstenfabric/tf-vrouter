@@ -456,6 +456,7 @@ extern int vhost_init(void);
 
 extern bool vr_is_ipv6_underlay_enabled(void);
 extern void vr_set_ipv6_underlay_enabled(void);
+extern bool vr_force_ipv6_underlay_enabled;
 
 #ifdef __cplusplus
 }

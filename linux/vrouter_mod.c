@@ -2771,6 +2771,9 @@ MODULE_PARM_DESC(vr_perfq2, "<cpu> CPU to send pkts to if perfr2 set");
 module_param(vr_perfq3, uint, S_IRUGO);
 MODULE_PARM_DESC(vr_perfq3, "<cpu> CPU to send pkts to if perfr3 set");
 
+module_param(vr_force_ipv6_underlay_enabled, bool, S_IRUGO|S_IWUSR);
+MODULE_PARM_DESC(vr_force_ipv6_underlay_enabled, "Forces to allow IPv6 traffic between underlay and overlay (for Metadata6)");
+
 module_init(vrouter_linux_init);
 module_exit(vrouter_linux_exit);
 
