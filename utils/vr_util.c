@@ -625,7 +625,7 @@ void vr_print_pkt_drop_log_data(vr_pkt_drop_log_req *pkt_log, int i)
     vr_pkt_drop_log_t *pkt_log_utils =
         (vr_pkt_drop_log_t*)pkt_log->vdl_pkt_droplog_arr;
     struct tm *ptr_time;
-    char ipv6_addr[VR_IP6_ADDRESS_LEN] = "";
+    char ipv6_addr[INET6_ADDRSTRLEN] = "";
 
     /* String mapping for packet drop log */
     char vr_pkt_droplog_str[][50] = {
@@ -656,9 +656,9 @@ void vr_print_pkt_drop_log_data(vr_pkt_drop_log_req *pkt_log, int i)
     }
     else if (pkt_log_utils[i].vp_type == VP_TYPE_IP6)
     {
-        inet_ntop(AF_INET6, &pkt_log_utils[i].src.ipv6, ipv6_addr, VR_IP6_ADDRESS_LEN);
+        inet_ntop(AF_INET6, &pkt_log_utils[i].src.ipv6, ipv6_addr, INET6_ADDRSTRLEN);
         printf("Src IPv6: %s  ", ipv6_addr);
-        inet_ntop(AF_INET6, &pkt_log_utils[i].dst.ipv6, ipv6_addr, VR_IP6_ADDRESS_LEN);
+        inet_ntop(AF_INET6, &pkt_log_utils[i].dst.ipv6, ipv6_addr, INET6_ADDRSTRLEN);
         printf("Dst IPv6: %s  ", ipv6_addr);
     }
     else
