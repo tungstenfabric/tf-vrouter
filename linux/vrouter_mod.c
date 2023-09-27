@@ -450,10 +450,18 @@ lh_pfree_skb(struct sk_buff *skb, struct vr_interface *vif,
 static void
 lh_get_mono_time(uint64_t *sec, uint64_t *nsec)
 {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,6,0))
+    struct timespec64 t;
+#else
     struct timespec t;
+#endif
     uint64_t jiffies = get_jiffies_64();
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,6,0))
+    jiffies_to_timespec64(jiffies, &t);
+#else
     jiffies_to_timespec(jiffies, &t);
+#endif
     *sec = t.tv_sec;
     *nsec = t.tv_nsec;
 

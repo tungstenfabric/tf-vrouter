@@ -2363,7 +2363,7 @@ vr_napi_poll(struct napi_struct *napi, int budget)
      * Return value of napi_gro_receive() changed across Linux versions.
      */
     int ret, napi_gro_err = NET_RX_DROP;
-#else
+#elif (LINUX_VERSION_CODE < KERNEL_VERSION(5,12,0))
     gro_result_t ret, napi_gro_err = GRO_DROP;
 #endif
 
@@ -2384,11 +2384,15 @@ vr_napi_poll(struct napi_struct *napi, int budget)
     while ((skb = skb_dequeue(head))) {
         vr_skb_set_rxhash(skb, 0);
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5,12,0))
         ret = napi_gro_receive(napi, skb);
         if (ret == napi_gro_err) {
             if (gro_vif_stats)
                 gro_vif_stats->vis_ierrors++;
         }
+#else
+        napi_gro_receive(napi, skb);
+#endif
 
         quota++;
         if (quota == budget) {

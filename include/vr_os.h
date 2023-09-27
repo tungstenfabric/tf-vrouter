@@ -43,6 +43,7 @@
 #ifdef __KERNEL__
 
 #include <linux/kernel.h>
+#include <linux/version.h>
 #include <linux/init.h>
 #include <linux/rculist.h>
 #include <linux/spinlock.h>

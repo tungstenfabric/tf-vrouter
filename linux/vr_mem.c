@@ -119,7 +119,11 @@ __vr_huge_page_get(uint64_t uspace_vmem, int npages, int mem_size, int hugepage_
      * Expectation is that the pages are pinned in the physical
      * memory and are not going to be faulted
      */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,8,0))
+    mmap_read_lock(current->mm);
+#else
     down_read(&current->mm->mmap_sem);
+#endif
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,9,0))
     spages = get_user_pages(uspace_vmem, npages, FOLL_WRITE, pmem, NULL);
 #else
@@ -133,7 +137,11 @@ __vr_huge_page_get(uint64_t uspace_vmem, int npages, int mem_size, int hugepage_
 #endif
 
 #endif
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,8,0))
+    mmap_read_unlock(current->mm);
+#else
     up_read(&current->mm->mmap_sem);
+#endif
 
     /*
      * If number of pinned pages are less than requested,

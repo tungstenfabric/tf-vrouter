@@ -361,7 +361,16 @@ struct vr_drop_loc
 };
 
 typedef struct vr_pkt_drop_log {
+#ifdef __KERNEL__
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,6,0))
+    time64_t timestamp;
+#else
     time_t timestamp;
+#endif
+#else /* not __KERNEL__ */
+    time_t timestamp;
+#endif
+
     unsigned char   vp_type;
     unsigned short  drop_reason;
     unsigned short  vif_idx;
