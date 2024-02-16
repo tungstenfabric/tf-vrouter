@@ -862,3 +862,175 @@ vr_ip6_well_known_packet(struct vr_packet *pkt)
 
     return L4_TYPE_UNKNOWN;
 }
+
+static void
+vr_ip6_update_csum(struct vr_packet *pkt, uint32_t ip_inc, uint32_t port_inc)
+{
+    struct vr_ip6 *ip6 = NULL;
+    struct vr_tcp *tcp = NULL;
+    struct vr_udp *udp = NULL;
+    uint32_t csum_inc  = 0;
+    uint32_t csum = 0;
+    uint16_t *csump = NULL;
+
+    ip6 = (struct vr_ip6 *)pkt_network_header(pkt);
+
+    if (ip6->ip6_nxt == VR_IP_PROTO_TCP) {
+        tcp = (struct vr_tcp *)((uint8_t *)ip6 + sizeof(struct vr_ip6));
+        csump = &tcp->tcp_csum;
+    } else if (ip6->ip6_nxt == VR_IP_PROTO_UDP) {
+        udp = (struct vr_udp *)((uint8_t *)ip6 + sizeof(struct vr_ip6));
+        csump = &udp->udp_csum;
+        if (*csump == 0) {
+            return;
+        }
+    } else {
+        return;
+    }
+
+    if (vr_ip6_transport_header_valid(ip6)) {
+        /*
+        * for partial checksums, the actual value is stored rather
+        * than the complement
+        */
+        if (pkt->vp_flags & VP_FLAG_CSUM_PARTIAL) {
+            csum = (*csump) & 0xffff;
+        } else {
+            csum = ~(*csump) & 0xffff;
+        }
+
+        // adj. ip contr. to csum change
+        ip_inc = (ip_inc & 0xffff) + (ip_inc >> 16);
+        if (ip_inc >> 16)
+            ip_inc = (ip_inc & 0xffff) + 1;
+
+        // adj. port contr. to csum change
+        port_inc = (port_inc & 0xffff) + (port_inc >> 16);
+        if (port_inc >> 16)
+            port_inc = (port_inc & 0xffff) + 1;
+
+        csum_inc = ip_inc + port_inc;
+
+        csum += csum_inc;
+
+        csum = (csum & 0xffff) + (csum >> 16);
+        if (csum >> 16)
+            csum = (csum & 0xffff) + 1;
+
+        if (pkt->vp_flags & VP_FLAG_CSUM_PARTIAL) {
+            *csump = csum & 0xffff;
+        } else {
+            *csump = ~(csum) & 0xffff;
+        }
+    }
+
+    return;
+}
+
+flow_result_t
+vr_inet6_flow_nat(struct vr_flow_entry *fe, struct vr_packet *pkt,
+                struct vr_forwarding_md *fmd)
+{
+    uint32_t ip_inc = 0, port_inc = 0;
+    uint16_t *t_sport = NULL, *t_dport = NULL;
+    const uint8_t dw_p_ip6 = VR_IP6_ADDRESS_LEN / sizeof(uint32_t);
+    uint8_t i = 0;
+
+    struct vrouter *router = pkt->vp_if->vif_router;
+    struct vr_flow_entry *rfe = NULL;
+    struct vr_ip6 *ip6 = NULL, *icmp_pl_ip6 = NULL;
+    struct vr_icmp *icmph = NULL;
+
+    if (fe->fe_rflow < 0)
+        goto drop;
+
+    rfe = vr_flow_get_entry(router, fe->fe_rflow);
+    if (!rfe)
+        goto drop;
+
+    ip6 = (struct vr_ip6 *)pkt_network_header(pkt);
+    if (!ip6)
+        goto drop;
+
+    if (ip6->ip6_nxt == VR_IP_PROTO_ICMP6) {
+        icmph = (struct vr_icmp *)((char *)ip6 + sizeof(struct vr_ip6));
+
+        if (vr_icmp_error(icmph)) {
+            icmp_pl_ip6 = (struct vr_ip6 *)(icmph + 1);
+            if (fe->fe_flags & VR_FLOW_FLAG_SNAT) {
+                memcpy(icmp_pl_ip6->ip6_dst, rfe->fe_key.flow6_dip,
+                    VR_IP6_ADDRESS_LEN);
+            }
+
+            if (fe->fe_flags & VR_FLOW_FLAG_DNAT) {
+                memcpy(icmp_pl_ip6->ip6_src, rfe->fe_key.flow6_sip,
+                    VR_IP6_ADDRESS_LEN);
+            }
+
+            t_sport = (uint16_t *)((uint8_t *)icmp_pl_ip6 +
+                sizeof(struct vr_ip6));
+            t_dport = t_sport + 1;
+
+            if (fe->fe_flags & VR_FLOW_FLAG_SPAT) {
+                *t_dport = rfe->fe_key.flow6_dport;
+            }
+            if (fe->fe_flags & VR_FLOW_FLAG_DPAT) {
+                *t_sport = rfe->fe_key.flow6_sport;
+            }
+        }
+    }
+
+    if ((fe->fe_flags & VR_FLOW_FLAG_SNAT) &&
+            (memcmp(ip6->ip6_src, fe->fe_key.flow6_sip, VR_IP6_ADDRESS_LEN) == 0)) {
+        for (i = 0; i < VR_IP6_ADDRESS_LEN; i += dw_p_ip6) {
+            vr_incremental_diff( *((uint32_t*)(ip6->ip6_src + i)),
+                *((uint32_t*)(rfe->fe_key.flow6_dip + i)), &ip_inc);
+        }
+        memcpy(ip6->ip6_src, rfe->fe_key.flow6_dip,
+            VR_IP6_ADDRESS_LEN);
+    }
+
+    if (fe->fe_flags & VR_FLOW_FLAG_DNAT) {
+        for (i = 0; i < VR_IP6_ADDRESS_LEN; i += dw_p_ip6) {
+            vr_incremental_diff( *((uint32_t*)(ip6->ip6_dst + i)),
+                *((uint32_t*)(rfe->fe_key.flow6_sip + i)), &ip_inc);
+        }
+        memcpy(ip6->ip6_dst, rfe->fe_key.flow6_sip,
+            VR_IP6_ADDRESS_LEN);
+    }
+
+    if (vr_ip6_transport_header_valid(ip6)) {
+        t_sport = (uint16_t *)((uint8_t *)ip6 +
+                sizeof(struct vr_ip6));
+        t_dport = t_sport + 1;
+
+        if (fe->fe_flags & VR_FLOW_FLAG_SPAT) {
+            vr_incremental_diff(*t_sport,
+                rfe->fe_key.flow6_dport, &port_inc);
+            *t_sport = rfe->fe_key.flow6_dport;
+        }
+
+        if (fe->fe_flags & VR_FLOW_FLAG_DPAT) {
+            vr_incremental_diff(*t_dport,
+                rfe->fe_key.flow6_sport, &port_inc);
+            *t_dport = rfe->fe_key.flow6_sport;
+        }
+    }
+
+    if (!vr_pkt_is_diag(pkt))
+        vr_ip6_update_csum(pkt, ip_inc, port_inc);
+
+    if ((fe->fe_flags & VR_FLOW_FLAG_VRFT) && pkt->vp_nh &&
+            ((pkt->vp_nh->nh_vrf != fmd->fmd_dvrf) ||
+            (pkt->vp_nh->nh_flags & NH_FLAG_ROUTE_LOOKUP))) {
+        /* only if pkt->vp_nh was set before... */
+        pkt->vp_nh = vr_inet6_ip_lookup(fmd->fmd_dvrf, ip6->ip6_dst);
+    }
+
+    return FLOW_FORWARD;
+
+drop:
+    PKT_LOG(VP_DROP_FLOW_NAT_NO_RFLOW, pkt, 0, VR_PROTO_IP6_C, __LINE__);
+    vr_pfree(pkt, VP_DROP_FLOW_NAT_NO_RFLOW);
+    return FLOW_CONSUMED;
+}

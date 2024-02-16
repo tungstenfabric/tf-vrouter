@@ -713,6 +713,9 @@ vr_flow_nat(struct vr_flow_entry *fe,
     if (pkt->vp_type == VP_TYPE_IP)
         return vr_inet_flow_nat(fe, pkt, fmd);
 
+    if (pkt->vp_type == VP_TYPE_IP6)
+        return vr_inet6_flow_nat(fe, pkt, fmd);
+
     PKT_LOG(VP_DROP_FLOW_ACTION_INVALID, pkt, 0, VR_FLOW_C, __LINE__);
     vr_pfree(pkt, VP_DROP_FLOW_ACTION_INVALID);
     return FLOW_CONSUMED;

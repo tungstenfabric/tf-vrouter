@@ -519,6 +519,8 @@ int vr_inet6_get_flow_key(struct vrouter *, unsigned short, struct vr_packet *,
 extern unsigned int vr_inet_flow_nexthop(struct vr_packet *, unsigned short);
 extern flow_result_t vr_inet_flow_nat(struct vr_flow_entry *,
         struct vr_packet *, struct vr_forwarding_md *);
+extern flow_result_t vr_inet6_flow_nat(struct vr_flow_entry *,
+        struct vr_packet *, struct vr_forwarding_md *);
 extern void vr_inet_fill_flow(struct vr_flow *, unsigned int,
        uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint8_t);
 extern void vr_inet6_fill_flow(struct vr_flow *, unsigned int,
