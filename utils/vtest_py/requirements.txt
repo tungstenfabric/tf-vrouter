@@ -32,5 +32,5 @@ setuptools==44.1.0
 six==1.14.0
 typing==3.7.4.1
 wcwidth==0.1.9
-wheel==0.34.2
+wheel==0.38.1
 zipp==1.2.0
